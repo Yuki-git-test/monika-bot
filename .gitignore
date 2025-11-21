@@ -1,0 +1,17 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+venv/
+
+# Environment variables (bot token, etc)
+.env
+
+# Logs
+*.log
+
+# macOS system junk
+.DS_Store
+
