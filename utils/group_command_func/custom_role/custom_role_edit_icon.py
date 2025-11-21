@@ -47,6 +47,9 @@ async def custom_role_edit_icon_func(
             ephemeral=True,
         )
         return
+
+    # Defer
+    await interaction.response.defer(ephemeral=True)
     embed = discord.Embed(
         title="🖼️ Discord Custom Role Icon Specs",
         color=discord.Color.purple(),
@@ -174,7 +177,8 @@ class UploadRoleIconView(discord.ui.View):
                 name=self.user.display_name, icon_url=self.user.display_avatar.url
             )
             embed.set_thumbnail(url=attachment.url)
-            await interaction.edit_original_response(embed=embed)
+            content = f"✅ Successfully updated the icon for the role {self.role.mention}."
+            await interaction.edit_original_response(content=content, embed=embed)
 
             # -------------------- Log Channel --------------------
             try:

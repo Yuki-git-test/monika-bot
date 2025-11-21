@@ -5,8 +5,13 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from constants.vn_allstars_constants import VNA_SERVER_ID
+from utils.db.get_pg_pool import get_pg_pool
 from utils.logs.pretty_log import pretty_log, set_monika_bot
 
+# 🍑────────────────────────────────────────────
+#          ⚡ Bot Initialization ⚡
+# 🍑────────────────────────────────────────────
 intents = discord.Intents.default()
 intents.message_content = True
 intents.guilds = True
@@ -63,6 +68,14 @@ async def load_extensions():
 async def on_ready():
     pretty_log(message=f"✅ Logged in as {bot.user}", tag="ready")
 
+    # Set bot presence
+    await bot.change_presence(
+        activity=discord.Activity(
+            type=discord.ActivityType.watching,
+            name="every channel… every message… I see it all ♡",
+        )
+    )
+
     # Sync all slash commands globally
     await bot.tree.sync()
     pretty_log(message="Commands loaded:", tag="ready")
@@ -81,6 +94,16 @@ async def on_ready():
 # 🍑────────────────────────────────────────────
 async def main():
     await load_extensions()
+    # Load the PostgreSQL connection pool
+    try:
+        bot.pg_pool = await get_pg_pool()
+        pretty_log(message="✅ PostgreSQL connection pool established", tag="ready")
+    except Exception as e:
+        pretty_log(
+            message=f"❌ Failed to establish PostgreSQL connection pool: {e}",
+            tag="error",
+        )
+        return
     token = os.getenv("DISCORD_TOKEN")
     await bot.start(token)
 

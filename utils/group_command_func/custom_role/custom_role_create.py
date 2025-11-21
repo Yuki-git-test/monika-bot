@@ -11,7 +11,7 @@ from utils.db.custom_roles_db_func import (
 )
 from utils.logs.pretty_log import pretty_log
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
-REFERENCE_ROLE_ID = VN_ALLSTARS_ROLES.server_booster
+REFERENCE_ROLE_ID = VN_ALLSTARS_ROLES.personal_roles_divider
 
 # 🍭──────────────────────────────
 #   🎀 Slash Command: Create Custom Role

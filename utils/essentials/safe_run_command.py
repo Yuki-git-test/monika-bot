@@ -37,7 +37,7 @@ async def run_command_safe(
     try:
         pretty_log(
             "info",
-            f"🌸 /{slash_cmd_name} triggered by {interaction.user}{target}",
+            f"🌸 {slash_cmd_name} triggered by {interaction.user}{target}",
         )
 
         # 🔹 Call the actual command function
@@ -62,7 +62,7 @@ async def run_command_safe(
             include_trace=False,
         )
 
-        # Only notify if user is NOT Khy
+        # Only notify if user is NOT YUKI
         if interaction.user.id != YUKI_USER_ID:
             try:
                 await interaction.followup.send(

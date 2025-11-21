@@ -483,7 +483,8 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
-
+    personal_roles_divider = 1431150679258435655
+    dot_role = 1375712535512354898
     the_hopeless_romantic = 1312302066063900703
     owner = 909880769860759613
     panda = 1355260919675879434

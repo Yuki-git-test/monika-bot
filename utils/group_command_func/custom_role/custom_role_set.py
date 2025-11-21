@@ -16,6 +16,7 @@ from utils.db.custom_roles_db_func import (
 from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
+from utils.essentials.pretty_defer import pretty_defer
 
 
 # 🍭──────────────────────────────
@@ -33,20 +34,25 @@ async def custom_role_set_func(
     # Check if user is a staff member
     user = interaction.user
     staff_role = guild.get_role(VN_ALLSTARS_ROLES.staff)
-    if staff_role not in user.roles:
+    dot_role = guild.get_role(VN_ALLSTARS_ROLES.dot_role)
+    if staff_role not in user.roles and dot_role not in user.roles:
         await interaction.response.send_message(
             "Only staff members can set custom roles.", ephemeral=True
         )
         return
+    # Initialize loader
+    loader = await pretty_defer(
+        interaction=interaction,
+        content="Setting the custom role...",
+        ephemeral=False,
+    )
     # Check if member has a custom role
     custom_role_id = await fetch_custom_role_id(bot, member)
     if custom_role_id:
         custom_role = guild.get_role(custom_role_id)
         if custom_role_id and custom_role:
-            await interaction.response.send_message(
-                f"{member.display_name} already has a custom role: {custom_role.mention}.",
-                ephemeral=True,
-            )
+            msg = f"{member.display_name} already has a custom role: {custom_role.mention}."
+            await loader.error(content=msg)
             return
         if custom_role_id and not custom_role:
             # Delete the old role from the database
@@ -61,11 +67,10 @@ async def custom_role_set_func(
     if user_id_with_role:
         user_with_role = guild.get_member(user_id_with_role["user_id"])
         if user_with_role:
-            await interaction.response.send_message(
-                f"The role {role.name} is already assigned to another {user_with_role.mention}.",
-                ephemeral=True,
-            )
+            msg = f"The role {role.name} is already assigned to another {user_with_role.mention}."
+            await loader.error(content=msg)
             return
+
         else:
             # The role is in the database but the user is not found in the guild
             await remove_role_by_role_id(bot, role_id=role.id)
@@ -74,11 +79,23 @@ async def custom_role_set_func(
                 "success",
                 f"Removed role {role.name} from database as it was assigned to a non-existent user.",
             )
+
     # Assign the role to the member
     try:
         await member.add_roles(role, reason="Custom role assigned by staff.")
         pretty_log("success", f"Assigned role {role.name} to {member.display_name}.")
         await upsert_role(bot, member, role.id)
+        # Build confirmation embed
+        embed = discord.Embed(
+            title="✅ Custom Role Assigned!",
+            description=f"**Member:** {member.mention}\n**Role:** {role.mention}\n**Assigned by:** {user.mention} 💜",
+            color=role.color,
+            timestamp=datetime.now(),
+        )
+        if role.icon:
+            embed.set_thumbnail(url=role.icon.url)
+        embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
+        await loader.success(embed=embed, content="")
         await interaction.response.send_message(
             f"Successfully assigned the role {role.mention} to {member.mention}.",
             ephemeral=False,
@@ -87,16 +104,7 @@ async def custom_role_set_func(
         # Send a log embed to your server log channel
         log_channel = guild.get_channel(LOG_CHANNEL_ID)
         if log_channel:
-            log_embed = discord.Embed(
-                title="Custom Role Assigned",
-                description=f"{user.mention} has assigned the role {role.mention} to {member.mention}.",
-                color=0x00FF00,  # Green
-                timestamp=datetime.utcnow(),
-            )
-            log_embed.add_field(name="Staff Member", value=user.mention, inline=True)
-            log_embed.add_field(name="Member", value=member.mention, inline=True)
-            log_embed.add_field(name="Role", value=role.mention, inline=True)
-            await log_channel.send(embed=log_embed)
+            await log_channel.send(embed=embed)
     except discord.Forbidden:
         await interaction.response.send_message(
             "I don't have permission to assign that role.", ephemeral=True

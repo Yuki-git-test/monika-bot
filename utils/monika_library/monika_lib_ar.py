@@ -181,3 +181,4 @@ async def monika_lib_ar_handler(message: discord.Message):
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     elif content in explore_ar_triggers:
         await send_main_explore_embed(message)
+

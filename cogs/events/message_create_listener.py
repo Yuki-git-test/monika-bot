@@ -9,7 +9,7 @@ from constants.vn_allstars_constants import (
 )
 from utils.logs.pretty_log import pretty_log
 
-from .monika_lib_ar import monika_lib_ar_handler
+from utils.monika_library.monika_lib_ar import monika_lib_ar_handler
 
 dot_role_id = 1375712535512354898
 
