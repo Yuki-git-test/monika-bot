@@ -1,0 +1,115 @@
+import discord
+from discord import app_commands
+from discord.ext import commands
+
+from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
+from utils.db.trophy import (
+    add_trophies,
+    fetch_all_trophies,
+    fetch_current_leaderboard_info,
+    fetch_user_trophies,
+    get_first_place,
+    update_trophies,
+)
+from utils.essentials.role_checks import is_staff_member
+from utils.logs.pretty_log import pretty_log
+
+from .trophy_update_leaderboard import (
+    new_first_place_announcement,
+    trophy_update_leaderboard_func,
+)
+
+LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
+
+
+# 🍭──────────────────────────────
+#   🎀 trophies Add Command Function
+# 🍭──────────────────────────────
+async def trophy_add_func(
+    bot: commands.Bot,
+    interaction: discord.Interaction,
+    member: discord.Member,
+    amount: int,
+):
+    guild = interaction.guild
+    user = interaction.user
+    staff_role = guild.get_role(VN_ALLSTARS_ROLES.staff)
+
+    # Check if staff role is in user's roles
+    is_staff = await is_staff_member(interaction=interaction)
+    if not is_staff:
+        await interaction.response.send_message(
+            "Only staff members can add trophies.", ephemeral=True
+        )
+        return
+
+    # Validate amount
+    if amount <= 0:
+        await interaction.response.send_message(
+            "Amount must be a positive integer.", ephemeral=True
+        )
+        return
+
+    # Get current trophies
+    current_trophies_info = await fetch_user_trophies(bot, member)
+    current_trophies = current_trophies_info["amount"] if current_trophies_info else 0
+    new_amount = current_trophies + amount
+    # Add trophies to the member
+    await update_trophies(bot, member, new_amount)
+
+    # Update the trophy leaderboard
+    await trophy_update_leaderboard_func(bot, guild)
+
+    # Check if the member is now in first place
+    new_first_place = False
+    first_place_user = await get_first_place(bot)
+    if first_place_user and first_place_user["user_id"] == member.id:
+        crown_emoji = "👑"
+        new_first_place = True
+        # Check if this is a new first place
+        current_leaderboard_info = await fetch_current_leaderboard_info(bot)
+        first_place_user_id = (
+            current_leaderboard_info.get("first_place_user_id")
+            if current_leaderboard_info
+            else None
+        )
+        if first_place_user_id != member.id:
+            # Announce new first place
+            await new_first_place_announcement(
+                bot=bot,
+                guild=guild,
+                member=member,
+                trophy_amount=new_amount,
+            )
+    else:
+        crown_emoji = ""
+
+    # Create and send the embed message
+    embed = discord.Embed(
+        title=f"{crown_emoji} {member.display_name}'s trophies Updated",
+        description=f"**Added trophies:** {amount}\n**Total trophies:** {new_amount}",
+        color=discord.Color.green(),
+    )
+    embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+    await interaction.response.send_message(embed=embed, ephemeral=False)
+
+    # Log the action in the log channel
+    log_channel = guild.get_channel(LOG_CHANNEL_ID)
+    if log_channel:
+        if new_first_place:
+            crown_emoji = "👑"
+            pretty_log(
+                "info", f"🏆 {member} has taken the lead with {new_amount} trophies!"
+            )
+        else:
+            crown_emoji = ""
+        embed = discord.Embed(
+            title=f"{crown_emoji} Trophies Added",
+            description=f"**Member:** {member.mention}\n**Added By:** {user.mention}\n**trophies Added:** {amount}\n**Total trophies:** {new_amount}",
+            color=discord.Color.blue(),
+        )
+        await log_channel.send(embed=embed)
+        pretty_log(
+            "info",
+            f"📝 {user} added {amount} trophies to {member}. Total trophies: {new_amount}",
+        )

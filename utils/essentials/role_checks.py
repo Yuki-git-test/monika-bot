@@ -9,6 +9,7 @@ from utils.logs.pretty_log import pretty_log
 #   🎀 Role Checks Utility
 # 🍭──────────────────────────────
 
+
 # ╭───────────────────────────────╮
 #   🌊 Check if User is Staff Member
 # ╰───────────────────────────────╯
@@ -17,6 +18,7 @@ async def is_staff_member(interaction: discord.Interaction) -> bool:
     guild = interaction.guild
     user = interaction.user
     staff_role = guild.get_role(VN_ALLSTARS_ROLES.staff)
-    if staff_role in user.roles:
+    dot_role = guild.get_role(VN_ALLSTARS_ROLES.dot_role)
+    if staff_role in user.roles or dot_role in user.roles:
         return True
     return False

@@ -17,7 +17,7 @@ intents.message_content = True
 intents.guilds = True
 intents.members = True
 load_dotenv()
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+bot = commands.Bot(command_prefix="!", intents=discord.Intents.all(), help_command=None)
 set_monika_bot(bot=bot)
 
 
@@ -72,7 +72,7 @@ async def on_ready():
     await bot.change_presence(
         activity=discord.Activity(
             type=discord.ActivityType.watching,
-            name="every channel… every message… I see it all ♡",
+            name="Watching every channel… every message… I see it all ♡",
         )
     )
 

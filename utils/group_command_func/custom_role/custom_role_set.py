@@ -17,6 +17,7 @@ from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 from utils.essentials.pretty_defer import pretty_defer
+from utils.essentials.role_checks import is_staff_member
 
 
 # 🍭──────────────────────────────
@@ -35,7 +36,8 @@ async def custom_role_set_func(
     user = interaction.user
     staff_role = guild.get_role(VN_ALLSTARS_ROLES.staff)
     dot_role = guild.get_role(VN_ALLSTARS_ROLES.dot_role)
-    if staff_role not in user.roles and dot_role not in user.roles:
+    is_staff = await is_staff_member(interaction=interaction)
+    if not is_staff:
         await interaction.response.send_message(
             "Only staff members can set custom roles.", ephemeral=True
         )

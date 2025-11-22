@@ -75,7 +75,7 @@ class ColorCog(commands.Cog):
         if custom_role.icon:
             embed.set_thumbnail(url=custom_role.icon.url)
         embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
-        await loader.success(embed=embed)
+        await loader.success(embed=embed, content="")
 
 
 async def setup(bot: commands.Bot):

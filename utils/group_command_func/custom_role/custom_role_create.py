@@ -1,4 +1,5 @@
 from datetime import datetime
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -6,12 +7,15 @@ from discord.ext import commands
 from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
 from utils.db.custom_roles_db_func import (
     fetch_custom_role_id,
-    upsert_role,
     update_gradient_role,
+    upsert_role,
 )
+from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
+
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 REFERENCE_ROLE_ID = VN_ALLSTARS_ROLES.personal_roles_divider
+
 
 # 🍭──────────────────────────────
 #   🎀 Slash Command: Create Custom Role
@@ -30,7 +34,8 @@ async def custom_role_create_func(
     # Check if user is a staff member
     user = interaction.user
     staff_role = guild.get_role(VN_ALLSTARS_ROLES.staff)
-    if staff_role not in user.roles:
+    is_staff = await is_staff_member(interaction=interaction)
+    if not is_staff:
         await interaction.response.send_message(
             "Only staff members can create custom roles.", ephemeral=True
         )
@@ -54,6 +59,7 @@ async def custom_role_create_func(
         )
         return
     await interaction.response.send_modal(modal)
+
 
 # 🍬──────────────────────────────
 #     🎨 Modal: Create Solid Role
@@ -91,9 +97,7 @@ class CreateSolidRoleModal(discord.ui.Modal, title="🎨 Create Solid Custom Rol
             await self.member.add_roles(new_role)
 
             # Save to DB
-            await upsert_role(
-                bot=self.bot, user_id=self.member, role_id=new_role.id
-            )
+            await upsert_role(bot=self.bot, user_id=self.member, role_id=new_role.id)
 
             # Build success embed
             embed = discord.Embed(
@@ -178,9 +182,7 @@ class CreateGradientRoleModal(discord.ui.Modal, title="🌈 Create Gradient Cust
             await self.member.add_roles(new_role)
 
             # 2. Save to DB
-            await upsert_role(
-                bot=self.bot, user_id=self.member, role_id=new_role.id
-            )
+            await upsert_role(bot=self.bot, user_id=self.member, role_id=new_role.id)
 
             # 3. Patch with gradient via helper
             success = await update_gradient_role(
@@ -227,14 +229,12 @@ class CreateGradientRoleModal(discord.ui.Modal, title="🌈 Create Gradient Cust
             pretty_log(
                 "success",
                 f"✅ Custom gradient role '{new_role.name}' created for {self.member} by {interaction.user}",
-
             )
 
         except Exception as e:
             pretty_log(
                 "error",
                 f"❌ Failed to create gradient role '{self.name}' for {self.member}: {e}",
-
             )
             await interaction.followup.send(
                 "⚠️ Failed to create the gradient role.", ephemeral=True

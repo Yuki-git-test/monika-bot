@@ -5,6 +5,7 @@ VNA_SERVER_ID = 909880511701352488
 #       VN_ALLSTARS_TEXT_CHANNELS
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_TEXT_CHANNELS:
+    first_place_annoucement_channel = 1369749847397367948
 
     # 🌊💙🤍───────────── Clan_Members ─────────────💙🤍🌊
 

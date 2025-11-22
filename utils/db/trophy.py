@@ -1,0 +1,297 @@
+import discord
+
+from utils.logs.pretty_log import pretty_log
+
+# SQL to create the trophies table
+"""CREATE TABLE trophies (
+    user_id   BIGINT PRIMARY KEY,
+    user_name VARCHAR(100) NOT NULL,
+    amount    INT NOT NULL
+);"""
+
+
+async def fetch_current_leaderboard_info(bot):
+    """
+    Fetch the trophy leaderboard info.
+    Returns None if not found.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        return await conn.fetchrow(
+            """
+            SELECT * FROM trophy_leaderboard
+            LIMIT 1;
+            """
+        )
+
+
+# Update leaderboard message ID
+async def update_first_place_in_db(
+    bot,
+    message_id: int,
+    first_place_id: int,
+    first_place_name: str,
+    first_place_trophy: int,
+):
+    """
+    Update the trophy leaderboard message ID and first place info.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE trophy_leaderboard
+                SET message_id = $1,
+                    first_place_id = $2,
+                    first_place_name = $3,
+                    first_place_trophy = $4;
+                """,
+                message_id,
+                first_place_id,
+                first_place_name,
+                first_place_trophy,
+            )
+            pretty_log(
+                "info",
+                f"Updated trophy_leaderboard with message_id {message_id} , first place name {first_place_name} with {first_place_trophy} trophies.",
+            )
+    except Exception as e:
+        pretty_log(
+            "error",
+            f"Error updating trophy_leaderboard: {e}",
+        )
+
+
+# 🟣────────────────────────────────────────────
+#          ⚡ trophy DB Functions ⚡
+# 🟣────────────────────────────────────────────
+# Fetch one trophy entry for a user
+async def fetch_user_trophies(bot, user: discord.Member):
+    """
+    Fetch a single trophy row for a user.
+    Returns None if not found.
+    """
+    user_id = user.id
+    async with bot.pg_pool.acquire() as conn:
+        return await conn.fetchrow(
+            """
+            SELECT * FROM trophies
+            WHERE user_id = $1;
+            """,
+            user_id,
+        )
+
+async def fetch_user_place_and_trophies(bot, user: discord.Member):
+    """
+    Fetch the rank and trophy amount for a user.
+    Returns None if not found.
+    """
+    user_id = user.id
+    async with bot.pg_pool.acquire() as conn:
+        return await conn.fetchrow(
+            """
+            SELECT
+                user_id,
+                user_name,
+                amount,
+                RANK() OVER (ORDER BY amount DESC, updated_at ASC) AS rank
+            FROM trophies
+            WHERE user_id = $1;
+            """,
+            user_id,
+        )
+
+# Fetch all trophies
+async def fetch_all_trophies(bot):
+    """
+    Fetch all trophy rows.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        return await conn.fetch(
+            """
+            SELECT * FROM trophies;
+            """
+        )
+
+
+async def update_trophies(bot, user: discord.Member, amount: int):
+    """
+    Update the trophy amount for a user.
+    """
+    user_id = user.id
+    # Get current first place info
+    first_place_info = await fetch_current_leaderboard_info(bot)
+    current_msg_id = first_place_info["message_id"] if first_place_info else None
+    first_place_user_id = (
+        first_place_info["first_place_id"] if first_place_info else None
+    )
+
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE trophies
+            SET amount = $1, updated_at = NOW()
+            WHERE user_id = $2;
+            """,
+            amount,
+            user_id,
+        )
+        if user_id == first_place_user_id:
+            await update_first_place_in_db(
+                bot=bot,
+                message_id=current_msg_id,
+                first_place_id=user.id,
+                first_place_name=user.name,
+                first_place_trophy=amount,
+            )
+            pretty_log(
+                "info",
+                f"Updated trophies for first place {user.name} to {amount}.",
+            )
+
+
+
+# Upsert trophy (insert or update)
+async def upsert_trophies(bot, user: discord.Member, amount: int):
+    """
+    Insert or update a trophy row for a user.
+    """
+    user_id = user.id
+    user_name = user.name
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            INSERT INTO trophies (user_id, user_name, amount)
+            VALUES ($1, $2, $3)
+            ON CONFLICT (user_id)
+            DO UPDATE SET user_name = $2, amount = $3;
+            """,
+            user_id,
+            user_name,
+            amount,
+        )
+
+
+# Add trophy (insert new row)
+async def add_trophies(bot, user: discord.Member, amount: int):
+    """
+    Add a new trophy row for a user.
+    """
+    user_id = user.id
+    user_name = user.name
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            INSERT INTO trophies (user_id, user_name, amount)
+            VALUES ($1, $2, $3);
+            """,
+            user_id,
+            user_name,
+            amount,
+        )
+
+
+# Remove trophy (delete row)
+async def remove_trophies(bot, user: discord.Member):
+    """
+    Remove a trophy row for a user.
+    """
+    user_id = user.id
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            DELETE FROM trophies
+            WHERE user_id = $1;
+            """,
+            user_id,
+        )
+
+
+# Reset trophies (clear table)
+async def reset_trophies(bot):
+    """
+    Delete all rows from trophies table.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            TRUNCATE TABLE trophies;
+            """
+        )
+
+
+# Get first place (user with highest amount)
+async def get_first_place(bot):
+    """
+    Get the user with the highest trophy amount.
+    Returns None if table is empty.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        return await conn.fetchrow(
+            """
+            SELECT * FROM trophies
+            ORDER BY amount DESC, updated_at ASC
+            LIMIT 1;
+            """
+        )
+
+
+## 🟣────────────────────────────────────────────
+#   Current Trophy Leaderboard DB Functions
+# 🟣────────────────────────────────────────────
+# Upsert row if table is empty
+async def upsert_leaderboard_msg_id(bot, message_id: int):
+    """
+    Insert a trophy_leaderboard row if table is empty.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO trophy_leaderboard (message_id)
+                SELECT $1
+                WHERE NOT EXISTS (SELECT 1 FROM trophy_leaderboard);
+                """,
+                message_id,
+            )
+            pretty_log(
+                "info",
+                f"Upserted trophy_leaderboard with message_id {message_id} if table was empty.",
+            )
+    except Exception as e:
+        pretty_log(
+            "error",
+            f"Error upserting trophy_leaderboard: {e}",
+        )
+
+
+async def fetch_leaderboard_message_id(bot):
+    """
+    Fetch the trophy leaderboard message ID.
+    Returns None if not found.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            SELECT * FROM trophy_leaderboard
+            LIMIT 1;
+            """
+        )
+        if row:
+            return row["message_id"]
+        return None
+
+
+async def reset_leaderboard(bot):
+    """
+    Delete all rows from trophy_leaderboard table.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            TRUNCATE TABLE trophy_leaderboard;
+            """
+        )
+        pretty_log(
+            "success",
+            "Reset trophy_leaderboard table.",
+        )

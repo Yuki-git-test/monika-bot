@@ -6,6 +6,7 @@ from discord.ext import commands
 
 from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
 from utils.db.custom_roles_db_func import fetch_custom_role_id, remove_role_by_role_id
+from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
@@ -25,7 +26,8 @@ async def custom_role_remove_func(
     # Check if user is a staff member
     user = interaction.user
     staff_role = guild.get_role(VN_ALLSTARS_ROLES.staff)
-    if staff_role not in user.roles:
+    is_staff = await is_staff_member(interaction=interaction)
+    if not is_staff:
         await interaction.response.send_message(
             "Only staff members can remove custom roles.", ephemeral=True
         )
