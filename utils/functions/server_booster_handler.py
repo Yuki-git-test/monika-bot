@@ -99,7 +99,7 @@ async def handle_server_booster_role_add(
                 new_role, reason="Assigning custom role after server boost."
             )
             # Save to DB
-            await upsert_role(bot=bot, user_id=member, role_id=new_role.id)
+            await upsert_role(bot=bot, user=member, role_id=new_role.id)
             pretty_log(
                 message=f"Created and assigned new custom role '{new_role.name}' to member '{member.display_name}' after server boost.",
                 tag="success",
