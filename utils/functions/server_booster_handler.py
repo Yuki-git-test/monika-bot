@@ -94,7 +94,17 @@ async def handle_server_booster_role_add(
                 reason="Creating custom role after server boost.",
                 mentionable=False,
             )
-            await new_role.edit(position=CUSTOM_ROLE_POSITION)
+            try:
+                await new_role.edit(position=CUSTOM_ROLE_POSITION)
+                pretty_log(
+                    message=f"Set position for new custom role '{new_role.name}' to {CUSTOM_ROLE_POSITION}.",
+                    tag="success",
+                )
+            except Exception as e:
+                pretty_log(
+                    message=f"Failed to set position for new custom role '{new_role.name}': {e}",
+                    tag="error",
+                )
             await member.add_roles(
                 new_role, reason="Assigning custom role after server boost."
             )

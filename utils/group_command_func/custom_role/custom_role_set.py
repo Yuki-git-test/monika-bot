@@ -98,22 +98,17 @@ async def custom_role_set_func(
             embed.set_thumbnail(url=role.icon.url)
         embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
         await loader.success(embed=embed, content="")
-        await interaction.response.send_message(
-            f"Successfully assigned the role {role.mention} to {member.mention}.",
-            ephemeral=False,
-        )
 
         # Send a log embed to your server log channel
         log_channel = guild.get_channel(LOG_CHANNEL_ID)
         if log_channel:
             await log_channel.send(embed=embed)
     except discord.Forbidden:
-        await interaction.response.send_message(
-            "I don't have permission to assign that role.", ephemeral=True
-        )
+
+        msg = "I don't have permission to assign that role."
+        await loader.error(content=msg)
         return
     except discord.HTTPException as e:
-        await interaction.response.send_message(
-            f"Failed to assign role due to an error: {e}", ephemeral=True
-        )
+        msg = f"Failed to assign role due to an error: {e}"
+        await loader.error(content=msg)
         return

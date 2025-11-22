@@ -51,9 +51,9 @@ async def load_extensions():
     pretty_log(message=f"📦 Extension Loading Summary:", tag="ready")
     pretty_log(message=f"✅ Successfully loaded {len(loaded_cogs)} cog(s)", tag="ready")
 
-    if loaded_cogs:
+    """if loaded_cogs:
         cog_list = ", ".join([cog.split(".")[-1] for cog in loaded_cogs])
-        pretty_log(message=f"📋 Loaded cogs: {cog_list}", tag="ready")
+        pretty_log(message=f"📋 Loaded cogs: {cog_list}", tag="ready")"""
 
     if failed_cogs:
         pretty_log(message=f"❌ Failed to load {len(failed_cogs)} cog(s)", tag="error")
@@ -78,15 +78,10 @@ async def on_ready():
 
     # Sync all slash commands globally
     await bot.tree.sync()
-    pretty_log(message="Commands loaded:", tag="ready")
 
-    # Regular prefix commands
-    for cmd in bot.commands:
-        pretty_log(message=f"- {cmd.name} (prefix)", tag="cmd")
-
-    # Slash commands
-    for cmd in bot.tree.walk_commands():
-        pretty_log(message=f"- {cmd.name} (slash)", tag="cmd")
+    # Number of slash commands
+    command_count = len(bot.tree.get_commands())
+    pretty_log(message=f"{command_count} slash command(s) loaded", tag="ready")
 
 
 # 🍑────────────────────────────────────────────
