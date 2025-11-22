@@ -102,7 +102,7 @@ For Challenges guide, `!ch mr` or `!mrch`""",
             name="Team Options",
             value="""> * **Team 1** – Arceus + Corviknight + 4 Golden Pokémon
 >   * Stable and safe option
->   * Averages **\~200 waves per hour**
+        >   * Averages **~200 waves per hour**
 >   * Switch to Corviknight when facing **Ground-types** while Arceus is in lead
 -
 > * **Team 2** – Xerneas + Corviknight + 4 Golden Pokémon
@@ -447,10 +447,11 @@ class MonikaRogueButtons(discord.ui.View):
             else:
                 child.disabled = False
 
+
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #   🔥 Monika Rogue Send Rouge Challenges Embed 🔥
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-async def send_monika_rogue_challenges_embed(message:discord.Message):
+async def send_monika_rogue_challenges_embed(message: discord.Message):
     user = message.author
     color = get_random_color()
     embed = build_monika_rouge_sub_challenges_embed(
@@ -463,6 +464,7 @@ async def send_monika_rogue_challenges_embed(message:discord.Message):
     view.disable_initial_classic()
     await message.reply(embed=embed, view=view, mention_author=False)
     await send_report_embed(message)
+
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #   🔥 Monika Rogue Challenges Embed Builder 🔥
@@ -586,12 +588,14 @@ class MonikaRogueChallengesButtons(discord.ui.View):
         super().__init__(timeout=120)
         self.color = color
         self.author_id = author_id
+
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user.id != self.author_id:
             await interaction.response.send_message(
                 "These buttons aren't for you!", ephemeral=True
             )
             return False
+
     @discord.ui.button(label="Classic", style=discord.ButtonStyle.primary)
     async def classic_button(
         self, interaction: discord.Interaction, button: discord.ui.Button
@@ -600,7 +604,7 @@ class MonikaRogueChallengesButtons(discord.ui.View):
             topic="classic",
             color=self.color,
         )
-        #disable this button, and enable others
+        # disable this button, and enable others
         for child in self.children:
             child.disabled = child == button
 
