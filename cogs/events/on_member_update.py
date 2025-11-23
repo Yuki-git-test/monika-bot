@@ -1,8 +1,9 @@
 import discord
 from discord.ext import commands
 
-from constants.vn_allstars_constants import VNA_SERVER_ID
+from constants.vn_allstars_constants import VNA_EMBED_COLOR, VNA_SERVER_ID
 from utils.functions.on_role_add import handle_role_add
+from utils.functions.on_role_remove import handle_role_remove
 from utils.logs.pretty_log import pretty_log
 
 
@@ -37,12 +38,13 @@ class OnMemberUpdateCog(commands.Cog):
         # Handle added roles
         if added_roles:
             for role in added_roles:
-                pretty_log(
-                    message=f"Role '{role.name}' added to member '{after.display_name}'.",
-                    tag="info",
-                    label="Member Update Event",
-                )
+
                 await handle_role_add(self.bot, after, role)
+
+        # Handle removed roles
+        if removed_roles:
+            for role in removed_roles:
+                await handle_role_remove(self.bot, after, role)
 
 
 async def setup(bot: commands.Bot):

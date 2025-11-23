@@ -1,5 +1,6 @@
 VNA_SERVER_ID = 909880511701352488
-
+VNA_EMBED_COLOR = 0x135CC0
+MONIKA_EMBED_COLOR = 0xFF9999
 
 # 💦☁────────────────────────────────────────────💦☁
 #       VN_ALLSTARS_TEXT_CHANNELS

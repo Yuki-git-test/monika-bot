@@ -1,4 +1,5 @@
 from datetime import datetime
+
 import discord
 from discord.ext import commands
 
@@ -7,48 +8,38 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
 )
-from utils.functions.server_booster_handler import handle_server_booster_role_add
 from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
 
 
 # 🍭──────────────────────────────
-#   🎀 Event: On Role Add
+#   🎀 Event: On Role Remove
 # 🍭──────────────────────────────
-async def handle_role_add(
+async def handle_role_remove(
     bot: discord.Client,
     member: discord.Member,
     role: discord.Role,
 ):
-    """Handle role addition events."""
+    """Handle role removal events."""
     role_id = role.id
 
     # ————————————————————————————————
-    # 🩵 VNA Server Role Add Logic
+    # 🩵 VNA Server Role Remove Logic
     # ————————————————————————————————
-    if role_id == VN_ALLSTARS_ROLES.server_booster:
-        # Handle server booster role addition
-        pretty_log(
-            message=f"Detected server booster role addition for member '{member.display_name}'.",
-            tag="info",
-            label="Role Add Event",
-        )
-        await handle_server_booster_role_add(bot, member)
-
-    # Log role addition
+    # Log role removal
     pretty_log(
-        message=f"Role '{role.name}' added to member '{member.display_name}'.",
+        message=f"Role '{role.name}' removed from member '{member.display_name}'.",
         tag="info",
         label="Member Update Event",
     )
     log_channel = member.guild.get_channel(LOG_CHANNEL_ID)
     if log_channel:
         embed = discord.Embed(
-            title="✅ Role Added",
-            color=discord.Color.green(),
+            title="❌ Role Removed",
+            color=discord.Color.red(),
             description=(f"**Member:** {member.mention}\n" f"**Role:** {role.mention}"),
-            timestamp=datetime.now()
+            timestamp=datetime.now(),
         )
         if role.icon:
             embed.set_thumbnail(url=role.icon.url)

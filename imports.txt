@@ -5,3 +5,4 @@ from utils.essentials.pretty_defer import pretty_defer
 from utils.logs.pretty_log import pretty_log
 from utils.visuals.colors import get_random_monika_color
 from utils.essentials.role_checks import is_staff_member
+from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS

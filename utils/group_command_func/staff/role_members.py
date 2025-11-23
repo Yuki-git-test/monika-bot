@@ -10,10 +10,11 @@ import discord
 from discord.ext import commands
 
 from constants.aesthetic import Emojis
+from constants.vn_allstars_constants import MONIKA_EMBED_COLOR
 from utils.essentials.pretty_defer import pretty_defer
-from utils.logs.pretty_log import pretty_log
-from utils.visuals.colors import get_random_monika_color
 from utils.essentials.role_checks import is_staff_member
+from utils.logs.pretty_log import pretty_log
+
 
 # 🌸────────────────────────────────────────────
 #       🎐 Smart Paginated View for Role Members
@@ -53,7 +54,7 @@ class RoleMembersView(discord.ui.View):
         embed = discord.Embed(
             title=f"{Emojis.orange_butterfly} Members with {self.role_name} Role",
             description=desc,
-            color=get_random_monika_color(),
+            color=MONIKA_EMBED_COLOR,
         )
         embed.set_thumbnail(url=self.thumbnail_url)
 
@@ -152,7 +153,7 @@ class RoleMembersView(discord.ui.View):
 async def role_members_func(
     bot: commands.Bot, interaction: discord.Interaction, role: discord.Role
 ):
-    #Check if user is a staff member
+    # Check if user is a staff member
 
     if not await is_staff_member(interaction):
         await interaction.response.send_message(
@@ -182,7 +183,7 @@ async def role_members_func(
             embed = discord.Embed(
                 title=embed_title,
                 description="No members with this role.",
-                color=get_random_monika_color(),
+                color=MONIKA_EMBED_COLOR,
             )
             embed.set_thumbnail(url=thumbnail_url)
             embed.set_footer(text=f"🍎 Total Members: 0")
@@ -197,7 +198,7 @@ async def role_members_func(
             embed = discord.Embed(
                 title=embed_title,
                 description=desc,
-                color=get_random_monika_color(),
+                color=MONIKA_EMBED_COLOR,
             )
             embed.set_thumbnail(url=thumbnail_url)
             embed.set_footer(

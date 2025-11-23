@@ -48,7 +48,7 @@ async def load_extensions():
                     failed_cogs.append((module_path, str(e)))
 
     # Display summary
-    pretty_log(message=f"📦 Extension Loading Summary:", tag="ready")
+    #pretty_log(message=f"📦 Extension Loading Summary:", tag="ready")
     pretty_log(message=f"✅ Successfully loaded {len(loaded_cogs)} cog(s)", tag="ready")
 
     """if loaded_cogs:
