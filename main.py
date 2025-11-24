@@ -104,6 +104,6 @@ async def main():
 
 
 # 🍑────────────────────
-#   🚀 Sttrt Bot 🚀
+#   🚀 Start Bot 🚀
 # 🍑────────────────────
 asyncio.run(main())

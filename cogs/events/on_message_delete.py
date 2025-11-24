@@ -30,9 +30,18 @@ class OnMessageDeleteCog(commands.Cog):
         if not guild or guild.id != VNA_SERVER_ID:
             return
 
+        pretty_log(
+            "info",
+            f"Message deleted in {guild.name} by {message.author} in #{message.channel}: {message.content}",
+        )
         # Only log messages if they have image or video
         if not message.attachments:
             return
+
+        pretty_log(
+            "info",
+            f"Message had {len(message.attachments)} attachments.",
+        )
 
         # Get media attachments
         media_attachments = [
@@ -41,59 +50,108 @@ class OnMessageDeleteCog(commands.Cog):
             if att.content_type and att.content_type.startswith(("image/", "video/"))
         ]
         if not media_attachments:
+            pretty_log(
+                "info",
+                "No image or video attachments found in the deleted message.",
+            )
             return
+        pretty_log(
+            "info",
+            f"Found {len(media_attachments)} media attachments in the deleted message.",
+        )
         # Embed for one image/video attachment
         log_channel = guild.get_channel(LOG_CHANNEL_ID)
         if not log_channel:
+            pretty_log(
+                "error",
+                "Log channel not found.",
+            )
             return
 
+        pretty_log(
+            "info",
+            f"Logging deleted message attachments to channel ID {LOG_CHANNEL_ID}.",
+        )
+
         if len(media_attachments) == 1:
-            attachment = media_attachments[0]
-            content = ""
-            if message.content:
-                content = f"**Content:** {message.content}\n"
-            # Send the attachment in the private thread for deleted images/videos
-            thread = guild.get_channel(DELETED_IMAGE_THREAD_ID)
-            if not thread:
-                return
-            media_file = await attachment.to_file()
-            media_msg = await thread.send(file=media_file)
-            # Get url from media_msg
-            media_url = media_msg.attachments[0].url
-            # If the attachment is an image , set it as the embed image
-            if attachment.content_type.startswith("image/"):
-                embed = discord.Embed(
-                    title="🗑️ Image Deleted",
-                    color=discord.Color.red(),
-                    description=(
-                        f"{content}"
-                        f"**Channel:** {message.channel.mention}\n"
-                        f"**Deleted At:** <t:{int(datetime.now().timestamp())}:D>"
-                    ),
-                    timestamp=datetime.now(),
+            try:
+                pretty_log(
+                    "info",
+                    "Processing single attachment in deleted message.",
                 )
-                embed.set_image(url=media_url)
-                embed.set_author(
-                    name=message.author.display_name,
-                    icon_url=message.author.display_avatar.url,
+                attachment = media_attachments[0]
+                content = ""
+                if message.content:
+                    content = f"**Content:** {message.content}\n"
+                # Send the attachment in the private thread for deleted images/videos
+                thread = discord.utils.get(guild.threads, id=DELETED_IMAGE_THREAD_ID)
+                if not thread:
+                    try:
+                        thread = await guild.fetch_channel(DELETED_IMAGE_THREAD_ID)
+                    except Exception as e:
+                        pretty_log(
+                            "error",
+                            f"Deleted image thread channel not found or could not be fetched: {e}",
+                        )
+                        return
+                pretty_log(
+                    "info",
+                    f"Sending deleted attachment to thread ID {DELETED_IMAGE_THREAD_ID}.",
                 )
-            elif attachment.content_type.startswith("video/"):
-                embed = discord.Embed(
-                    title="🗑️ Video Deleted",
-                    color=discord.Color.red(),
-                    description=(
-                        f"{content}"
-                        f"**Channel:** {message.channel.mention}\n"
-                        f"**Deleted At:** <t:{int(datetime.now().timestamp())}:D>"
-                    ),
-                    timestamp=datetime.now(),
+                try:
+                    media_file = await attachment.to_file()
+                    media_msg = await thread.send(file=media_file)
+                except Exception as e:
+                    pretty_log(
+                        "error",
+                        f"Failed to send attachment to deleted image thread: {e}",
+                    )
+                    return
+                # Get url from media_msg
+                media_url = media_msg.attachments[0].url
+                # If the attachment is an image , set it as the embed image
+                if attachment.content_type.startswith("image/"):
+                    embed = discord.Embed(
+                        title="🗑️ Image Deleted",
+                        color=discord.Color.red(),
+                        description=(
+                            f"{content}"
+                            f"**Channel:** {message.channel.mention}\n"
+                            f"**Deleted At:** <t:{int(datetime.now().timestamp())}:D>"
+                        ),
+                        timestamp=datetime.now(),
+                    )
+                    embed.set_image(url=media_url)
+                    embed.set_author(
+                        name=message.author.display_name,
+                        icon_url=message.author.display_avatar.url,
+                    )
+                elif attachment.content_type.startswith("video/"):
+                    embed = discord.Embed(
+                        title="🗑️ Video Deleted",
+                        color=discord.Color.red(),
+                        description=(
+                            f"{content}"
+                            f"**Channel:** {message.channel.mention}\n"
+                            f"**Deleted At:** <t:{int(datetime.now().timestamp())}:D>"
+                        ),
+                        timestamp=datetime.now(),
+                    )
+                    embed.add_field(name="Video URL", value=media_url, inline=False)
+                    embed.set_author(
+                        name=message.author.display_name,
+                        icon_url=message.author.display_avatar.url,
+                    )
+                    embed.set_footer(
+                        text=f"Message ID: {message.id}",
+                        icon_url=message.guild.icon.url if message.guild.icon else None,
+                    )
+                await log_channel.send(embed=embed)
+            except Exception as e:
+                pretty_log(
+                    "error",
+                    f"Failed to log deleted message attachment: {e}",
                 )
-                embed.add_field(name="Video URL", value=media_url, inline=False)
-                embed.set_author(
-                    name=message.author.display_name,
-                    icon_url=message.author.display_avatar.url,
-                )
-            await log_channel.send(embed=embed)
 
         elif len(media_attachments) > 1:
             # Message with multiple attachments
