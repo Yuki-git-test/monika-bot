@@ -5,10 +5,12 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 
+from constants.settings import YUKI_USER_ID
 from constants.vn_allstars_constants import VNA_SERVER_ID
 from utils.db.get_pg_pool import get_pg_pool
 from utils.logs.pretty_log import pretty_log, set_monika_bot
 
+ALLOWED_GUILD_IDS = [VNA_SERVER_ID, 1220718310455250996]
 # 🍑────────────────────────────────────────────
 #          ⚡ Bot Initialization ⚡
 # 🍑────────────────────────────────────────────
@@ -19,6 +21,79 @@ intents.members = True
 load_dotenv()
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all(), help_command=None)
 set_monika_bot(bot=bot)
+
+
+# 🍑────────────────────────────────────────────
+#          ⚡ On Guild Join ⚡
+# 🍑────────────────────────────────────────────
+@bot.event
+async def on_guild_join(guild: discord.Guild):
+    bot_owner = bot.get_user(YUKI_USER_ID)
+    try:
+        guild_owner = guild.owner or await bot.fetch_user(guild.owner_id)
+        owner_name = guild_owner.name if guild_owner else "Unknown"
+        owner_id = guild_owner.id if guild_owner else "Unknown"
+
+        # DM Yuki about the new guild
+        if bot_owner:
+            if guild.id in ALLOWED_GUILD_IDS:
+                try:
+                    await bot_owner.send(
+                        f"Joined new guild: {guild.name} (ID: {guild.id})\n"
+                        f"Owner: {owner_name} (ID: {owner_id})\n"
+                        f"Member Count: {guild.member_count}"
+                    )
+                    pretty_log(
+                        message=f"📥 Notified Yuki about new guild join: {guild.name} (ID: {guild.id})"
+                    )
+                except Exception as e:
+                    pretty_log(
+                        message=f"❌ Failed to DM Yuki about new guild join: {e}",
+                        tag="error",
+                    )
+            else:
+                try:
+                    await bot_owner.send(
+                        f"Joined unauthorized guild: {guild.name} (ID: {guild.id})\n"
+                        f"Owner: {owner_name} (ID: {owner_id})\n"
+                        f"Member Count: {guild.member_count}\n"
+                        f"Leaving guild..."
+                    )
+                    pretty_log(
+                        message=f"📥 Notified Yuki about unapproved guild join: {guild.name} (ID: {guild.id})"
+                    )
+                except Exception as e:
+                    pretty_log(
+                        message=f"❌ Failed to DM Yuki about unapproved guild join: {e}",
+                        tag="error",
+                    )
+                # Send a dm to the guild owner first
+                if guild_owner:
+                    try:
+                        await guild_owner.send(
+                            f"Hello! I am Monika, a bot designed to assist with VN Allstars server management. "
+                            f"However, I am not authorized to be in your server ({guild.name}). "
+                            f"I will be leaving shortly. If you believe this is a mistake, please contact my owner."
+                        )
+                        pretty_log(
+                            message=f"📥 Notified guild owner about leaving: {owner_name} (ID: {owner_id})"
+                        )
+                    except Exception as e:
+                        pretty_log(
+                            message=f"❌ Failed to DM guild owner about leaving: {e}",
+                            tag="error",
+                        )
+                await guild.leave()
+                pretty_log(
+                    message=f"🚪 Left unapproved guild: {guild.name} (ID: {guild.id})"
+                )
+                #
+
+    except Exception as e:
+        pretty_log(
+            message=f"❌ Error handling guild join for {guild.name} (ID: {guild.id}): {e}",
+            tag="error",
+        )
 
 
 # 🍑────────────────────────────────────────────
@@ -48,7 +123,7 @@ async def load_extensions():
                     failed_cogs.append((module_path, str(e)))
 
     # Display summary
-    #pretty_log(message=f"📦 Extension Loading Summary:", tag="ready")
+    # pretty_log(message=f"📦 Extension Loading Summary:", tag="ready")
     pretty_log(message=f"✅ Successfully loaded {len(loaded_cogs)} cog(s)", tag="ready")
 
     """if loaded_cogs:
