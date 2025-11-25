@@ -2,13 +2,14 @@ import asyncio
 import os
 
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
 from constants.settings import YUKI_USER_ID
 from constants.vn_allstars_constants import VNA_SERVER_ID
 from utils.db.get_pg_pool import get_pg_pool
 from utils.logs.pretty_log import pretty_log, set_monika_bot
+from utils.cache.central_cache_loader import load_all_caches
 
 ALLOWED_GUILD_IDS = [VNA_SERVER_ID, 1220718310455250996]
 # 🍑────────────────────────────────────────────
@@ -97,6 +98,19 @@ async def on_guild_join(guild: discord.Guild):
 
 
 # 🍑────────────────────────────────────────────
+#          ⚡ Hourly Cache Refresh Task ⚡
+# 🍑────────────────────────────────────────────
+@tasks.loop(hours=1)
+async def refresh_all_caches():
+    # Skip the very first run to avoid double loading at startup
+    if not hasattr(refresh_all_caches, "has_run"):
+        refresh_all_caches.has_run = True
+        return
+
+    await load_all_caches(bot)
+
+
+# 🍑────────────────────────────────────────────
 #          ⚡ Load Extensions Dynamically ⚡
 # 🍑────────────────────────────────────────────
 async def load_extensions():
@@ -158,7 +172,13 @@ async def on_ready():
     command_count = len(bot.tree.get_commands())
     pretty_log(message=f"{command_count} slash command(s) loaded", tag="ready")
 
-
+    # Load all caches immediately at startup
+    await load_all_caches(bot)
+    # Start the hourly cache refresh task
+    if not refresh_all_caches.is_running():
+        refresh_all_caches.start()
+        pretty_log(message="✅ Started hourly cache refresh task", tag="ready")
+        
 # 🍑────────────────────────────────────────────
 #               ⚡ Main Entry Point ⚡
 # 🍑────────────────────────────────────────────

@@ -19,6 +19,7 @@ def set_monika_bot(bot: commands.Bot):
 # -------------------- 🍑 Monika's Log Tags --------------------
 TAGS = {
     "info": "📖 INFO",
+    "cache": "🍊 CACHE",
     "db": "🍑 DB",
     "cmd": "🖋️ CMD",
     "ready": "🌹 READY",

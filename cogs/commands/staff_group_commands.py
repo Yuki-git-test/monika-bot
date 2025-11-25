@@ -73,7 +73,78 @@ class StaffGroupCommand(commands.Cog):
             member=member,
         )
 
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff list-members 🌸
+    # 🎀───────────────────────────────────────────
+    @staff_group.command(
+        name="list-members",
+        description="List all VNA members to the database",
+    )
+    @app_commands.describe(
+        message_link="The link to the message to list members from",
+    )
+    async def list_members(
+        self,
+        interaction: discord.Interaction,
+        message_link: str,
+    ):
+        slash_cmd_name = "/staff list-members"
 
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=list_vna_members_func,
+            message_link=message_link,
+        )
+
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff set-channel 🌸
+    # 🎀───────────────────────────────────────────
+    @staff_group.command(
+        name="set-channel",
+        description="Set the clan channel for a VNA member",
+    )
+    @app_commands.describe(
+        member="The VNA member to set the channel for",
+        channel="The channel to set as the clan channel",
+    )
+    async def set_channel(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member,
+        channel: discord.TextChannel,
+    ):
+        slash_cmd_name = "staff set-channel"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=set_channel_func,
+            member=member,
+            channel=channel,
+
+        )
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff clan-members 🌸
+    # 🎀───────────────────────────────────────────
+    @staff_group.command(
+        name="clan-members",
+        description="List all members of the VNA Clan",
+    )
+    async def clan_members(
+        self,
+        interaction: discord.Interaction,
+    ):
+        slash_cmd_name = "staff clan-members"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=clan_members_func,
+        )
 
 # 🎀────────────────────────────────────────────
 #           🌸 Cog Setup Function 🌸

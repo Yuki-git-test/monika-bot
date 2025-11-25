@@ -9,6 +9,8 @@ from constants.vn_allstars_constants import (
     VNA_SERVER_ID,
 )
 from utils.logs.pretty_log import pretty_log
+from utils.db.vna_members_db_func import remove_member
+from utils.cache.cache_list import vna_members_cache
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
 
@@ -27,6 +29,17 @@ async def handle_role_remove(
     # ————————————————————————————————
     # 🩵 VNA Server Role Remove Logic
     # ————————————————————————————————
+
+    # ————————————————————————————————
+    # 🩵 VNA Member Role Removed
+    # ————————————————————————————————
+    if role_id == VN_ALLSTARS_ROLES.vna_member:
+        # Check if member is in cache
+        cached_member = vna_members_cache.get(member.id)
+        if cached_member:
+            # Remove member from the database
+            await remove_member(bot, member)
+
     # Log role removal
     pretty_log(
         message=f"Role '{role.name}' removed from member '{member.display_name}'.",

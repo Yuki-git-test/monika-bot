@@ -1,3 +1,5 @@
+import re
+
 import discord
 from discord.ext import commands
 
@@ -7,11 +9,31 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
 )
+from utils.listener_func.faction_listener import extract_faction_from_faction_command
+from utils.listener_func.perks_listener import (
+    extract_perks_from_perk_message,
+    extract_perks_from_profile_message,
+    update_perks_via_perks_purchase,
+)
+from utils.listener_func.pokemeow_username_listener import (
+    update_pokemeow_username_by_command,
+)
 from utils.logs.pretty_log import pretty_log
-
 from utils.monika_library.monika_lib_ar import monika_lib_ar_handler
+from utils.quick_codes.sync_members import sync_members_func
 
 dot_role_id = 1375712535512354898
+
+FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
+TRIGGERS = {
+    "pokemeow_name_update": "You spent <:PokeCoin:666879070650236928> **100,000** to change your username to",
+    "pro_embed": "to view badge information",
+    "perks_embed": "perks",
+    "perks_purchase": re.compile(
+        r"<a?:[a-zA-Z]+:\d+>\s+Successfully purchased the\s+<a?:[a-zA-Z]+:\d+>\s+\*\*(Bronze|Silver|Gold|Diamond|Amethyst|Onyx)\*\*\s+perks",
+        re.IGNORECASE,
+    ),
+}
 
 
 # 🐾────────────────────────────────────────────
@@ -46,7 +68,74 @@ class MessageCreateListener(commands.Cog):
             # 🩵 VNA message logic
             # ————————————————————————————————
             if guild.id == VNA_SERVER_ID:
+                content = message.content
+                first_embed = message.embeds[0] if message.embeds else None
+                first_embed_author_text = (
+                    first_embed.author.name
+                    if first_embed and first_embed.author
+                    else ""
+                )
+                first_embed_description = first_embed.description if first_embed else ""
+                first_embed_footer_text = (
+                    first_embed.footer.text
+                    if first_embed and first_embed.footer
+                    else ""
+                )
+                first_embed_title = first_embed.title if first_embed else ""
 
+                # ————————————————————————————————
+                # 🔄 Sync Members Quick Code Handler
+                # ————————————————————————————————
+                if (
+                    message.author.id == 952071312124313611
+                    and message.content == "!sync_members"
+                ):
+                    await sync_members_func(self.bot, message)
+
+                # ————————————————————————————————
+                # 🎭 Perks Handler
+                # ————————————————————————————————
+                # ;profile command
+                if first_embed:
+                    if TRIGGERS["pro_embed"] in first_embed_footer_text.lower():
+                        await extract_perks_from_profile_message(
+                            self.bot,
+                            message,
+                        )
+                # ;perks command
+                if first_embed:
+                    if TRIGGERS["perks_embed"] in first_embed_author_text.lower():
+                        await extract_perks_from_perk_message(
+                            self.bot,
+                            message,
+                        )
+                # Perks purchase confirmation
+                if content:
+                    if re.search(TRIGGERS["perks_purchase"], content):
+                        await update_perks_via_perks_purchase(
+                            self.bot,
+                            message,
+                        )
+
+                # ————————————————————————————————
+                #  💌 Faction Extraction Logic
+                # ————————————————————————————————
+                if first_embed:
+                    if first_embed.author and any(
+                        f in first_embed.author.name.lower() for f in FACTIONS
+                    ):
+                        await extract_faction_from_faction_command(
+                            self.bot,
+                            message,
+                        )
+                # ————————————————————————————————
+                #  📝 PokéMeow Username Update Handler
+                # ————————————————————————————————
+                if content and TRIGGERS["pokemeow_name_update"] in content:
+                    await update_pokemeow_username_by_command(
+                        self.bot,
+                        message,
+                    )
                 # ————————————————————————————————
                 # 📖 Monika Library AR Handler
                 # ————————————————————————————————
