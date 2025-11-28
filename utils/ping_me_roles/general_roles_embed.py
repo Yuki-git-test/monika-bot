@@ -155,6 +155,7 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
         lottery_role = guild.get_role(VN_ALLSTARS_ROLES.lottery)
         incense_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
         meow_promo_team = guild.get_role(VN_ALLSTARS_ROLES.meow_promo)
+        ee_spawn_ping = guild.get_role(VN_ALLSTARS_ROLES.ee_spawn_ping)
 
         games = guild.get_role(VN_ALLSTARS_ROLES.games)
 
@@ -235,6 +236,16 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
                 )
             )
             roles.append((emoji, games))
+        if ee_spawn_ping:
+            emoji = VN_ALLSTARS_EMOJIS.vna_gmax
+            view.add_item(
+                ToggleRoleButton(
+                    role=ee_spawn_ping,
+                    label="EE Spawn Ping",
+                    emoji=emoji,
+                )
+            )
+            roles.append((emoji, ee_spawn_ping))
 
         if as_spawn_ping:
             emoji = VN_ALLSTARS_EMOJIS.vna_pokeball

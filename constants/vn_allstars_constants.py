@@ -485,6 +485,7 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
+    ee_spawn_ping = 1443756412613431449
     personal_roles_divider = 1431150679258435655
     dot_role = 1375712535512354898
     the_hopeless_romantic = 1312302066063900703
