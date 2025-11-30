@@ -20,6 +20,11 @@ class StaffGroupCommand(commands.Cog):
         name="staff", description="Staff only commands"
     )
 
+    message_group = app_commands.Group(
+        name="message", description="Staff message commands"
+    )
+    staff_group.add_command(message_group)
+
     # 🎀───────────────────────────────────────────
     #          🌸 /staff role-members 🌸
     # 🎀───────────────────────────────────────────
@@ -35,7 +40,7 @@ class StaffGroupCommand(commands.Cog):
         interaction: discord.Interaction,
         role: discord.Role,
     ):
-        slash_cmd_name = "/staff role-members"
+        slash_cmd_name = "staff role-members"
 
         await run_command_safe(
             bot=self.bot,
@@ -62,7 +67,7 @@ class StaffGroupCommand(commands.Cog):
         channel_name: str,
         member: discord.Member,
     ):
-        slash_cmd_name = "/staff invite"
+        slash_cmd_name = "staff invite"
 
         await run_command_safe(
             bot=self.bot,
@@ -88,7 +93,7 @@ class StaffGroupCommand(commands.Cog):
         interaction: discord.Interaction,
         message_link: str,
     ):
-        slash_cmd_name = "/staff list-members"
+        slash_cmd_name = "staff list-members"
 
         await run_command_safe(
             bot=self.bot,
@@ -144,6 +149,61 @@ class StaffGroupCommand(commands.Cog):
             interaction=interaction,
             slash_cmd_name=slash_cmd_name,
             command_func=clan_members_func,
+        )
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff message send 🌸
+    # 🎀───────────────────────────────────────────
+    @message_group.command(
+        name="send",
+        description="Send a message to a specified channel",
+    )
+    @app_commands.describe(
+        channel="The channel to send the message to",
+        ping_role="An optional role to ping in the message",
+    )
+    async def message_send(
+        self,
+        interaction: discord.Interaction,
+        channel: discord.TextChannel,
+        ping_role: discord.Role = None,
+    ):
+        slash_cmd_name = "staff message send"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=message_send_func,
+            channel=channel,
+            ping_role=ping_role,
+        )
+
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff message edit 🌸
+    # 🎀───────────────────────────────────────────
+    @message_group.command(
+        name="edit",
+        description="Edit a message in a specified channel",
+    )
+    @app_commands.describe(
+        channel="The channel where the message is located",
+        message_id="The ID of the message to edit",
+    )
+    async def message_edit(
+        self,
+        interaction: discord.Interaction,
+        channel: discord.TextChannel,
+        message_id: str,
+    ):
+        slash_cmd_name = "staff message edit"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=message_edit_func,
+            channel=channel,
+            message_id=message_id,
         )
 
 # 🎀────────────────────────────────────────────
