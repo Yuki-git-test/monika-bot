@@ -10,6 +10,7 @@ from constants.vn_allstars_constants import (
     VNA_SERVER_ID,
 )
 from utils.listener_func.faction_listener import extract_faction_from_faction_command
+from utils.listener_func.market_snipe_filter import check_market_buy_command
 from utils.listener_func.perks_listener import (
     extract_perks_from_perk_message,
     extract_perks_from_profile_message,
@@ -136,6 +137,15 @@ class MessageCreateListener(commands.Cog):
                         self.bot,
                         message,
                     )
+                # ————————————————————————————————
+                #  🛒 Market Buy Command Filter
+                # ————————————————————————————————
+                # Only check if message is not from a bot and in snipe channel
+                if message.channel.id == VN_ALLSTARS_TEXT_CHANNELS.snipe_channel:
+                    if not message.author.bot:
+                        await check_market_buy_command(
+                            message,
+                        )
                 # ————————————————————————————————
                 # 📖 Monika Library AR Handler
                 # ————————————————————————————————
