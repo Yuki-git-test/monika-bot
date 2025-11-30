@@ -1,11 +1,12 @@
-from datetime import datetime
 import re
+from datetime import datetime
 
 import discord
 from discord.ext import commands
 
 from constants.aesthetic import *
 from constants.vn_allstars_constants import (
+    MONIKA_EMBED_COLOR,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
@@ -37,16 +38,22 @@ class OnUserUpdateCog(discord.ext.commands.Cog):
                 if not log_channel:
                     continue
                 changes = []
+                change_list = []
+                clan_member = False
                 if before.name != after.name:
                     changes.append(f"**Username:** `{before.name}` → `{after.name}`")
+                    change_list.append("username")
                     # Update in database
                     member_id = after.id
                     member_info = vna_members_cache.get(member_id)
                     if member_info:
                         old_username = member_info.get("user_name", "")
+                        clan_member = True
                         if old_username != after.name:
                             try:
-                                await update_member_user_name(self.bot, member, after.name)
+                                await update_member_user_name(
+                                    self.bot, member, after.name
+                                )
                                 pretty_log(
                                     message=(
                                         f"Updated username for member '{member.display_name}' "
@@ -64,22 +71,43 @@ class OnUserUpdateCog(discord.ext.commands.Cog):
                                     tag="error",
                                     label="Username Update",
                                 )
-                if before.discriminator != after.discriminator:
-                    changes.append(
-                        f"**Discriminator:** `{before.discriminator}` → `{after.discriminator}`"
-                    )
+
                 if before.avatar != after.avatar:
-                    changes.append(f"**Avatar changed**")
+                    change_list.append("avatar")
                 if not changes:
                     return
-                embed = discord.Embed(
-                    title="📝 User Profile Updated",
-                    color=discord.Color.blurple(),
-                    description=f"{after.mention} ({after.id})\n" + "\n".join(changes),
+
+                user_str = "Clan Member" if clan_member else "User"
+                description = f"**{user_str}:** {after.mention} - {after.display_name}"
+                log_embed = discord.Embed(
+                    description=description,
+                    color=MONIKA_EMBED_COLOR,
                     timestamp=datetime.now(),
                 )
-                embed.set_thumbnail(url=after.display_avatar.url)
-                await log_channel.send(embed=embed)
+                log_embed.set_author(
+                    name=after.display_name,
+                    icon_url=after.display_avatar.url,
+                )
+                log_embed.set_thumbnail(url=after.display_avatar.url)
+                log_embed.set_footer(
+                    text=f"User ID: {after.id}",
+                    icon_url=guild.icon.url if guild.icon else None,
+                )
+                if "username" in change_list and "avatar" not in change_list:
+                    log_embed.title = f"📝 {user_str} Username Updated"
+                    value_str = f"**Username:** `{before.name}` → `{after.name}`"
+
+                elif "avatar" in change_list and "username" not in change_list:
+                    log_embed.title = f"🖼️ {user_str} Avatar Updated"
+                    value_str = f"**Avatar:** [Before]({before.display_avatar.url}) → [After]({after.display_avatar.url})"
+                elif "username" in change_list and "avatar" in change_list:
+                    log_embed.title = f"🧡 {user_str} Profile Updated"
+                    value_str = (
+                        f"**Username:** `{before.name}` → `{after.name}`\n"
+                        f"**Avatar:** [Before]({before.display_avatar.url}) → [After]({after.display_avatar.url})"
+                    )
+                log_embed.add_field(name="Changes", value=value_str, inline=False)
+                await log_channel.send(embed=log_embed)
 
 
 async def setup(bot: discord.ext.commands.Bot):
