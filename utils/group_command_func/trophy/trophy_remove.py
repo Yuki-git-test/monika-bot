@@ -21,6 +21,7 @@ from .trophy_update_leaderboard import (
     new_first_place_announcement,
     trophy_update_leaderboard_func,
 )
+from utils.functions.webhook_func import send_webhook
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 
@@ -103,7 +104,11 @@ async def trophy_remove_func(
         log_embed.set_author(
             name=member.display_name, icon_url=member.display_avatar.url
         )
-        await log_channel.send(embed=log_embed)
+        await send_webhook(
+            bot=bot,
+            channel=log_channel,
+            embed=log_embed,
+        )
 
     # Check if there is a new first place
     old_first_place_info = await fetch_current_leaderboard_info(bot)

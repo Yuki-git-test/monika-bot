@@ -18,6 +18,7 @@ from .trophy_update_leaderboard import (
     new_first_place_announcement,
     trophy_update_leaderboard_func,
 )
+from utils.functions.webhook_func import send_webhook
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 
@@ -108,7 +109,11 @@ async def trophy_add_func(
             description=f"**Member:** {member.mention}\n**Added By:** {user.mention}\n**trophies Added:** {amount}\n**Total trophies:** {new_amount}",
             color=discord.Color.blue(),
         )
-        await log_channel.send(embed=embed)
+        await send_webhook(
+            bot=bot,
+            channel=log_channel,
+            embed=embed,
+        )
         pretty_log(
             "info",
             f"📝 {user} added {amount} trophies to {member}. Total trophies: {new_amount}",

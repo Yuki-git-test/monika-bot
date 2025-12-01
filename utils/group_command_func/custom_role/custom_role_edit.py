@@ -14,6 +14,7 @@ from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 REFERENCE_ROLE_ID = VN_ALLSTARS_ROLES.server_booster
+from utils.functions.webhook_func import send_webhook
 
 
 # 🍭──────────────────────────────
@@ -63,7 +64,9 @@ async def custom_role_edit_func(
     if new_role_name and not color_type:
         old_name = custom_role.name
         try:
-            await custom_role.edit(name=new_role_name, reason="Updated via edit command")
+            await custom_role.edit(
+                name=new_role_name, reason="Updated via edit command"
+            )
             pretty_log(
                 "info",
                 f"Role name updated: {old_name} ({custom_role.id}) ➜ {new_role_name}",
@@ -100,7 +103,11 @@ async def custom_role_edit_func(
                     )
                 )
                 embed.set_footer(text=f"User ID: {interaction.user.id}")
-                await log_channel.send(embed=embed)
+                await send_webhook(
+                    bot=bot,
+                    channel=log_channel,
+                    embed=embed,
+                )
 
         except Exception as e:
             pretty_log(
@@ -162,7 +169,7 @@ class SolidColorModal(discord.ui.Modal, title="🎨 Enter Solid Color"):
                 f"Role updated: {self.role.name} ({self.role.id})",
                 label="CUSTOM ROLE",
             )
-            #Send confirmation message
+            # Send confirmation message
             embed = discord.Embed(
                 title="🎀 Your Custom Role Was Updated! 💖",
                 description="\n".join(changes),
@@ -172,7 +179,11 @@ class SolidColorModal(discord.ui.Modal, title="🎨 Enter Solid Color"):
                 name=interaction.user.display_name,
                 icon_url=interaction.user.display_avatar.url,
             )
-            thumbnail_url = self.role.icon.url if self.role.icon else interaction.user.display_avatar.url
+            thumbnail_url = (
+                self.role.icon.url
+                if self.role.icon
+                else interaction.user.display_avatar.url
+            )
             embed.set_thumbnail(url=thumbnail_url)
             await interaction.response.send_message(embed=embed)
 
@@ -183,7 +194,11 @@ class SolidColorModal(discord.ui.Modal, title="🎨 Enter Solid Color"):
                 log_embed.title = "🎀 Custom Role Updated"
                 log_embed.set_footer(text=f"User ID: {interaction.user.id}")
                 log_embed.timestamp = datetime.now()
-                await log_channel.send(embed=log_embed)
+                await send_webhook(
+                    bot=self.bot,
+                    channel=log_channel,
+                    embed=log_embed,
+                )
 
         except Exception as e:
             pretty_log(
@@ -274,4 +289,8 @@ class GradientColorModal(discord.ui.Modal, title="🌈 Enter Gradient Colors"):
             log_embed.title = "🎀 Custom Role Updated"
             log_embed.set_footer(text=f"User ID: {interaction.user.id}")
             log_embed.timestamp = datetime.now()
-            await log_channel.send(embed=log_embed)
+            await send_webhook(
+                bot=self.bot,
+                channel=log_channel,
+                embed=log_embed,
+            )

@@ -20,7 +20,7 @@ from utils.visuals.colors import get_random_monika_color
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 REFERENCE_ROLE_ID = VN_ALLSTARS_ROLES.personal_roles_divider
 PEACH_SERVER_BOOSTER_ICON_URL = "https://media.discordapp.net/attachments/1394913073520967680/1441576187099877529/ChatGPT_Image_Nov_22_2025_07_44_57_AM.png?ex=69224bf2&is=6920fa72&hm=bcfec42a965eb116e5dba345a4c3b68788e03adad7d9b0f532d848232fa6d0da&=&format=webp&quality=lossless&width=855&height=855"
-
+from utils.functions.webhook_func import send_webhook
 
 # 🍭──────────────────────────────
 #   🎀 Handle Server Booster Role Addition
@@ -170,4 +170,8 @@ async def handle_server_booster_role_add(
                     log_embed.set_footer(
                         name=guild.name, icon_url=guild.icon.url if guild.icon else None
                     )
-                    await log_channel.send(embed=log_embed)
+                    await send_webhook(
+                        bot=bot,
+                        channel=log_channel,
+                        embed=log_embed,
+                    )

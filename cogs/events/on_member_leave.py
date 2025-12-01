@@ -12,6 +12,7 @@ from constants.vn_allstars_constants import (
 from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
+from utils.functions.webhook_func import send_webhook
 
 # 🍭──────────────────────────────
 #   🎀 Event: On Member Leave
@@ -53,7 +54,11 @@ class OnMemberLeaveCog(commands.Cog):
                 text=f"User ID: {member.id}",
                 icon_url=member.guild.icon.url if member.guild.icon else None,
             )
-            await log_channel.send(embed=embed)
+            await send_webhook(
+                bot=self.bot,
+                channel=log_channel,
+                embed=embed,
+            )
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMemberLeaveCog(bot))

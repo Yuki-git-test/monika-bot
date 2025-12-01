@@ -1,7 +1,7 @@
 import re
 
 import discord
-
+from utils.functions.webhook_func import send_webhook
 from constants.vn_allstars_constants import (
     VN_ALLSTARS_CATEGORIES,
     VN_ALLSTARS_ROLES,
@@ -115,7 +115,11 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                     log_embed.add_field(
                         name="Channel", value=new_channel.mention, inline=True
                     )
-                    await log_channel.send(embed=log_embed)
+                    await send_webhook(
+                        bot=bot,
+                        channel=log_channel,
+                        embed=log_embed,
+                    )
 
             except discord.NotFound:
                 pretty_log("error", f"User with ID {user_id} not found")

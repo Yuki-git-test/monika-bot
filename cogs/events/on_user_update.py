@@ -18,7 +18,7 @@ from utils.db.vna_members_db_func import (
 )
 from utils.essentials.pokemeow_member_reply import get_pokemeow_reply_member
 from utils.logs.pretty_log import pretty_log
-
+from utils.functions.webhook_func import send_webhook
 
 class OnUserUpdateCog(discord.ext.commands.Cog):
     """Cog to handle user profile update events."""
@@ -107,7 +107,11 @@ class OnUserUpdateCog(discord.ext.commands.Cog):
                         f"**Avatar:** [Before]({before.display_avatar.url}) → [After]({after.display_avatar.url})"
                     )
                 log_embed.add_field(name="Changes", value=value_str, inline=False)
-                await log_channel.send(embed=log_embed)
+                await send_webhook(
+                    bot=self.bot,
+                    channel=log_channel,
+                    embed=log_embed,
+                )
 
 
 async def setup(bot: discord.ext.commands.Bot):

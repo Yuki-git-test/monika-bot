@@ -12,7 +12,7 @@ from utils.logs.pretty_log import pretty_log
 from utils.db.vna_members_db_func import upsert_member
 from utils.cache.cache_list import vna_members_cache
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
-
+from utils.functions.webhook_func import send_webhook
 
 # 🍭──────────────────────────────
 #   🎀 Event: On Role Add
@@ -70,4 +70,8 @@ async def handle_role_add(
             text=f"Role ID: {role.id}",
             icon_url=member.guild.icon.url if member.guild.icon else None,
         )
-        await log_channel.send(embed=embed)
+        await send_webhook(
+            bot=bot,
+            channel=log_channel,
+            embed=embed,
+        )

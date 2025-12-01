@@ -7,5 +7,5 @@ from utils.visuals.colors import get_random_monika_color
 from utils.essentials.role_checks import is_staff_member
 from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
 from constants.aesthetic import *
-
+from utils.functions.webhook_func import send_webhook
 from utils.essentials.pokemeow_member_reply import get_pokemeow_reply_member

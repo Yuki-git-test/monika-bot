@@ -9,6 +9,7 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
 )
+from utils.functions.webhook_func import send_webhook
 from utils.logs.pretty_log import pretty_log
 
 image_url = "https://media.discordapp.net/attachments/1220786720082235403/1382956264102826004/image.png?ex=684d09e3&is=684bb863&hm=8e69e66a6897337d74b88efac9a84b6ad95e1dc42b6cc269ea352e9e766d0299&=&format=webp&quality=lossless&width=1600&height=128"
@@ -116,4 +117,8 @@ async def clan_invite_func(
         )
         log_embed.add_field(name="User", value=user.mention, inline=True)
         log_embed.add_field(name="Channel", value=new_channel.mention, inline=True)
-        await log_channel.send(embed=log_embed)
+        await send_webhook(
+            bot=bot,
+            channel=log_channel,
+            embed=log_embed,
+        )

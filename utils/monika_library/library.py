@@ -2,8 +2,8 @@ import discord
 from discord.ext import commands
 
 from constants.monika_library import get_random_color
-
-
+from utils.functions.webhook_func import send_webhook
+from utils.logs.pretty_log import pretty_log, BOT_INSTANCE
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 #   🌸 Monika's Library Function 🌸
 #   "Just Monika."
@@ -26,7 +26,21 @@ async def send_report_embed(message: discord.Message):
     log_channel_id = 1349024210923687956
     log_channel = message.guild.get_channel(log_channel_id)
     if log_channel:
-        await log_channel.send(embed=embed)
+        try:
+            await send_webhook(
+                bot=BOT_INSTANCE,
+                channel=log_channel,
+                embed=embed,
+            )
+        except Exception as e:
+            pretty_log(
+                message=(
+                    f"Failed to send report embed for user '{user.display_name}'. "
+                    f"Error: {e}"
+                ),
+                tag="error",
+                label="Monika Library Report Embed",
+            )
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

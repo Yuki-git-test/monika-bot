@@ -9,6 +9,7 @@ from utils.db.trophy import reset_leaderboard, reset_trophies
 from utils.essentials.pretty_defer import pretty_defer
 from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
+from utils.functions.webhook_func import send_webhook
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 
@@ -49,7 +50,11 @@ async def trophy_reset_func(
                 color=discord.Color.red(),
                 timestamp=datetime.now(),
             )
-            await log_channel.send(embed=embed)
+            await send_webhook(
+                bot=bot,
+                channel=log_channel,
+                embed=embed,
+            )
         pretty_log(
             message=f"All trophies have been reset by {interaction.user}.",
             tag="info",

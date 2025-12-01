@@ -7,7 +7,7 @@ from constants.vn_allstars_constants import (
     VNA_SERVER_ID,
 )
 from utils.logs.pretty_log import pretty_log
-
+from utils.functions.webhook_func import send_webhook
 
 # 🍭──────────────────────────────
 #   🎀 Event: on_invite_create
@@ -46,7 +46,11 @@ class InviteCreateEvent(commands.Cog):
                         "This invite was deleted because it was created by a non-staff member."
                     ),
                 )
-                await log_channel.send(embed=embed)
+                await send_webhook(
+                    bot=self.bot,
+                    channel=log_channel,
+                    embed=embed,
+                )
                 await invite.delete()
                 pretty_log(f"Deleted invite created by non-staff member {creator}.")
                 # DM the creator about the deletion
@@ -85,7 +89,11 @@ class InviteCreateEvent(commands.Cog):
                 f"**Channel:** {invite.channel.mention} ({invite.channel.name})"
             ),
         )
-        await log_channel.send(embed=embed)
+        await send_webhook(
+            bot=self.bot,
+            channel=log_channel,
+            embed=embed,
+        )
         pretty_log(f"Invite created by {creator} logged in {log_channel.name}.")
 
 

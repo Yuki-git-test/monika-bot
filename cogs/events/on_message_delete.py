@@ -12,7 +12,7 @@ from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.message_logs
 DELETED_IMAGE_THREAD_ID = 1442024624803287180
-
+from utils.functions.webhook_func import send_webhook
 
 # 🍭──────────────────────────────
 #   🎀 Event: On Message Delete
@@ -146,7 +146,11 @@ class OnMessageDeleteCog(commands.Cog):
                         text=f"Message ID: {message.id}",
                         icon_url=message.guild.icon.url if message.guild.icon else None,
                     )
-                await log_channel.send(embed=embed)
+                await send_webhook(
+                    bot=self.bot,
+                    channel=log_channel,
+                    embed=embed,
+                )
             except Exception as e:
                 pretty_log(
                     "error",

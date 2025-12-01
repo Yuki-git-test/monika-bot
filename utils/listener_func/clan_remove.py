@@ -14,6 +14,7 @@ from utils.cache.cache_list import vna_members_cache
 from utils.db.vna_members_db_func import remove_member
 from utils.essentials.pokemeow_member_reply import get_pokemeow_reply_member
 from utils.logs.pretty_log import pretty_log
+from utils.functions.webhook_func import send_webhook
 
 FORMER_MEMBERS_CATEGORY_ID = 927658364618571776
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
@@ -118,7 +119,11 @@ async def auto_clan_remove_handler(
             text=f"Member ID: {member.id}",
             icon_url=member.guild.icon.url if member.guild.icon else None,
         )
-        await log_channel.send(embed=embed)
+        await send_webhook(
+            bot=bot,
+            channel=log_channel,
+            embed=embed,
+        )
 
 
 # 🍭──────────────────────────────
