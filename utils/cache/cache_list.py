@@ -7,6 +7,11 @@ vna_members_cache: dict[int, dict] = {}
 # "perks": str,
 # "faction": str,
 # }
+top_monthly_grinders_cache: dict[int, dict] = {}
+# Structure:
+# user_id -> {
+#   "user_name": str,
+# }
 
 webhook_url_cache: dict[tuple[int, int], str] = {}
 #     ...

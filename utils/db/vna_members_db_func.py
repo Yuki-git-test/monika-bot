@@ -41,44 +41,60 @@ async def fetch_all_members(bot):
 
 
 # Upsert member (insert or update)
-async def upsert_member(bot, user: discord.Member, channel_id: int = None):
+async def upsert_member(
+    bot,
+    user: discord.Member,
+    channel_id: int = None,
+    pokemeow_name: str = None,
+    perks: str = None,
+    faction: str = None,
+):
     """
     Insert or update a vna_members row for a user.
     """
     user_id = user.id
     user_name = user.name
-    perks = None
-    pokemeow_name = user.name
-    faction = None
-    async with bot.pg_pool.acquire() as conn:
-        await conn.execute(
-            """
-            INSERT INTO vna_members (user_id, user_name, pokemeow_name, channel_id, perks, faction)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (user_id)
-            DO UPDATE SET user_name = $2, channel_id = $4;
-            """,
-            user_id,
-            user_name,
-            pokemeow_name,
-            channel_id,
-            perks,
-            faction,
-        )
-        pretty_log(
-            "info",
-            f"Upserted vna_members for {user.name} with channel_id {channel_id}.",
-        )
-        # Update cache as well
-        from utils.cache.vna_members_cache import upsert_vna_member_cache
 
-        upsert_vna_member_cache(
-            user_id=user_id,
-            user_name=user_name,
-            pokemeow_name=pokemeow_name,
-            channel_id=channel_id,
-            perks=perks,
-        )
+    if not pokemeow_name:
+        pokemeow_name = user.name
+    else:
+        pokemeow_name = pokemeow_name
+
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO vna_members (user_id, user_name, pokemeow_name, channel_id, perks, faction)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (user_id)
+                DO UPDATE SET user_name = $2, pokemeow_name = $3, channel_id = $4, perks = $5, faction = $6;
+                """,
+                user_id,
+                user_name,
+                pokemeow_name,
+                channel_id,
+                perks,
+                faction,
+            )
+            pretty_log(
+                "info",
+                f"Upserted vna_members for {user.name} with channel_id {channel_id}.",
+            )
+            # Update cache as well
+            from utils.cache.vna_members_cache import upsert_vna_member_cache
+
+            upsert_vna_member_cache(
+                user_id=user_id,
+                user_name=user_name,
+                pokemeow_name=pokemeow_name,
+                channel_id=channel_id,
+                perks=perks,
+                faction=faction,
+            )
+            return True
+    except Exception as e:
+        pretty_log("error", f"Failed to upsert vna_members for {user.name}: {e}")
+        return False
 
 
 # Add member (insert new row)
@@ -102,6 +118,68 @@ async def add_member(bot, user: discord.Member, channel_id: int):
             "info",
             f"Added {user.name} to vna_members with channel_id {channel_id}.",
         )
+
+
+# Update member multiple fields for a user
+async def update_member_fields(
+    bot,
+    user: discord.Member,
+    user_name: str = None,
+    pokemeow_name: str = None,
+    channel_id: int = None,
+    perks: str = None,
+    faction: str = None,
+):
+    """
+    Update multiple fields for a user in vna_members.
+    """
+    try:
+        user_id = user.id
+        fields = []
+        values = []
+        if user_name is not None:
+            fields.append(f"user_name = ${{{len(values)+2}}}")
+            values.append(user_name)
+        if pokemeow_name is not None:
+            fields.append(f"pokemeow_name = ${{{len(values)+2}}}")
+            values.append(pokemeow_name)
+        if channel_id is not None:
+            fields.append(f"channel_id = ${{{len(values)+2}}}")
+            values.append(channel_id)
+        if perks is not None:
+            fields.append(f"perks = ${{{len(values)+2}}}")
+            values.append(perks)
+        if faction is not None:
+            fields.append(f"faction = ${{{len(values)+2}}}")
+            values.append(faction)
+        if fields:
+            sql = f"UPDATE vna_members SET {', '.join(fields)} WHERE user_id = $1;"
+            async with bot.pg_pool.acquire() as conn:
+                await conn.execute(sql, user_id, *values)
+            pretty_log(
+                "info", f"Updated fields for {user.name} in vna_members: {fields}"
+            )
+
+            # Update cache as well
+            from utils.cache.vna_members_cache import (
+                update_vna_member_multiple_fields_cache,
+            )
+
+            update_vna_member_multiple_fields_cache(
+                user_id=user_id,
+                user_name=user_name,
+                pokemeow_name=pokemeow_name,
+                channel_id=channel_id,
+                perks=perks,
+                faction=faction,
+            )
+            return True
+        else:
+            pretty_log("info", f"No fields to update for {user.name}.")
+            return False
+    except Exception as e:
+        pretty_log("error", f"Failed to update fields for {user.name}: {e}")
+        return False
 
 
 # Update member faction for a user
@@ -128,7 +206,6 @@ async def update_member_faction(bot, user: discord.Member, faction: str):
         from utils.cache.vna_members_cache import update_vna_member_faction_cache
 
         update_vna_member_faction_cache(user_id, faction)
-
 
 
 # Update member channel_id for a user

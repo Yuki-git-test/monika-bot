@@ -24,7 +24,7 @@ TRIGGERS = {
     "pro_embed": "to view badge information",
     "clan_leave": "You left **VN Allstar**.",
     "clan_kick": re.compile(
-        r"you spent <:pokecoin:\d+>\s+\*\*100,000\*\*\s+to kick\s+.+?\s+from straymons\.",
+        r"you spent <:pokecoin:\d+>\s+\*\*100,000\*\*\s+to kick\s+.+?\s+from vn allstar\.",
         re.IGNORECASE,
     ),
 }
@@ -70,31 +70,26 @@ class OnMessageEditCog(commands.Cog):
             )
             await handle_clan_leave_command(self.bot, after)
 
-        # 🍭──────────────────────────────
-        #   🎀 Clan Kick Processing
-        # 🍭──────────────────────────────
-        if (
-            content
-            and "You spent <:PokeCoin:666879070650236928> **100,000** to kick"
-            in content
-            and "from VN Allstar." in content
-        ):
-            pretty_log(
-                message=f"Detected clan kick message edit for member '{after.author.display_name}'.",
-                tag="info",
-                label="Clan Kick Command",
-            )
-            await handle_clan_kick_command(self.bot, after)
-            # ————————————————————————————————
-            # 🎭 Perks Handler
-            # ————————————————————————————————
-            # ;profile command
-            if first_embed:
-                if TRIGGERS["pro_embed"] in first_embed_footer_text.lower():
-                    await extract_perks_from_profile_message(
-                        self.bot,
-                        after,
-                    )
+            # 🍭──────────────────────────────
+            #   🎀 Clan Kick Processing
+            # 🍭──────────────────────────────
+            if content and TRIGGERS["clan_kick"].search(content):
+                pretty_log(
+                    message=f"Detected clan kick message edit for member '{after.author.display_name}'.",
+                    tag="info",
+                    label="Clan Kick Command",
+                )
+                await handle_clan_kick_command(self.bot, after)
+                # ————————————————————————————————
+                # 🎭 Perks Handler
+                # ————————————————————————————————
+                # ;profile command
+                if first_embed:
+                    if TRIGGERS["pro_embed"] in first_embed_footer_text.lower():
+                        await extract_perks_from_profile_message(
+                            self.bot,
+                            after,
+                        )
 
 
 async def setup(bot: commands.Bot):

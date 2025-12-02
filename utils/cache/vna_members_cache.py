@@ -55,7 +55,32 @@ def upsert_vna_member_cache(
     }
     pretty_log("cache", f"Upserted vna_member {user_name} ({user_id}) into cache.")
 
-
+def update_vna_member_multiple_fields_cache(
+    user_id: int,
+    user_name: str = None,
+    pokemeow_name: str = None,
+    channel_id: int = None,
+    perks: str = None,
+    faction: str = None,
+):
+    """
+    Update multiple fields for a vna_member in the cache.
+    """
+    if user_id in vna_members_cache:
+        if user_name is not None:
+            vna_members_cache[user_id]["user_name"] = user_name
+        if pokemeow_name is not None:
+            vna_members_cache[user_id]["pokemeow_name"] = pokemeow_name
+        if channel_id is not None:
+            vna_members_cache[user_id]["channel_id"] = channel_id
+        if perks is not None:
+            vna_members_cache[user_id]["perks"] = perks
+        if faction is not None:
+            vna_members_cache[user_id]["faction"] = faction
+        pretty_log(
+            "cache",
+            f"Updated multiple fields for vna_member ({user_id}) in cache.",
+        )
 def update_vna_member_channel_cache(user_id: int, channel_id: int):
     """
     Update the channel_id of a vna_member in the cache.
@@ -151,3 +176,11 @@ def remove_vna_member_from_cache(user_id: int):
     if user_id in vna_members_cache:
         del vna_members_cache[user_id]
         pretty_log("cache", f"Removed vna_member ({user_id}) from cache.")
+
+
+def fetch_all_user_ids_from_cache() -> list[int]:
+    """
+    Fetch all user_ids of vna_members from the cache.
+    """
+    members = list(vna_members_cache.keys())
+    return members

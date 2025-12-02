@@ -24,7 +24,27 @@ class StaffGroupCommand(commands.Cog):
         name="message", description="Staff message commands"
     )
     staff_group.add_command(message_group)
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff list-top-grinders 🌸
+    # 🎀───────────────────────────────────────────
+    @staff_group.command(
+        name="list-top-grinders",
+        description="Assign Top Monthly Grinder roles to members",
+    )
+    async def list_top_grinders(
+        self,
+        interaction: discord.Interaction,
+        message_link: str,
+    ):
+        slash_cmd_name = "staff list-top-grinders"
 
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=assign_top_grinder_roles,
+            message_link=message_link,
+        )
     # 🎀───────────────────────────────────────────
     #          🌸 /staff role-members 🌸
     # 🎀───────────────────────────────────────────
@@ -205,6 +225,7 @@ class StaffGroupCommand(commands.Cog):
             channel=channel,
             message_id=message_id,
         )
+
 
 # 🎀────────────────────────────────────────────
 #           🌸 Cog Setup Function 🌸

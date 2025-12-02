@@ -5,8 +5,10 @@ from .message.edit import message_edit_func
 from .message.send import message_send_func
 from .role_members import role_members_func
 from .set_channel import set_channel_func
+from .assign_top_grinder import assign_top_grinder_roles
 
 __all__ = [
+    "assign_top_grinder_roles",
     "role_members_func",
     "clan_invite_func",
     "list_vna_members_func",

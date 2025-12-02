@@ -8,7 +8,8 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
 )
-from utils.cache.cache_list import vna_members_cache
+from utils.cache.cache_list import top_monthly_grinders_cache, vna_members_cache
+from utils.db.top_monthly_grinders_db import delete_top_monthly_grinder
 from utils.db.vna_members_db_func import remove_member
 from utils.logs.pretty_log import pretty_log
 
@@ -41,7 +42,19 @@ async def handle_role_remove(
             # Remove member from the database
             await remove_member(bot, member)
 
-    # Log role removal
+    # ————————————————————————————————
+    # 🩵 VNA Top Monthly Grinder Role Remove
+    # ————————————————————————————————
+    if role_id == VN_ALLSTARS_ROLES.top_monthly_grinder:
+        # Check if in cache
+        cached_grinder = top_monthly_grinders_cache.get(member.id)
+        if cached_grinder:
+            # Remove from db
+            await delete_top_monthly_grinder(bot, member)
+
+    # ————————————————————————————————
+    # 🩵 VNA Role Logs
+    # ————————————————————————————————
     pretty_log(
         message=f"Role '{role.name}' removed from member '{member.display_name}'.",
         tag="info",
