@@ -162,10 +162,7 @@ class MessageCreateListener(commands.Cog):
                             "info",
                             "Detected Clan Weekly Stats embed, processing weekly stats...",
                         )
-                        await weekly_stats_checker(
-                            self.bot,
-                            message,
-                        )
+                        await weekly_stats_checker(self.bot, message, message)
                 # ————————————————————————————————
                 # 🏆 Top Grinder Roles Assignment Listener
                 # ————————————————————————————————

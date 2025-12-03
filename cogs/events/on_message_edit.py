@@ -19,6 +19,7 @@ from utils.listener_func.perks_listener import (
     update_perks_via_perks_purchase,
 )
 from utils.logs.pretty_log import pretty_log
+from utils.listener_func.weekly_stats_listener import weekly_stats_checker
 
 TRIGGERS = {
     "pro_embed": "to view badge information",
@@ -27,6 +28,7 @@ TRIGGERS = {
         r"you spent <:pokecoin:\d+>\s+\*\*100,000\*\*\s+to kick\s+.+?\s+from vn allstar\.",
         re.IGNORECASE,
     ),
+    "weekly_stats_checker": "**Clan Weekly Stats — VN Allstar**",
 }
 
 
@@ -70,27 +72,38 @@ class OnMessageEditCog(commands.Cog):
             )
             await handle_clan_leave_command(self.bot, after)
 
-            # 🍭──────────────────────────────
-            #   🎀 Clan Kick Processing
-            # 🍭──────────────────────────────
-            if content and TRIGGERS["clan_kick"].search(content):
-                pretty_log(
-                    message=f"Detected clan kick message edit for member '{after.author.display_name}'.",
-                    tag="info",
-                    label="Clan Kick Command",
-                )
-                await handle_clan_kick_command(self.bot, after)
-                # ————————————————————————————————
-                # 🎭 Perks Handler
-                # ————————————————————————————————
-                # ;profile command
-                if first_embed:
-                    if TRIGGERS["pro_embed"] in first_embed_footer_text.lower():
-                        await extract_perks_from_profile_message(
-                            self.bot,
-                            after,
-                        )
+        # 🍭──────────────────────────────
+        #   🎀 Clan Kick Processing
+        # 🍭──────────────────────────────
+        if content and TRIGGERS["clan_kick"].search(content):
+            pretty_log(
+                message=f"Detected clan kick message edit for member '{after.author.display_name}'.",
+                tag="info",
+                label="Clan Kick Command",
+            )
+            await handle_clan_kick_command(self.bot, after)
 
+        # ————————————————————————————————
+        # 🎭 Perks Handler
+        # ————————————————————————————————
+        # ;profile command
+        if first_embed:
+            if TRIGGERS["pro_embed"] in first_embed_footer_text.lower():
+                await extract_perks_from_profile_message(
+                    self.bot,
+                    after,
+                )
+        # ————————————————————————————————
+        # 🗓️ Weekly Stats Checker Listener
+        # ————————————————————————————————
+        if first_embed:
+            if first_embed_title and TRIGGERS["weekly_stats_checker"] in first_embed_title:
+                pretty_log(
+                    message=f"Detected weekly stats checker embed edit for member '{after.author.display_name}'.",
+                    tag="info",
+                    label="Weekly Stats Checker",
+                )
+                await weekly_stats_checker(self.bot, before, after)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMessageEditCog(bot))
