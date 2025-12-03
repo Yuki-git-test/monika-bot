@@ -6,43 +6,67 @@ import discord
 
 from utils.logs.pretty_log import pretty_log
 
+
 async def fetch_message_obj_from_link(
     bot: discord.Client, message_link: str
-):
+) -> tuple[Optional[discord.Message], Optional[str]]:
+    """Fetches a Discord message object from a given message link."""
     try:
         parts = message_link.strip().split("/")
         guild_id = int(parts[4])
         channel_id = int(parts[5])
         message_id = int(parts[6])
-        pretty_log("info", f"Parsed message link: guild_id={guild_id}, channel_id={channel_id}, message_id={message_id}", label="MSG LINK PARSER")
+        pretty_log(
+            "info",
+            f"Parsed message link: guild_id={guild_id}, channel_id={channel_id}, message_id={message_id}",
+            label="MSG LINK PARSER",
+        )
 
     except (IndexError, ValueError) as e:
-        pretty_log("error", f"Failed to parse message link: {e}", label="MSG LINK PARSER")
-        error_message = "Invalid message link format. Please provide a valid Discord message link."
+        pretty_log(
+            "error", f"Failed to parse message link: {e}", label="MSG LINK PARSER"
+        )
+        error_message = (
+            "Invalid message link format. Please provide a valid Discord message link."
+        )
         return None, error_message
 
     # Fetch the message
     guild = bot.get_guild(guild_id)
     if not guild:
-        pretty_log("error", f"Guild with ID {guild_id} not found.", label="MSG LINK PARSER")
-        error_message = "Guild not found. Please ensure the bot is in the specified server."
+        pretty_log(
+            "error", f"Guild with ID {guild_id} not found.", label="MSG LINK PARSER"
+        )
+        error_message = (
+            "Guild not found. Please ensure the bot is in the specified server."
+        )
         return None, error_message
     channel = guild.get_channel(channel_id)
     if not channel:
-        pretty_log("error", f"Channel with ID {channel_id} not found in guild {guild_id}.", label="MSG LINK PARSER")
+        pretty_log(
+            "error",
+            f"Channel with ID {channel_id} not found in guild {guild_id}.",
+            label="MSG LINK PARSER",
+        )
         error_message = "Channel not found. Please ensure the channel exists in the specified server."
         return None, error_message
 
     try:
         message = await channel.fetch_message(message_id)
-        pretty_log("info", f"Successfully fetched message ID {message_id} from channel ID {channel_id}.", label="MSG LINK PARSER")
+        pretty_log(
+            "info",
+            f"Successfully fetched message ID {message_id} from channel ID {channel_id}.",
+            label="MSG LINK PARSER",
+        )
         return message, None
     except discord.NotFound:
-        pretty_log("error", f"Message with ID {message_id} not found in channel {channel_id}.", label="MSG LINK PARSER")
+        pretty_log(
+            "error",
+            f"Message with ID {message_id} not found in channel {channel_id}.",
+            label="MSG LINK PARSER",
+        )
         error_message = "Message not found. Please ensure the message ID is correct."
         return None, error_message
-
-
 
 
 def calculate_total_catches(catches: int, fishes: int) -> int:

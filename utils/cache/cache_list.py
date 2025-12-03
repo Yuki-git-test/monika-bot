@@ -25,3 +25,18 @@ webhook_url_cache: dict[tuple[int, int], str] = {}
 #     "channel_name": "alerts-channel",
 # },
 #
+
+probation_list_cache: dict[int, dict] = {}
+# Structure
+# user_id: {
+# "user_name": str,
+# "pokemeow_name": str,
+# }
+
+kick_list_cache: dict[int, dict] = {}
+# Structure
+# user_id: {
+# "user_name": str,
+#  "pokemeow_name": str,
+# }
+#

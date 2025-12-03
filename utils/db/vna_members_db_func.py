@@ -4,9 +4,13 @@ from utils.logs.pretty_log import pretty_log
 
 # SQL Script to create the vna_members table
 """CREATE TABLE vna_members (
-    user_id    BIGINT PRIMARY KEY,
-    user_name  VARCHAR(100) NOT NULL,
-    channel_id BIGINT NOT NULL
+    user_id           BIGINT PRIMARY KEY,
+    user_name         VARCHAR(100) NOT NULL,
+    channel_id        BIGINT NOT NULL,
+    pokemeow_name     VARCHAR(100),
+    perks             TEXT,
+    faction           VARCHAR(100),
+    clan_joined_date  BIGINT
 );"""
 
 
@@ -48,6 +52,7 @@ async def upsert_member(
     pokemeow_name: str = None,
     perks: str = None,
     faction: str = None,
+    clan_joined_date: int = None,
 ):
     """
     Insert or update a vna_members row for a user.
@@ -60,14 +65,20 @@ async def upsert_member(
     else:
         pokemeow_name = pokemeow_name
 
+    import time
+
+    clan_joined_date = None
+    if clan_joined_date is None:
+        clan_joined_date = int(time.time())
+
     try:
         async with bot.pg_pool.acquire() as conn:
             await conn.execute(
                 """
-                INSERT INTO vna_members (user_id, user_name, pokemeow_name, channel_id, perks, faction)
-                VALUES ($1, $2, $3, $4, $5, $6)
+                INSERT INTO vna_members (user_id, user_name, pokemeow_name, channel_id, perks, faction, clan_joined_date)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
                 ON CONFLICT (user_id)
-                DO UPDATE SET user_name = $2, pokemeow_name = $3, channel_id = $4, perks = $5, faction = $6;
+                DO UPDATE SET user_name = $2, pokemeow_name = $3, channel_id = $4, perks = $5, faction = $6, clan_joined_date = $7;
                 """,
                 user_id,
                 user_name,
@@ -75,6 +86,7 @@ async def upsert_member(
                 channel_id,
                 perks,
                 faction,
+                clan_joined_date,
             )
             pretty_log(
                 "info",
@@ -90,6 +102,7 @@ async def upsert_member(
                 channel_id=channel_id,
                 perks=perks,
                 faction=faction,
+                clan_joined_date=clan_joined_date,
             )
             return True
     except Exception as e:
@@ -107,12 +120,13 @@ async def add_member(bot, user: discord.Member, channel_id: int):
     async with bot.pg_pool.acquire() as conn:
         await conn.execute(
             """
-            INSERT INTO vna_members (user_id, user_name, channel_id)
-            VALUES ($1, $2, $3);
+            INSERT INTO vna_members (user_id, user_name, channel_id, clan_joined_date)
+            VALUES ($1, $2, $3, $4);
             """,
             user_id,
             user_name,
             channel_id,
+            getattr(user, "clan_joined_date", None),
         )
         pretty_log(
             "info",
@@ -129,6 +143,7 @@ async def update_member_fields(
     channel_id: int = None,
     perks: str = None,
     faction: str = None,
+    clan_joined_date: int = None,
 ):
     """
     Update multiple fields for a user in vna_members.
@@ -138,20 +153,23 @@ async def update_member_fields(
         fields = []
         values = []
         if user_name is not None:
-            fields.append(f"user_name = ${{{len(values)+2}}}")
+            fields.append(f"user_name = ${len(values)+2}")
             values.append(user_name)
         if pokemeow_name is not None:
-            fields.append(f"pokemeow_name = ${{{len(values)+2}}}")
+            fields.append(f"pokemeow_name = ${len(values)+2}")
             values.append(pokemeow_name)
         if channel_id is not None:
-            fields.append(f"channel_id = ${{{len(values)+2}}}")
+            fields.append(f"channel_id = ${len(values)+2}")
             values.append(channel_id)
         if perks is not None:
-            fields.append(f"perks = ${{{len(values)+2}}}")
+            fields.append(f"perks = ${len(values)+2}")
             values.append(perks)
         if faction is not None:
-            fields.append(f"faction = ${{{len(values)+2}}}")
+            fields.append(f"faction = ${len(values)+2}")
             values.append(faction)
+        if clan_joined_date is not None:
+            fields.append(f"clan_joined_date = ${len(values)+2}")
+            values.append(clan_joined_date)
         if fields:
             sql = f"UPDATE vna_members SET {', '.join(fields)} WHERE user_id = $1;"
             async with bot.pg_pool.acquire() as conn:
@@ -172,6 +190,7 @@ async def update_member_fields(
                 channel_id=channel_id,
                 perks=perks,
                 faction=faction,
+                clan_joined_date=clan_joined_date,
             )
             return True
         else:
@@ -310,6 +329,34 @@ async def update_member_user_name(bot, user: discord.Member, user_name: str):
         from utils.cache.vna_members_cache import update_vna_member_user_name_cache
 
         update_vna_member_user_name_cache(user_id, user_name)
+
+
+# Update joined date for a user
+async def update_member_joined_date(bot, user: discord.Member, joined_date: int):
+    """
+    Update the clan_joined_date for a user in vna_members.
+    """
+    user_id = user.id
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE vna_members
+            SET clan_joined_date = $1
+            WHERE user_id = $2;
+            """,
+            joined_date,
+            user_id,
+        )
+        pretty_log(
+            "info",
+            f"Updated clan_joined_date for {user.name} to {joined_date} in vna_members.",
+        )
+        # Update cache as well
+        from utils.cache.vna_members_cache import (
+            update_vna_member_clan_joined_date_cache,
+        )
+
+        update_vna_member_clan_joined_date_cache(user_id, joined_date)
 
 
 # Remove member (delete row)

@@ -10,7 +10,7 @@ from constants.vn_allstars_constants import VNA_SERVER_ID
 from utils.db.get_pg_pool import get_pg_pool
 from utils.logs.pretty_log import pretty_log, set_monika_bot
 from utils.cache.central_cache_loader import load_all_caches
-
+from utils.schedule.scheduler import setup_schedulers
 ALLOWED_GUILD_IDS = [VNA_SERVER_ID, 1220718310455250996]
 # 🍑────────────────────────────────────────────
 #          ⚡ Bot Initialization ⚡
@@ -178,7 +178,7 @@ async def on_ready():
     if not refresh_all_caches.is_running():
         refresh_all_caches.start()
         pretty_log(message="✅ Started hourly cache refresh task", tag="ready")
-        
+
 # 🍑────────────────────────────────────────────
 #               ⚡ Main Entry Point ⚡
 # 🍑────────────────────────────────────────────
@@ -194,6 +194,10 @@ async def main():
             tag="error",
         )
         return
+
+    # Setup scheduled tasks
+    await setup_schedulers(bot)
+    
     token = os.getenv("DISCORD_TOKEN")
     await bot.start(token)
 

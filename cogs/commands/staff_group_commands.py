@@ -226,6 +226,70 @@ class StaffGroupCommand(commands.Cog):
             message_id=message_id,
         )
 
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff extract-joined-date 🌸
+    # 🎀───────────────────────────────────────────
+    @staff_group.command(
+        name="extract-joined-date",
+        description="Extract joined date from a message link and update the member's record",
+    )
+    @app_commands.describe(
+        message_link="The link to the message to extract joined dates from",
+    )
+    async def extract_joined_date(
+        self,
+        interaction: discord.Interaction,
+        message_link: str,
+    ):
+        slash_cmd_name = "staff extract-joined-date"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=extract_joined_date_func,
+            message_link=message_link,
+        )
+
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff update-member 🌸
+    # 🎀───────────────────────────────────────────
+    @staff_group.command(
+        name="update-member",
+        description="Update a VNA member's information",
+    )
+    @app_commands.describe(
+        member="The VNA member to update",
+        pokemeow_name="The updated PokéMeow username",
+        channel="The updated clan channel",
+        perks="The updated perks",
+        faction="The updated faction",
+        clan_joined_date="The updated clan joined date (Unix timestamp)",
+    )
+    async def update_member(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member,
+        pokemeow_name: str = None,
+        channel: discord.TextChannel = None,
+        perks: str = None,
+        faction: str = None,
+        clan_joined_date: str = None,
+    ):
+        slash_cmd_name = "staff update-member"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=update_member_func,
+            member=member,
+            pokemeow_name=pokemeow_name,
+            channel=channel,
+            perks=perks,
+            faction=faction,
+            clan_joined_date=clan_joined_date,
+        )
 
 # 🎀────────────────────────────────────────────
 #           🌸 Cog Setup Function 🌸

@@ -20,6 +20,7 @@ from utils.listener_func.pokemeow_username_listener import (
     update_pokemeow_username_by_command,
 )
 from utils.listener_func.top_grinder_listener import assign_top_grinder_roles_listener
+from utils.listener_func.weekly_stats_listener import weekly_stats_checker
 from utils.logs.pretty_log import pretty_log
 from utils.monika_library.monika_lib_ar import monika_lib_ar_handler
 from utils.quick_codes.sync_members import sync_members_func
@@ -36,6 +37,7 @@ TRIGGERS = {
         re.IGNORECASE,
     ),
     "monthly_stats_checker": "**Clan Monthly Stats — VN Allstar**",
+    "weekly_stats_checker": "**Clan Weekly Stats — VN Allstar**",
 }
 
 
@@ -146,6 +148,22 @@ class MessageCreateListener(commands.Cog):
                 if message.channel.id == VN_ALLSTARS_TEXT_CHANNELS.snipe_channel:
                     if not message.author.bot:
                         await check_market_buy_command(
+                            message,
+                        )
+                # ————————————————————————————————
+                # 🗓️ Weekly Stats Checker Listener
+                # ————————————————————————————————
+                if first_embed:
+                    if (
+                        first_embed_title
+                        and TRIGGERS["weekly_stats_checker"] in first_embed_title
+                    ):
+                        pretty_log(
+                            "info",
+                            "Detected Clan Weekly Stats embed, processing weekly stats...",
+                        )
+                        await weekly_stats_checker(
+                            self.bot,
                             message,
                         )
                 # ————————————————————————————————

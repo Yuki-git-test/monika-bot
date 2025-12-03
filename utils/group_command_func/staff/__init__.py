@@ -6,7 +6,8 @@ from .message.send import message_send_func
 from .role_members import role_members_func
 from .set_channel import set_channel_func
 from .assign_top_grinder import assign_top_grinder_roles
-
+from .extract_joined_date import extract_joined_date_func
+from .update_member import update_member_func
 __all__ = [
     "assign_top_grinder_roles",
     "role_members_func",
@@ -16,4 +17,7 @@ __all__ = [
     "clan_members_func",
     "message_send_func",
     "message_edit_func",
+    "extract_joined_date_func",
+    "update_member_func",
 ]
+

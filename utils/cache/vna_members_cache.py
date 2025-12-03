@@ -22,6 +22,7 @@ async def load_vna_members_cache(bot):
                     "channel_id": member["channel_id"],
                     "perks": member["perks"],
                     "faction": member["faction"],
+                    "clan_joined_date": member.get("clan_joined_date"),
                 }
             pretty_log(
                 "cache", f"Loaded {len(vna_members_cache)} vna_members into cache."
@@ -42,6 +43,7 @@ def upsert_vna_member_cache(
     channel_id: int,
     perks: str,
     faction: str,
+    clan_joined_date: int = None,
 ):
     """
     Upsert a vna_member into the cache.
@@ -52,8 +54,10 @@ def upsert_vna_member_cache(
         "channel_id": channel_id,
         "perks": perks,
         "faction": faction,
+        "clan_joined_date": clan_joined_date,
     }
     pretty_log("cache", f"Upserted vna_member {user_name} ({user_id}) into cache.")
+
 
 def update_vna_member_multiple_fields_cache(
     user_id: int,
@@ -62,6 +66,7 @@ def update_vna_member_multiple_fields_cache(
     channel_id: int = None,
     perks: str = None,
     faction: str = None,
+    clan_joined_date: int = None,
 ):
     """
     Update multiple fields for a vna_member in the cache.
@@ -77,10 +82,24 @@ def update_vna_member_multiple_fields_cache(
             vna_members_cache[user_id]["perks"] = perks
         if faction is not None:
             vna_members_cache[user_id]["faction"] = faction
+        if clan_joined_date is not None:
+            vna_members_cache[user_id]["clan_joined_date"] = clan_joined_date
         pretty_log(
             "cache",
             f"Updated multiple fields for vna_member ({user_id}) in cache.",
         )
+
+def update_vna_member_clan_joined_date_cache(user_id: int, clan_joined_date: int):
+    """
+    Update the clan_joined_date of a vna_member in the cache.
+    """
+    if user_id in vna_members_cache:
+        vna_members_cache[user_id]["clan_joined_date"] = clan_joined_date
+        pretty_log(
+            "cache",
+            f"Updated clan_joined_date for vna_member ({user_id}) to {clan_joined_date} in cache.",
+        )
+        
 def update_vna_member_channel_cache(user_id: int, channel_id: int):
     """
     Update the channel_id of a vna_member in the cache.
@@ -92,6 +111,7 @@ def update_vna_member_channel_cache(user_id: int, channel_id: int):
             f"Updated channel_id for vna_member ({user_id}) to {channel_id} in cache.",
         )
 
+
 def update_vna_member_faction_cache(user_id: int, faction: str):
     """
     Update the faction of a vna_member in the cache.
@@ -102,6 +122,7 @@ def update_vna_member_faction_cache(user_id: int, faction: str):
             "cache",
             f"Updated faction for vna_member ({user_id}) to {faction} in cache.",
         )
+
 
 def update_vna_member_perks_cache(user_id: int, perks: str):
     """

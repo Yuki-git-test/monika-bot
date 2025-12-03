@@ -1,7 +1,7 @@
 VNA_SERVER_ID = 909880511701352488
 VNA_EMBED_COLOR = 0x135CC0
 MONIKA_EMBED_COLOR = 0xFF9999
-
+HARMLESS_USER_ID = 715486300383477823
 # 💦☁────────────────────────────────────────────💦☁
 #       VN_ALLSTARS_TEXT_CHANNELS
 # 💦☁────────────────────────────────────────────💦☁
@@ -485,6 +485,9 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
+    probation = 1426299800386539521
+    kick_list = 1445374287098937418
+    clan_break = 1445374171763965952
     ee_spawn_ping = 1443756412613431449
     personal_roles_divider = 1431150679258435655
     dot_role = 1375712535512354898

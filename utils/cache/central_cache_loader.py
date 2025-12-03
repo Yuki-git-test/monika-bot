@@ -5,7 +5,8 @@ from utils.logs.pretty_log import pretty_log
 
 from .vna_members_cache import load_vna_members_cache
 from .top_monthly_grinders_cache import load_top_monthly_grinders_cache
-
+from .probation_list_cache import load_probation_list_cache
+from .kick_list_cache import load_kick_list_cache
 
 # Load all caches
 async def load_all_caches(bot):
@@ -20,7 +21,12 @@ async def load_all_caches(bot):
         # Load top_monthly_grinders cache
         await load_top_monthly_grinders_cache(bot)
 
+        # Load probation_list cache
+        await load_probation_list_cache(bot)
 
+        # Load kick_list cache
+        await load_kick_list_cache(bot)
+        
         pretty_log("cache", "All caches loaded successfully.")
     except Exception as e:
         pretty_log("error", f"Error loading caches: {e}")

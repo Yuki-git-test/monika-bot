@@ -30,6 +30,7 @@ TAGS = {
     "sent": "💌 SENT",
     "debug": "🔍 DEBUG",
     "success": "✅ SUCCESS",
+    "scheduler": "⏰ SCHEDULER",
 }
 
 # -------------------- 🍑 Monika's ANSI Colors --------------------
