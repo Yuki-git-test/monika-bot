@@ -131,3 +131,39 @@ async def remove_webhook_url(
             tag="error",
             include_trace=True,
         )
+async def fetch_webhook_url(
+        bot: discord.Client,
+        channel: discord.TextChannel,
+    ):
+    bot_id = bot.user.id
+    channel_id = channel.id
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT url
+                FROM webhook_url
+                WHERE bot_id = $1 AND channel_id = $2
+                """,
+                bot_id,
+                channel_id,
+            )
+            if row:
+                pretty_log(
+                    message=f"✅ Fetched webhook URL for channel: {channel.name} (ID: {channel_id})",
+                    tag="db",
+                )
+                return row["url"]
+            else:
+                pretty_log(
+                    message=f"⚠️ No webhook URL found for channel: {channel.name} (ID: {channel_id})",
+                    tag="db",
+                )
+                return None
+    except Exception as e:
+        pretty_log(
+            message=f"❌ Failed to fetch webhook URL for channel: {channel.name} (ID: {channel_id}): {e}",
+            tag="error",
+            include_trace=True,
+        )
+        return None

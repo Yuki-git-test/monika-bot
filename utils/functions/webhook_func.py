@@ -3,7 +3,7 @@ from datetime import datetime
 import discord
 
 from utils.cache.cache_list import webhook_url_cache
-from utils.db.webhook_db_url import upsert_webhook_url
+from utils.db.webhook_db_url import fetch_webhook_url, upsert_webhook_url
 from utils.logs.pretty_log import pretty_log
 
 
@@ -44,22 +44,32 @@ async def send_webhook(
     key = (bot_id, channel_id)
     webhook_url_row = webhook_url_cache.get(key)
     if not webhook_url_row:
-
-        if channel_id == member_logs_channel_id:
-            webhook_name = "Monika Member Logs 📝"
-        elif channel_id == server_logs_channel_id:
-            webhook_name = "Monika Server Logs 🛡️"
-        else:
-            webhook_name = f"Monika Webhook {channel.name} 📢"
-        webhook_url = await create_webhook_func(bot, channel, webhook_name)
+        # Check db first
+        webhook_url = await fetch_webhook_url(bot, channel)
         if not webhook_url:
-            pretty_log(
-                tag="info",
-                message=f"⚠️ Falling back to direct channel send for channel '{channel.name}' (ID: {channel.id}) due to webhook creation failure",
-                label="🌐 WEBHOOK SEND",
-            )
-            await channel.send(content=content, embed=embed)
-            return
+            # Try to reuse an existing webhook in the channel
+            existing_webhooks = await channel.webhooks()
+            webhook_url = None
+            for wh in existing_webhooks:
+                if wh.user and wh.user.id == bot_id:
+                    webhook_url = wh.url
+                    break
+            if not webhook_url:
+                if channel_id == member_logs_channel_id:
+                    webhook_name = "Monika Member Logs 📝"
+                elif channel_id == server_logs_channel_id:
+                    webhook_name = "Monika Server Logs 🛡️"
+                else:
+                    webhook_name = f"Monika Webhook {channel.name} 📢"
+                webhook_url = await create_webhook_func(bot, channel, webhook_name)
+                if not webhook_url:
+                    pretty_log(
+                        tag="info",
+                        message=f"⚠️ Falling back to direct channel send for channel '{channel.name}' (ID: {channel.id}) due to webhook creation failure",
+                        label="🌐 WEBHOOK SEND",
+                    )
+                    await channel.send(content=content, embed=embed)
+                    return
         # Update cache for immediate use
         webhook_url_cache[key] = {
             "channel_name": channel_name,
