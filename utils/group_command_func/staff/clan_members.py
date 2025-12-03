@@ -83,14 +83,17 @@ class Clan_Members_Paginator(View):
             joined_date_str = "N/A"
             if clan_joined_date:
                 joined_date_str= f"<t:{clan_joined_date}:D>"
+
+            display_perks = perks.title() if perks != "None" else "None"
+            display_faction = faction.title() if faction != "None" else "None"
             embed.add_field(
                 name=f"👤 {member_name}",
                 value=(
                     f"**Discord Member:** {discord_member.mention}\n"
                     f"**Channel:** {channel_mention}\n"
                     f"**PokéMeow Name:** {pokemeow_name}\n"
-                    f"**Perks:** {perks.title()}\n"
-                    f"**Faction:** {faction.title()}\n"
+                    f"**Perks:** {display_perks}\n"
+                    f"**Faction:** {display_faction}\n"
                     f"**Joined Date:** {joined_date_str}"
                 ),
                 inline=False,
