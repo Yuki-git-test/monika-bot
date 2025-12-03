@@ -75,17 +75,17 @@ class Clan_Members_Paginator(View):
                 continue
             member_name = member.get("user_name", "Unknown")
             pokemeow_name = member.get("pokemeow_name", "Unknown")
-            perks = member.get("perks", "None")
+            perks = member.get("perks")
             channel_id = member.get("channel_id")
             channel_mention = f"<#{channel_id}>" if channel_id else "No channel set"
-            faction = member.get("faction", "None")
+            faction = member.get("faction")
             clan_joined_date = member.get("clan_joined_date", "Unknown")
             joined_date_str = "N/A"
             if clan_joined_date:
                 joined_date_str= f"<t:{clan_joined_date}:D>"
 
-            display_perks = perks.title() if perks != "None" else "None"
-            display_faction = faction.title() if faction != "None" else "None"
+            display_perks = perks.title() if perks not in (None, "None") else "None"
+            display_faction = faction.title() if faction not in (None, "None") else "None"
             embed.add_field(
                 name=f"👤 {member_name}",
                 value=(
