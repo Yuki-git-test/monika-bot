@@ -58,6 +58,7 @@ class Clan_Members_Paginator(View):
             await interaction.response.edit_message(embed=embed, view=self)
 
     async def get_embed(self):
+        total_members = len(self.members)
         start = self.page * self.per_page
         end = start + self.per_page
         page_members = self.members[start:end]
@@ -99,7 +100,7 @@ class Clan_Members_Paginator(View):
                 inline=False,
             )
         embed.set_footer(
-            text=f"Page {self.page + 1} of {self.max_page + 1}",
+            text=f"Page {self.page + 1} of {self.max_page + 1} | Total Members: {total_members}",
             icon_url=guild.icon.url if guild.icon else None,
         )
         return embed
