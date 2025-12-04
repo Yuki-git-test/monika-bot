@@ -24,7 +24,7 @@ from utils.listener_func.weekly_stats_listener import weekly_stats_checker
 from utils.logs.pretty_log import pretty_log
 from utils.monika_library.monika_lib_ar import monika_lib_ar_handler
 from utils.quick_codes.sync_members import sync_members_func
-
+from utils.listener_func.stats_listener import stats_command_handler
 dot_role_id = 1375712535512354898
 
 FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
@@ -180,6 +180,19 @@ class MessageCreateListener(commands.Cog):
                                 self.bot,
                                 message,
                             )
+                # ————————————————————————————————
+                # 📊 Stats Command Handler
+                # ————————————————————————————————
+                if first_embed:
+                    if "Stats" in first_embed_author_text:
+                        pretty_log(
+                            "info",
+                            "Detected Stats embed, processing stats command...",
+                        )
+                        await stats_command_handler(
+                            self.bot,
+                            message,
+                        )
                 # ————————————————————————————————
                 # 📖 Monika Library AR Handler
                 # ————————————————————————————————
