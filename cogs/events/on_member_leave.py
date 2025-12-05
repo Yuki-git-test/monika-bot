@@ -10,7 +10,7 @@ from constants.vn_allstars_constants import (
     VNA_SERVER_ID,
 )
 from utils.logs.pretty_log import pretty_log
-
+from utils.cache.cache_list import vna_members_cache
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
 from utils.functions.webhook_func import send_webhook
 
@@ -36,9 +36,14 @@ class OnMemberLeaveCog(commands.Cog):
 
         # Log member leave
         log_channel = member.guild.get_channel(LOG_CHANNEL_ID)
+        title_str = "👋 Member Left Server"
+        # Check if its a clan member
+        member_info  = vna_members_cache.get(member.id)
+        if member_info:
+            title_str = "💔 Clan Member Left Server"
         if log_channel:
             embed = discord.Embed(
-                title="👋 Member Left",
+                title=title_str,
                 color=discord.Color.red(),
                 description=(
                     f"**Member:** {member.mention} - {member.name}\n"

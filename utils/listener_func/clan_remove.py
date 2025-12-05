@@ -95,16 +95,17 @@ async def auto_clan_remove_handler(
                             )
     # Log the clan leave event
     log_channel = member.guild.get_channel(LOG_CHANNEL_ID)
-    message_link = ""
+    message_link = None
     if log_channel:
         if context == "clan_leave_command":
             title = "Clan Member Left via Command"
-            message_link = f"• [Jump to Message]({replied_message.jump_url})\n"
+            message_link = replied_message.jump_url if replied_message else None
         else:
             title = "Clan Member Removed"
 
         embed = discord.Embed(
             title=title,
+            url = message_link if message_link else None,
             color=discord.Color.red(),
             description=(
                 f"{message_link}"
