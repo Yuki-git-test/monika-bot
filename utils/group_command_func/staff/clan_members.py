@@ -83,10 +83,12 @@ class Clan_Members_Paginator(View):
             clan_joined_date = member.get("clan_joined_date", "Unknown")
             joined_date_str = "N/A"
             if clan_joined_date:
-                joined_date_str= f"<t:{clan_joined_date}:D>"
+                joined_date_str = f"<t:{clan_joined_date}:D>"
 
             display_perks = perks.title() if perks not in (None, "None") else "None"
-            display_faction = faction.title() if faction not in (None, "None") else "None"
+            display_faction = (
+                faction.title() if faction not in (None, "None") else "None"
+            )
             embed.add_field(
                 name=f"👤 {member_name}",
                 value=(
@@ -142,6 +144,16 @@ async def clan_members_func(
         if not members:
             await loader.error(content="No VNA Clan members found in the database.")
             return
+
+        # Sort members by clan_joined_date (oldest first, unknowns last)
+        def get_joined_date(member):
+            date = member.get("clan_joined_date")
+            try:
+                return int(date)
+            except (TypeError, ValueError):
+                return float("inf")  # Put unknown dates at the end
+
+        members.sort(key=get_joined_date)
         # Create and send the paginator
         paginator = Clan_Members_Paginator(bot, user, members, per_page=10)
         embed = await paginator.get_embed()

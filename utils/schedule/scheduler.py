@@ -25,15 +25,14 @@ async def setup_schedulers(bot):
     scheduler_manager.start()
     pretty_log("scheduler", "Scheduler started.")
 
-    # Weekly Stats Check Reminder Every 7th, 14th, 21st, and 28th Day at 11:50 PM EST
+    # Weekly Stats Check Reminder Every Saturday at 11:50 PM EST
     try:
         job = scheduler_manager.add_cron_job(
             func=weekly_stats_check_reminder,
             name="weekly_stats_check_reminder",
             hour=23,
             minute=50,
-            day_of_month="7,14,21,28",
-            timezone=NYC,
+            day_of_week="sat",
             args=[bot],
         )
         pretty_log(

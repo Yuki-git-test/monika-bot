@@ -20,10 +20,11 @@ async def load_probation_list_cache(bot):
             )
             return
 
-        for user_id, user_name, pokemeow_name in probation_members:
+        for user_id, user_name, pokemeow_name, catch_requirement in probation_members:
             probation_list_cache[user_id] = {
                 "user_name": user_name,
                 "pokemeow_name": pokemeow_name,
+                "catch_requirement": catch_requirement,
             }
         pretty_log(
             "info",
@@ -44,19 +45,32 @@ def upsert_probation_list_cache(user: discord.Member):
     """
 
     # Accepts user and pokemeow_name
-    def upsert_probation_list_cache(user: discord.Member, pokemeow_name: str):
+    def upsert_probation_list_cache(
+        user: discord.Member, pokemeow_name: str, catch_requirement: int
+    ):
         user_name = user.name
         probation_list_cache[user.id] = {
             "user_name": user_name,
             "pokemeow_name": pokemeow_name,
+            "catch_requirement": catch_requirement,
         }
         pretty_log(
             "info",
-            f"Upserted probation list cache member: {user_name} ({user.id}) | Pokemeow: {pokemeow_name}",
+            f"Upserted probation list cache member: {user_name} ({user.id}) | Pokemeow: {pokemeow_name} | Catch Requirement: {catch_requirement}",
             label="Probation List Cache",
         )
 
-
+def update_probation_catch_requirement_cache(user: discord.Member, catch_requirement: int):
+    """
+    Update the catch requirement for a probation_list_cache member.
+    """
+    if user.id in probation_list_cache:
+        probation_list_cache[user.id]["catch_requirement"] = catch_requirement
+        pretty_log(
+            "info",
+            f"Updated catch requirement for probation list cache member: {user} ({user.id}) to {catch_requirement}",
+            label="Probation List Cache",
+        )
 def remove_probation_list_cache(user: discord.Member):
     """
     Remove a user from the probation_list_cache.

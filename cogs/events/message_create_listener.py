@@ -25,6 +25,7 @@ from utils.logs.pretty_log import pretty_log
 from utils.monika_library.monika_lib_ar import monika_lib_ar_handler
 from utils.quick_codes.sync_members import sync_members_func
 from utils.listener_func.stats_listener import stats_command_handler
+from utils.listener_func.monthly_stats_listener import monthly_stats_checker
 dot_role_id = 1375712535512354898
 
 FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
@@ -163,6 +164,19 @@ class MessageCreateListener(commands.Cog):
                             "Detected Clan Weekly Stats embed, processing weekly stats...",
                         )
                         await weekly_stats_checker(self.bot, message, message)
+                # ————————————————————————————————
+                # 🗓️ Monthly Stats Checker Listener
+                # ————————————————————————————————
+                if first_embed:
+                    if (
+                        first_embed_title
+                        and TRIGGERS["monthly_stats_checker"] in first_embed_title
+                    ):
+                        pretty_log(
+                            "info",
+                            "Detected Clan Monthly Stats embed, processing monthly stats...",
+                        )
+                        await monthly_stats_checker(self.bot, message, message)
                 # ————————————————————————————————
                 # 🏆 Top Grinder Roles Assignment Listener
                 # ————————————————————————————————

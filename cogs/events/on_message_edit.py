@@ -13,13 +13,14 @@ from utils.listener_func.clan_remove import (
     handle_clan_kick_command,
     handle_clan_leave_command,
 )
+from utils.listener_func.monthly_stats_listener import monthly_stats_checker
 from utils.listener_func.perks_listener import (
     extract_perks_from_perk_message,
     extract_perks_from_profile_message,
     update_perks_via_perks_purchase,
 )
-from utils.logs.pretty_log import pretty_log
 from utils.listener_func.weekly_stats_listener import weekly_stats_checker
+from utils.logs.pretty_log import pretty_log
 
 TRIGGERS = {
     "pro_embed": "to view badge information",
@@ -29,6 +30,7 @@ TRIGGERS = {
         re.IGNORECASE,
     ),
     "weekly_stats_checker": "**Clan Weekly Stats — VN Allstar**",
+    "monthly_stats_checker": "**Clan Monthly Stats — VN Allstar**",
 }
 
 
@@ -97,13 +99,31 @@ class OnMessageEditCog(commands.Cog):
         # 🗓️ Weekly Stats Checker Listener
         # ————————————————————————————————
         if first_embed:
-            if first_embed_title and TRIGGERS["weekly_stats_checker"] in first_embed_title:
+            if (
+                first_embed_title
+                and TRIGGERS["weekly_stats_checker"] in first_embed_title
+            ):
                 pretty_log(
                     message=f"Detected weekly stats checker embed edit for member '{after.author.display_name}'.",
                     tag="info",
                     label="Weekly Stats Checker",
                 )
                 await weekly_stats_checker(self.bot, before, after)
+        # ————————————————————————————————
+        # 🗓️ Monthly Stats Checker Listener
+        # ————————————————————————————————
+        if first_embed:
+            if (
+                first_embed_title
+                and TRIGGERS["monthly_stats_checker"] in first_embed_title
+            ):
+                pretty_log(
+                    message=f"Detected monthly stats checker embed edit for member '{after.author.display_name}'.",
+                    tag="info",
+                    label="Monthly Stats Checker",
+                )
+                await monthly_stats_checker(self.bot, before, after)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMessageEditCog(bot))

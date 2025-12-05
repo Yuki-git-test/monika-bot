@@ -15,8 +15,11 @@ from constants.vn_allstars_constants import (
 from utils.cache.cache_list import (
     kick_list_cache,
     probation_list_cache,
-    top_monthly_grinders_cache,
     vna_members_cache,
+)
+from utils.db.probation_list_db import (
+    update_probation_catch_requirement,
+    upsert_probation_member,
 )
 from utils.essentials.pokemeow_member_reply import get_pokemeow_reply_member
 from utils.essentials.pretty_defer import pretty_defer
@@ -29,7 +32,7 @@ from utils.essentials.stats_parsers import (
 from utils.functions.webhook_func import send_webhook
 from utils.logs.pretty_log import pretty_log
 
-PROBATION_LIST_DAYS = [7, 14, 21, 28]
+PROBATION_LIST_DAYS = [6, 13, 20, 27]  # Every Saturday
 WEEKLY_REQUIREMENT_CATCHES = 1500
 
 
@@ -37,6 +40,23 @@ def is_past_11pm_probation_day_est():
     est = pytz.timezone("US/Eastern")
     now_est = datetime.now(est)
     return now_est.day in PROBATION_LIST_DAYS and now_est.hour >= 23
+
+
+def is_saturday_10min_before_midnight_est(now=None):
+    """
+    Returns True if the current time (or provided datetime) is Saturday,
+    between 11:50 PM and 11:59:59 PM EST.
+    """
+    est = pytz.timezone("US/Eastern")
+    if now is None:
+        now = datetime.now(est)
+    else:
+        now = now.astimezone(est)
+    return (
+        now.weekday() == 5  # Saturday (Monday=0)
+        and now.hour == 23
+        and 50 <= now.minute < 60
+    )
 
 
 def get_est_day_number():
@@ -65,12 +85,21 @@ async def send_probation_report_embed(
     catches: int,
     fishes: int,
     total_catches: int,
+    required_catches: int = None,
+    old_required_catches: int = None,
 ):
     if "add" in title.lower() or "assigned" in title.lower():
         color = discord.Color.red()
     else:
         color = discord.Color.green()
 
+    required_catches_text = ""
+    if required_catches:
+        required_catches_text = f"**Required Catches:** {required_catches:,}\n"
+        if old_required_catches:
+            required_catches_text += (
+                f"**Previous Required Catches:** {old_required_catches:,}\n"
+            )
     embed = discord.Embed(
         title=title,
         description=(
@@ -78,6 +107,7 @@ async def send_probation_report_embed(
             f"**Catches:** {catches}\n"
             f"**Fishes:** {fishes}\n"
             f"**Total Catches:** {total_catches}\n"
+            f"{required_catches_text}"
         ),
         color=color,
         timestamp=datetime.now(),
@@ -102,11 +132,138 @@ async def send_probation_report_embed(
         )
 
 
+async def probation_assignment_handler(
+    bot: discord.Client,
+    member: discord.Member,
+    catches: int,
+    fishes: int,
+    total_catches: int,
+):
+    # Get roles
+    guild = bot.get_guild(VNA_SERVER_ID)
+    kick_role = guild.get_role(VN_ALLSTARS_ROLES.kick_list)
+    clan_break_role = guild.get_role(VN_ALLSTARS_ROLES.clan_break)
+    probation_role = guild.get_role(VN_ALLSTARS_ROLES.probation)
+
+    # Get member info
+    member_info = vna_members_cache.get(member.id)
+    if not member_info:
+        pretty_log(
+            "info",
+            f"Member {member.display_name} not found in VNA members cache.",
+            label="Auto Probation Role Assignment",
+        )
+        msg = f"Member {member.display_name} not found in VNA members cache."
+        return False, msg
+
+    joined_date = member_info.get("clan_joined_date")
+    pokemeow_name = member_info.get("pokemeow_name", "Unknown")
+    is_new_to_clan = False
+
+    if joined_date and is_clan_member_less_than_7_days_est(joined_date):
+        is_new_to_clan = True
+        pretty_log(
+            "info",
+            f"Member {member.display_name} is new to clan (joined less than 7 days).",
+            label="Auto Probation Role Assignment",
+        )
+        msg = f"Member {member.display_name} is new to clan (joined less than 7 days)."
+        return False, msg
+
+    if catches >= WEEKLY_REQUIREMENT_CATCHES:
+        msg = f"Member {member.display_name} met weekly catches requirement with {catches} catches."
+        return False, msg
+
+    if clan_break_role in member.roles:
+        # Skip members on clan break
+        msg = f"Member {member.display_name} is on clan break."
+        return False, msg
+
+    if catches < WEEKLY_REQUIREMENT_CATCHES:
+        if probation_role not in member.roles:
+            await member.add_roles(
+                probation_role,
+                reason="Did not meet weekly catches requirement.",
+            )
+            pretty_log(
+                "info",
+                f"Assigned probation role to {member.display_name} for not meeting weekly catches requirement.",
+                label="Auto Probation Role Assignment",
+            )
+            await send_probation_report_embed(
+                bot=bot,
+                title="⚠️ Probation Role Assigned",
+                member=member,
+                catches=catches,
+                fishes=fishes,
+                total_catches=total_catches,
+            )
+            # Upsert to probation list db with 1500 catch requirement
+            await upsert_probation_member(
+                bot=bot,
+                user=member,
+                pokemeow_name=pokemeow_name,
+                catch_requirement=WEEKLY_REQUIREMENT_CATCHES,
+            )
+            return True, None
+        elif probation_role in member.roles:
+            # Get current catch requirement from cache
+            probation_member_info = probation_list_cache.get(member.id)
+            previous_catch_requirement = probation_member_info.get(
+                "catch_requirement", 1500
+            )
+            int_previous_catch_requirement = int(previous_catch_requirement)
+            new_catch_requirement = (
+                int_previous_catch_requirement + WEEKLY_REQUIREMENT_CATCHES
+            )
+
+            # Add double probation aka kick role
+            if kick_role not in member.roles:
+                await member.add_roles(
+                    kick_role,
+                    reason="Second week of not meeting weekly catches requirement.",
+                )
+                pretty_log(
+                    "info",
+                    f"Assigned kick role to {member.display_name} for second week of not meeting weekly catches requirement.",
+                    label="Auto Probation Role Assignment",
+                )
+                title = "⚠️ Double Probation Role Assigned"
+                await send_probation_report_embed(
+                    bot=bot,
+                    title=title,
+                    member=member,
+                    catches=catches,
+                    fishes=fishes,
+                    total_catches=total_catches,
+                    required_catches=new_catch_requirement,
+                    old_required_catches=int_previous_catch_requirement,
+                )
+            elif kick_role in member.roles:
+                title = "⚠️ Catch Requirement Updated for Member"
+                await send_probation_report_embed(
+                    bot=bot,
+                    title=title,
+                    member=member,
+                    catches=catches,
+                    fishes=fishes,
+                    total_catches=total_catches,
+                    required_catches=new_catch_requirement,
+                    old_required_catches=int_previous_catch_requirement,
+                )
+            # Update catch requirement in db
+            await update_probation_catch_requirement(
+                bot=bot,
+                user=member,
+                catch_requirement=new_catch_requirement,
+            )
+            return True, None
+
+
 async def weekly_stats_checker(
     bot: discord.Client, before_message: discord.Message, after_message: discord.Message
 ):
 
-    is_probation_time = is_past_11pm_probation_day_est()
     # Extract stats from message
     embed = after_message.embeds[0] if after_message.embeds else None
     if not embed:
@@ -121,20 +278,22 @@ async def weekly_stats_checker(
     if not embed_description:
         return
 
+    # Check if 10 minutes before midnight EST on Saturday
+    if not is_saturday_10min_before_midnight_est():
+        pretty_log(
+            "info",
+            "Not the scheduled time for weekly stats check reminder.",
+            label="Weekly Stats Listener",
+        )
+        return
     # Get member first
     command_user = await get_pokemeow_reply_member(before_message)
     if not command_user:
         return
 
-    # Get current day and hour in EST
-    current_day = get_est_day_number()
-    current_hour = get_est_hour()
-
     # Get roles
     guild = bot.get_guild(VNA_SERVER_ID)
-    kick_role = guild.get_role(VN_ALLSTARS_ROLES.kick_list)
     clan_break_role = guild.get_role(VN_ALLSTARS_ROLES.clan_break)
-    probation_role = guild.get_role(VN_ALLSTARS_ROLES.probation)
 
     # Parse clan stats from embed description
     clan_members_stats = parse_clan_stats_message(embed_description)
@@ -181,6 +340,7 @@ async def weekly_stats_checker(
                 label="Auto Probation Role Assignment",
             )
     """
+
     # Get top line
     command_user_catches = 0
     command_user_top_line_match = re.search(
@@ -193,106 +353,30 @@ async def weekly_stats_checker(
             f"Command user catches parsed from embed: {user_catches}",
         )
 
+
     # Check command user first
     command_user_id = command_user.id
-    command_user_info = vna_members_cache.get(command_user_id)
-    if not command_user_info:
-        pretty_log(
-            "error",
-            f"Command user {command_user.display_name} not found in VNA members cache.",
-            label="Auto Probation Role Assignment",
+    command_user = guild.get_member(command_user_id)
+    if command_user:
+        success, message = await probation_assignment_handler(
+            bot=bot,
+            member=command_user,
+            catches=command_user_catches,
+            fishes=0,
+            total_catches=command_user_catches,
         )
-    command_user_joined_date = command_user_info.get("clan_joined_date")
-    new_to_clan = False
-    if command_user_joined_date:
-        if is_clan_member_less_than_7_days_est(command_user_joined_date):
-            new_to_clan = True
+        if success:
             pretty_log(
                 "info",
-                f"Command user {command_user.display_name} is new to clan (joined less than 7 days).",
+                f"Processed probation assignment for command user {command_user.display_name}.",
                 label="Auto Probation Role Assignment",
             )
-        if (
-            command_user_joined_date
-            and not new_to_clan
-            and command_user_id != HARMLESS_USER_ID
-        ):
-            # Remove if on probation if met requirements
-            if probation_role in command_user.roles:
-                if command_user_catches >= WEEKLY_REQUIREMENT_CATCHES:
-                    roles_to_remove = []
-                    if probation_role in command_user.roles:
-                        roles_to_remove.append(probation_role)
-                    if kick_role in command_user.roles:
-                        roles_to_remove.append(kick_role)
-                    if roles_to_remove:
-                        await command_user.remove_roles(
-                            *roles_to_remove,
-                            reason="Met weekly catches requirement.",
-                        )
-                        pretty_log(
-                            "info",
-                            f"Removed probation/kick roles from {command_user.display_name} for meeting weekly catches requirement.",
-                            label="Auto Probation Role Assignment",
-                        )
-                        title = "✅ Command User Probation Role Removed"
-                        if kick_role in roles_to_remove:
-                            title = "✅  Command User Probation and Double Probation Roles Removed"
-                        await send_probation_report_embed(
-                            bot=bot,
-                            title=title,
-                            member=command_user,
-                            catches=command_user_catches,
-                            fishes=0,
-                            total_catches=command_user_catches,
-                        )
-
-                # Assign probation if didnt meet requirements and doesnt have probation
-                elif command_user_catches < WEEKLY_REQUIREMENT_CATCHES:
-                    # Check time to assign probation
-                    if current_day in PROBATION_LIST_DAYS and current_hour >= 23:
-                        if probation_role not in command_user.roles:
-                            await command_user.add_roles(
-                                probation_role,
-                                reason="Did not meet weekly catches requirement.",
-                            )
-                            pretty_log(
-                                "info",
-                                f"Assigned probation role to {command_user.display_name} for not meeting weekly catches requirement.",
-                                label="Auto Probation Role Assignment",
-                            )
-                            title = "⚠️ Command User Probation Role Assigned"
-                            await send_probation_report_embed(
-                                bot=bot,
-                                title=title,
-                                member=command_user,
-                                catches=command_user_catches,
-                                fishes=0,
-                                total_catches=command_user_catches,
-                            )
-                        elif (
-                            probation_role in command_user.roles
-                            and not kick_role in command_user.roles
-                        ):
-                            # Add double probation aka kick role
-                            await command_user.add_roles(
-                                kick_role,
-                                reason="Second week of not meeting weekly catches requirement.",
-                            )
-                            pretty_log(
-                                "info",
-                                f"Assigned kick role to {command_user.display_name} for second week of not meeting weekly catches requirement.",
-                                label="Auto Probation Role Assignment",
-                            )
-                            title = "⚠️ Command User Double Probation Role Assigned"
-                            await send_probation_report_embed(
-                                bot=bot,
-                                title=title,
-                                member=command_user,
-                                catches=command_user_catches,
-                                fishes=0,
-                                total_catches=command_user_catches,
-                            )
+        else:
+            pretty_log(
+                "info",
+                f"Skipped probation assignment for command user {command_user.display_name}. Reason: {message}",
+                label="Auto Probation Role Assignment",
+            )
 
     # Assign roles to top 10
     for member, username, catches, fishes in known_members:
@@ -304,81 +388,23 @@ async def weekly_stats_checker(
         if clan_break_role in member.roles:
             continue  # Skip members on clan break
 
-        # Check if member is new to clan
-        member_info = vna_members_cache.get(member_id)
-        is_new_to_clan = False
-        if member_info:
-            joined_date = member_info.get("clan_joined_date")
-            if joined_date and is_clan_member_less_than_7_days_est(joined_date):
-                is_new_to_clan = True
-
-        if is_probation_time and not is_new_to_clan:
-            if total_catches < WEEKLY_REQUIREMENT_CATCHES:
-                # Assign probation role
-                if probation_role not in member.roles:
-                    await member.add_roles(
-                        probation_role,
-                        reason="Did not meet weekly catches requirement.",
-                    )
-                    pretty_log(
-                        "info",
-                        f"Assigned probation role to {member.display_name} for not meeting weekly catches requirement.",
-                        label="Auto Probation Role Assignment",
-                    )
-                    await send_probation_report_embed(
-                        bot=bot,
-                        title="⚠️ Probation Role Assigned",
-                        member=member,
-                        catches=catches,
-                        fishes=fishes,
-                        total_catches=total_catches,
-                    )
-                elif probation_role in member.roles and not kick_role in member.roles:
-                    # Add double probation aka kick role
-                    await member.add_roles(
-                        kick_role,
-                        reason="Second week of not meeting weekly catches requirement.",
-                    )
-                    pretty_log(
-                        "info",
-                        f"Assigned kick role to {member.display_name} for second week of not meeting weekly catches requirement.",
-                        label="Auto Probation Role Assignment",
-                    )
-                    title = "⚠️ Double Probation Role Assigned"
-                    await send_probation_report_embed(
-                        bot=bot,
-                        title=title,
-                        member=member,
-                        catches=catches,
-                        fishes=fishes,
-                        total_catches=total_catches,
-                    )
-            elif total_catches >= WEEKLY_REQUIREMENT_CATCHES:
-                # Remove probation role if met requirements
-                roles_to_remove = []
-                if probation_role in member.roles:
-                    roles_to_remove.append(probation_role)
-                if kick_role in member.roles:
-                    roles_to_remove.append(kick_role)
-                if roles_to_remove:
-                    await member.remove_roles(
-                        *roles_to_remove,
-                        reason="Met weekly catches requirement.",
-                    )
-
-                    pretty_log(
-                        "info",
-                        f"Removed probation/kick roles from {member.display_name} for meeting weekly catches requirement.",
-                        label="Auto Probation Role Assignment",
-                    )
-                    title = "✅ Probation Role Removed"
-                    if kick_role in roles_to_remove:
-                        title = "✅ Probation and Double Probation Roles Removed"
-                    await send_probation_report_embed(
-                        bot=bot,
-                        title=title,
-                        member=member,
-                        catches=catches,
-                        fishes=fishes,
-                        total_catches=total_catches,
-                    )
+        success, message = await probation_assignment_handler(
+            bot=bot,
+            member=member,
+            catches=int(catches),
+            fishes=int(fishes),
+            total_catches=total_catches,
+        )
+        if success:
+            pretty_log(
+                "info",
+                f"Processed probation assignment for {member.display_name}.",
+                label="Auto Probation Role Assignment",
+            )
+        else:
+            pretty_log(
+                "info",
+                f"Skipped probation assignment for {member.display_name}. Reason: {message}",
+                label="Auto Probation Role Assignment",
+            )
+            continue
