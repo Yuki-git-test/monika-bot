@@ -58,6 +58,7 @@ def build_market_snipe_roles_embed(guild: discord.Guild, user: discord.Member):
         event_exclusive_snipe_role = guild.get_role(
             VN_ALLSTARS_ROLES.eventexclusives_snipe
         )
+        paldean_snipe_role = guild.get_role(VN_ALLSTARS_ROLES.paldean_snipe)
 
         roles = []
         if common_snipe_role:
@@ -115,6 +116,12 @@ def build_market_snipe_roles_embed(guild: discord.Guild, user: discord.Member):
             view.add_item(
                 Server_Booster_Only_Button(role, "Event Exclusive Snipe", emoji)
             )
+            roles.append((emoji, role))
+            
+        if paldean_snipe_role:
+            emoji = "🌋"
+            role = paldean_snipe_role
+            view.add_item(Server_Booster_Only_Button(role, "Paldean Snipe", emoji))
             roles.append((emoji, role))
 
         if roles:

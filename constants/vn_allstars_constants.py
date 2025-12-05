@@ -485,6 +485,7 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
+    paldean_snipe = 1446581017501503628
     probation = 1426299800386539521
     kick_list = 1445374287098937418
     clan_break = 1445374171763965952
