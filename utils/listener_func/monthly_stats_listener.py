@@ -47,6 +47,14 @@ async def probation_removal_handler(
         return False, msg
 
     probation_member_info = probation_list_cache.get(member.id)
+    if not probation_member_info:
+        pretty_log(
+            "info",
+            f"Member {member.display_name} not found in probation list cache.",
+            label="Auto Probation Role Assignment",
+        )
+        msg = f"Member {member.display_name} not found in probation list cache."
+        return False, msg
     previous_catch_requirement = probation_member_info.get("catch_requirement", 1500)
 
     if (
@@ -112,7 +120,15 @@ async def monthly_stats_checker(
     if not command_user:
         return
 
-
+    # Check if probation list is empty
+    if not probation_list_cache:
+        pretty_log(
+            "info",
+            "Probation list is empty. Skipping monthly stats probation check.",
+            label="Auto Probation Role Assignment",
+        )
+        return
+    
     # Get roles
     guild = bot.get_guild(VNA_SERVER_ID)
 
