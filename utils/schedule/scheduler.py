@@ -12,7 +12,7 @@ from .schedule_manager import SchedulerManager
 
 # Schedule Functions
 from .weekly_stats_check_reminder import weekly_stats_check_reminder
-
+from .prob_weekly_catch_reminder import prob_weekly_catch_reminder
 # Timezones
 MANILA = zoneinfo.ZoneInfo("Asia/Manila")
 NYC = zoneinfo.ZoneInfo("America/New_York")  # auto-handles EST/EDT
@@ -47,6 +47,30 @@ async def setup_schedulers(bot):
         pretty_log(
             "error",
             message=(f"Failed to schedule Weekly Stats Check Reminder. Error: {e}"),
+        )
+
+    # PROB Weekly Catch Reminder Every Friday Midnight EST
+    try:
+        job = scheduler_manager.add_cron_job(
+            func=prob_weekly_catch_reminder,
+            name="prob_weekly_catch_reminder",
+            hour=0,
+            minute=0,
+            day_of_week="fri",
+            timezone=NYC,
+            args=[bot],
+        )
+        pretty_log(
+            "scheduler",
+            message=(
+                f"Scheduled: PROB Weekly Catch Reminder every Friday at 12:00 AM EST\n"
+                f"Next Scheduled Run: {job.next_run_time}"
+            ),
+        )
+    except Exception as e:
+        pretty_log(
+            "error",
+            message=(f"Failed to schedule PROB Weekly Catch Reminder. Error: {e}"),
         )
 
     # Attach the scheduler manager to the bot for later access

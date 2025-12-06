@@ -10,7 +10,7 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
 )
-from utils.functions.webhook_func import send_webhook
+
 from utils.logs.pretty_log import pretty_log
 
 
