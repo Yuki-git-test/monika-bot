@@ -34,14 +34,7 @@ class OnMessageDeleteCog(commands.Cog):
             "info",
             f"Message deleted in {guild.name} by {message.author} in #{message.channel}: {message.content}",
         )
-        # Only log messages if they have image or video
-        if not message.attachments:
-            return
 
-        pretty_log(
-            "info",
-            f"Message had {len(message.attachments)} attachments.",
-        )
 
         # Get media attachments
         media_attachments = [
@@ -49,12 +42,7 @@ class OnMessageDeleteCog(commands.Cog):
             for att in message.attachments
             if att.content_type and att.content_type.startswith(("image/", "video/"))
         ]
-        if not media_attachments:
-            pretty_log(
-                "info",
-                "No image or video attachments found in the deleted message.",
-            )
-            return
+
         pretty_log(
             "info",
             f"Found {len(media_attachments)} media attachments in the deleted message.",
@@ -72,8 +60,36 @@ class OnMessageDeleteCog(commands.Cog):
             "info",
             f"Logging deleted message attachments to channel ID {LOG_CHANNEL_ID}.",
         )
+        if len(media_attachments) == 0:
 
-        if len(media_attachments) == 1:
+            embed = discord.Embed(
+                title="🗑️ Message Deleted",
+                color=discord.Color.red(),
+                description=(
+                    f"**Member:** {message.author.mention}\n"
+                    f"**Channel:** {message.channel.mention}\n"
+                ),
+                timestamp=datetime.now(),
+            )
+            embed.add_field(
+                name="Message Content",
+                value=message.content or "[No text]",
+                inline=False,
+            )
+            embed.set_author(
+                name=message.author.display_name,
+                icon_url=message.author.display_avatar.url,
+            )
+            embed.set_footer(
+                text=f"Message ID: {message.id}",
+                icon_url=message.guild.icon.url if message.guild.icon else None,
+            )
+            await send_webhook(
+                bot=self.bot,
+                channel=log_channel,
+                embed=embed,
+            )
+        elif len(media_attachments) == 1:
             try:
                 pretty_log(
                     "info",

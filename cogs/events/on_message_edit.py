@@ -21,7 +21,7 @@ from utils.listener_func.perks_listener import (
 )
 from utils.listener_func.weekly_stats_listener import weekly_stats_checker
 from utils.logs.pretty_log import pretty_log
-
+from utils.functions.message_edit_log import message_edit_log
 TRIGGERS = {
     "pro_embed": "to view badge information",
     "clan_leave": "You left **VN Allstar**.",
@@ -63,6 +63,11 @@ class OnMessageEditCog(commands.Cog):
             first_embed.footer.text if first_embed and first_embed.footer else ""
         )
         first_embed_title = first_embed.title if first_embed else ""
+        # 🍭──────────────────────────────
+        #   🎀 Message Edit Log
+        # 🍭──────────────────────────────
+        await message_edit_log(self.bot, before, after)
+        
         # 🍭──────────────────────────────
         #   🎀 Clan Leave Processing
         # 🍭──────────────────────────────

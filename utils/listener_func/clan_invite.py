@@ -1,14 +1,17 @@
 import re
 
 import discord
-from utils.functions.webhook_func import send_webhook
+
 from constants.vn_allstars_constants import (
     VN_ALLSTARS_CATEGORIES,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
 )
+from utils.functions.webhook_func import send_webhook
 from utils.logs.pretty_log import pretty_log
+
 image_url = "https://media.discordapp.net/attachments/1220786720082235403/1382956264102826004/image.png?ex=684d09e3&is=684bb863&hm=8e69e66a6897337d74b88efac9a84b6ad95e1dc42b6cc269ea352e9e766d0299&=&format=webp&quality=lossless&width=1600&height=128"
+
 
 # 🟣────────────────────────────────────────────
 #          ⚡ Auto Clan Invite ⚡
@@ -96,6 +99,10 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                     description=desc,
                     color=0xFF00EE,  # Magenta
                 )
+                embed.set_author(
+                    name=user.display_name, icon_url=user.display_avatar.url
+                )
+                embed.set_thumbnail(url=guild.icon.url if guild.icon else None)
                 embed.set_image(url=image_url)
                 await message.channel.send(embed=embed)
                 pretty_log(
@@ -106,14 +113,20 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                 # Send a log embed to your server log channel
                 log_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.server_log)
                 if log_channel:
+
                     log_embed = discord.Embed(
                         title="New Clan Member Joined",
-                        description=f"{user.mention} has joined the clan and was assigned roles and a personal channel.",
+                        url=message.jump_url,
+                        description=f"**Member:** {user.mention}\n**Channel:** {new_channel.mention}",
                         color=0xFF00EE,  # Magenta
                     )
-                    log_embed.add_field(name="User", value=user.mention, inline=True)
-                    log_embed.add_field(
-                        name="Channel", value=new_channel.mention, inline=True
+                    log_embed.set_thumbnail(url=user.display_avatar.url)
+                    log_embed.set_author(
+                        name=user.display_name, icon_url=user.display_avatar.url
+                    )
+                    log_embed.set_footer(
+                        text=f"User ID: {user.id}",
+                        icon_url=guild.icon.url if guild.icon else None,
                     )
                     await send_webhook(
                         bot=bot,

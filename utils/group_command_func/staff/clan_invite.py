@@ -100,6 +100,10 @@ async def clan_invite_func(
         description=desc,
         color=0xFF00EE,  # Magenta
     )
+    embed.set_author(
+        name=user.display_name, icon_url=user.display_avatar.url
+    )
+    embed.set_thumbnail(url=guild.icon.url if guild.icon else None)
     embed.set_image(url=image_url)
     await interaction.channel.send(embed=embed)
     pretty_log(
@@ -112,11 +116,16 @@ async def clan_invite_func(
     if log_channel:
         log_embed = discord.Embed(
             title="New Clan Member Joined",
-            description=f"{user.mention} has joined the clan and was assigned roles and a personal channel.",
+            description=f"**Member:** {user.mention}\n**Channel:** {new_channel.mention}",
             color=0xFF00EE,  # Magenta
         )
-        log_embed.add_field(name="User", value=user.mention, inline=True)
-        log_embed.add_field(name="Channel", value=new_channel.mention, inline=True)
+        log_embed.set_thumbnail(url=user.display_avatar.url)
+        log_embed.set_author(
+            name=member.display_name, icon_url=member.display_avatar.url
+        )
+        log_embed.set_footer(
+            text=f"User ID: {user.id}", icon_url=guild.icon.url if guild.icon else None
+        )
         await send_webhook(
             bot=bot,
             channel=log_channel,
