@@ -33,6 +33,7 @@ async def setup_schedulers(bot):
             hour=23,
             minute=50,
             day_of_week="sat",
+            timezone=NYC,
             args=[bot],
         )
         pretty_log(
