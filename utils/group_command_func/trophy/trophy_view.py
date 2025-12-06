@@ -2,7 +2,12 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
+from constants.aesthetic import Thumbnails
+from constants.vn_allstars_constants import (
+    MONIKA_EMBED_COLOR,
+    VN_ALLSTARS_ROLES,
+    VN_ALLSTARS_TEXT_CHANNELS,
+)
 from utils.db.trophy import (
     fetch_all_trophies,
     fetch_user_place_and_trophies,
@@ -13,6 +18,8 @@ from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
 
 from .trophy_update_leaderboard import create_leaderboard_embed
+
+TROPHY_THUMBNAIL_URL = Thumbnails.trophy
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 
@@ -48,12 +55,10 @@ async def trophies_view_func(
 
         target_member_info = await fetch_user_place_and_trophies(bot, target_member)
         if not target_member_info:
-            await interaction.response.send_message(
-                f"{target_member.display_name} has no trophies record.", ephemeral=True
-            )
+            await loader.error(f"{target_member.display_name} has no trophies record.")
             return
         target_member_trophies = target_member_info["amount"]
-        target_member_rank = target_member_info["rank"]
+        target_member_rank = target_member_info["place"]
         first_place_user = await get_first_place(bot)
         if first_place_user and first_place_user["user_id"] == target_member.id:
             crown_emoji = "👑"
@@ -68,32 +73,36 @@ async def trophies_view_func(
         embed.set_author(
             name=target_member.display_name, icon_url=target_member.display_avatar.url
         )
-        await interaction.response.send_message(embed=embed, ephemeral=False)
+        embed.set_thumbnail(url=TROPHY_THUMBNAIL_URL)
+        await loader.success(embed=embed, content="")
         return
 
     # If no member specified, show own trophies
     target_member = user
-    target_member_trophies_info = await fetch_user_trophies(bot, target_member)
+    target_member_trophies_info = await fetch_user_place_and_trophies(
+        bot, target_member
+    )
     if not target_member_trophies_info:
-        await interaction.response.send_message(
-            "You have no trophies record.", ephemeral=True
-        )
+        await loader.error("No trophies record found for user.")
         return
     target_member_trophies = target_member_trophies_info["amount"]
+    target_member_rank = target_member_info["place"]
+
     first_place_user = await get_first_place(bot)
     if first_place_user and first_place_user["user_id"] == target_member.id:
         crown_emoji = "👑"
     else:
         crown_emoji = ""
     embed = discord.Embed(
-        title=f"{crown_emoji} Your trophies",
-        description=f"**trophies:** {target_member_trophies}",
-        color=discord.Color.blue(),
+        title=f"{crown_emoji} Your Trophies",
+        description=f"**Rank:**{target_member_rank}\n**Trophies:** 🏆 {target_member_trophies}",
+        color=MONIKA_EMBED_COLOR,
     )
     embed.set_author(
         name=target_member.display_name, icon_url=target_member.display_avatar.url
     )
-    await interaction.response.send_message(embed=embed, ephemeral=False)
+    embed.set_thumbnail(url=TROPHY_THUMBNAIL_URL)
+    await loader.success(embed=embed, content="")
 
 
 # 🍭──────────────────────────────
@@ -110,5 +119,7 @@ async def view_leaderboard_func(bot: commands.Bot, interaction: discord.Interact
         ephemeral=False,
     )
 
-    embed = await create_leaderboard_embed(bot, guild, user)
+    embed = await create_leaderboard_embed(
+        bot, guild, command_user=user, context="view leaderboard"
+    )
     await loader.success(embed=embed, content="")

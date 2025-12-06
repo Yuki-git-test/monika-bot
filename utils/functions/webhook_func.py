@@ -5,7 +5,7 @@ import discord
 from utils.cache.cache_list import webhook_url_cache
 from utils.db.webhook_db_url import fetch_webhook_url, upsert_webhook_url
 from utils.logs.pretty_log import pretty_log
-
+from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
 
 async def create_webhook_func(
     bot, channel: discord.TextChannel, name: str
@@ -59,6 +59,8 @@ async def send_webhook(
                     webhook_name = "Monika Member Logs 📝"
                 elif channel_id == server_logs_channel_id:
                     webhook_name = "Monika Server Logs 🛡️"
+                elif channel_id == VN_ALLSTARS_TEXT_CHANNELS.message_logs:
+                    webhook_name = "Monika Message Logs 📑"
                 else:
                     webhook_name = f"Monika Webhook {channel.name} 📢"
                 webhook_url = await create_webhook_func(bot, channel, webhook_name)

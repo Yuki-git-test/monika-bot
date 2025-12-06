@@ -29,7 +29,10 @@ class OnMessageDeleteCog(commands.Cog):
         guild = message.guild
         if not guild or guild.id != VNA_SERVER_ID:
             return
-
+        # Return if bot deleted the message or message is from a bot
+        if message.author.bot:
+            return
+        
         pretty_log(
             "info",
             f"Message deleted in {guild.name} by {message.author} in #{message.channel}: {message.content}",

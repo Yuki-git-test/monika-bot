@@ -9,21 +9,23 @@ from utils.db.trophy import (
     fetch_all_trophies,
     fetch_current_leaderboard_info,
     fetch_leaderboard_message_id,
+    fetch_user_place_and_trophies,
     get_first_place,
     update_first_place_in_db,
     upsert_leaderboard_msg_id,
-    fetch_user_place_and_trophies
 )
 from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 
 
-async def create_leaderboard_embed(bot: commands.Bot, guild: discord.Guild):
+async def create_leaderboard_embed(
+    bot: commands.Bot, guild: discord.Guild, command_user: discord.Member = None, context: str = None
+):
     """Create the trophy leaderboard embed."""
     all_trophies = await fetch_all_trophies(bot)
     embed = discord.Embed(
-        title="🏆 Trophy Leaderboard 🏆",
+        title=f"🏆 {guild.name} Trophy Leaderboard",
         color=0x135CC0,
     )
     footer_text = "Updated Trophy Leaderboard at"
@@ -38,32 +40,36 @@ async def create_leaderboard_embed(bot: commands.Bot, guild: discord.Guild):
         first_place_user_id = None
         current_leaderboard_info = await fetch_current_leaderboard_info(bot)
         first_place_user_id = (
-            current_leaderboard_info.get("first_place_user_id")
+            current_leaderboard_info.get("first_place_id")
             if current_leaderboard_info
             else None
         )
 
-        for index, trophy_info in enumerate(sorted_trophies[:10], start=1):
+        for index, trophy_info in enumerate(sorted_trophies[:20], start=1):
             user_id = trophy_info["user_id"]
             amount = trophy_info["amount"]
             user = guild.get_member(user_id)
             if user:
-                field_name_str = f"{index}. {user.mention} | {user.display_name}"
+                field_name_str = f"{index}. {user.display_name}"
                 if first_place_user_id and user_id == first_place_user_id:
                     field_name_str = f"👑 {field_name_str}"
                 embed.add_field(
                     name=field_name_str,
-                    value=f"🏆 {amount}",
+                    value=f"> - 🏆 {amount}",
                     inline=False,
                 )
-        if user:
-            user_place_info = await fetch_user_place_and_trophies(bot, user)
-            if user_place_info:
-                user_place = user_place_info["place"]
-                user_trophies = user_place_info["amount"]
+        if command_user and context == "view leaderboard":
+            user_place_info = await fetch_user_place_and_trophies(bot, command_user)
+            if not user_place_info or user_place_info["amount"] == 0:
                 embed.add_field(
-                    name="Your Position",
-                    value=f"You are currently in place #{user_place} with 🏆 {user_trophies}.",
+                    name="\u200b",
+                    value="You have no trophies yet.",
+                    inline=False,
+                )
+            else:
+                embed.add_field(
+                    name="\u200b",
+                    value=f"You are currently in #{user_place_info['place']} with \U0001f3c6 {user_place_info['amount']}",
                     inline=False,
                 )
 
@@ -80,6 +86,7 @@ async def create_leaderboard_embed(bot: commands.Bot, guild: discord.Guild):
         text=footer_text,
         icon_url=guild.icon.url if guild.icon else None,
     )
+    embed.set_thumbnail(url=guild.icon.url if guild.icon else None)
     return embed
 
 
@@ -102,8 +109,8 @@ async def new_first_place_announcement(
     )
 
     announcement_channel = guild.get_channel(
-        VN_ALLSTARS_TEXT_CHANNELS.first_place_annoucement_channel
-    )
+        VN_ALLSTARS_TEXT_CHANNELS.khys_chamber
+    )  # Testing channel for now
     if not announcement_channel:
         pretty_log(
             tag="error",
@@ -127,9 +134,11 @@ async def new_first_place_announcement(
 # 🍭──────────────────────────────
 #   🎀 trophies Update Leaderboard Command Function
 # 🍭──────────────────────────────
-async def trophy_update_leaderboard_func(bot: commands.Bot, guild: discord.Guild, user: discord.Member = None):
+async def trophy_update_leaderboard_func(
+    bot: commands.Bot, guild: discord.Guild, user: discord.Member = None
+):
     """Update the trophy leaderboard message in the designated channel."""
-    leaderboard_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.leaderboard)
+    leaderboard_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.clan_leaderboard)
     if not leaderboard_channel:
         pretty_log(
             tag="error",

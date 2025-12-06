@@ -2,10 +2,12 @@ VNA_SERVER_ID = 909880511701352488
 VNA_EMBED_COLOR = 0x135CC0
 MONIKA_EMBED_COLOR = 0xFF9999
 HARMLESS_USER_ID = 715486300383477823
+KHY_USER_ID = 952071312124313611
 # 💦☁────────────────────────────────────────────💦☁
 #       VN_ALLSTARS_TEXT_CHANNELS
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_TEXT_CHANNELS:
+    clan_leaderboard = 1410092717756780574
     first_place_annoucement_channel = 1369749847397367948
 
     # 🌊💙🤍───────────── Clan_Members ─────────────💙🤍🌊

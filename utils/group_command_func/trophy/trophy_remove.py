@@ -22,6 +22,10 @@ from .trophy_update_leaderboard import (
     trophy_update_leaderboard_func,
 )
 from utils.functions.webhook_func import send_webhook
+from utils.essentials.pretty_defer import pretty_defer
+from constants.aesthetic import Thumbnails
+
+TROPHY_THUMBNAIL_URL = Thumbnails.trophy
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 
@@ -80,11 +84,12 @@ async def trophy_remove_func(
         title="Trophies Removed",
         description=(
             f"Removed 🏆 {amount} from {member.mention}.\n"
-            f"New total: {new_amount} trophies."
+            f"**New total:**  🏆 {new_amount} trophies."
         ),
         color=discord.Color.red(),
     )
     embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+    embed.set_thumbnail(url=TROPHY_THUMBNAIL_URL)
     await loader.success(embed=embed, content="")
 
     # Send log embed to log channel
@@ -94,8 +99,8 @@ async def trophy_remove_func(
             title="Trophies Removed",
             description=(
                 f"**Member:** {member.mention}\n"
-                f"**Amount Removed:** {amount}\n"
-                f"**New Total:** {new_amount}\n"
+                f"**Amount Removed:** 🏆 {amount}\n"
+                f"**New Total:**  🏆 {new_amount}\n"
                 f"**Removed by:** {user.mention}"
             ),
             color=discord.Color.dark_red(),
@@ -104,6 +109,7 @@ async def trophy_remove_func(
         log_embed.set_author(
             name=member.display_name, icon_url=member.display_avatar.url
         )
+        log_embed.set_thumbnail(url=TROPHY_THUMBNAIL_URL)
         await send_webhook(
             bot=bot,
             channel=log_channel,
@@ -113,9 +119,7 @@ async def trophy_remove_func(
     # Check if there is a new first place
     old_first_place_info = await fetch_current_leaderboard_info(bot)
     old_first_place_id = (
-        old_first_place_info.get("first_place_user_id")
-        if old_first_place_info
-        else None
+        old_first_place_info.get("first_place_id") if old_first_place_info else None
     )
     current_first_place = await get_first_place(bot)
     if current_first_place:

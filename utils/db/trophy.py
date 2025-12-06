@@ -18,7 +18,7 @@ async def fetch_current_leaderboard_info(bot):
     async with bot.pg_pool.acquire() as conn:
         return await conn.fetchrow(
             """
-            SELECT * FROM trophy_leaderboard
+            SELECT * FROM current_trophy_leaderboard
             LIMIT 1;
             """
         )
@@ -39,7 +39,7 @@ async def update_first_place_in_db(
         async with bot.pg_pool.acquire() as conn:
             await conn.execute(
                 """
-                UPDATE trophy_leaderboard
+                UPDATE current_trophy_leaderboard
                 SET message_id = $1,
                     first_place_id = $2,
                     first_place_name = $3,
@@ -52,12 +52,12 @@ async def update_first_place_in_db(
             )
             pretty_log(
                 "info",
-                f"Updated trophy_leaderboard with message_id {message_id} , first place name {first_place_name} with {first_place_trophy} trophies.",
+                f"Updated current_trophy_leaderboard with message_id {message_id} , first place name {first_place_name} with {first_place_trophy} trophies.",
             )
     except Exception as e:
         pretty_log(
             "error",
-            f"Error updating trophy_leaderboard: {e}",
+            f"Error updating current_trophy_leaderboard: {e}",
         )
 
 
@@ -80,25 +80,31 @@ async def fetch_user_trophies(bot, user: discord.Member):
             user_id,
         )
 
+
 async def fetch_user_place_and_trophies(bot, user: discord.Member):
     """
-    Fetch the rank and trophy amount for a user.
-    Returns None if not found.
+    Fetch the rank (place) and trophy amount for a user.
+    Returns None if not found or if user has no trophies.
     """
     user_id = user.id
     async with bot.pg_pool.acquire() as conn:
-        return await conn.fetchrow(
+        rows = await conn.fetch(
             """
             SELECT
                 user_id,
                 user_name,
                 amount,
-                RANK() OVER (ORDER BY amount DESC, updated_at ASC) AS rank
+                RANK() OVER (ORDER BY amount DESC, updated_at ASC) AS place
             FROM trophies
-            WHERE user_id = $1;
-            """,
-            user_id,
+            WHERE amount > 0
+            ORDER BY amount DESC, updated_at ASC;
+            """
         )
+        for row in rows:
+            if row["user_id"] == user_id:
+                return row
+        return None
+
 
 # Fetch all trophies
 async def fetch_all_trophies(bot):
@@ -114,11 +120,8 @@ async def fetch_all_trophies(bot):
 
 
 async def update_trophies(bot, user: discord.Member, amount: int):
-    """
-    Update the trophy amount for a user.
-    """
     user_id = user.id
-    # Get current first place info
+    user_name = user.name
     first_place_info = await fetch_current_leaderboard_info(bot)
     current_msg_id = first_place_info["message_id"] if first_place_info else None
     first_place_user_id = (
@@ -128,12 +131,14 @@ async def update_trophies(bot, user: discord.Member, amount: int):
     async with bot.pg_pool.acquire() as conn:
         await conn.execute(
             """
-            UPDATE trophies
-            SET amount = $1, updated_at = NOW()
-            WHERE user_id = $2;
+            INSERT INTO trophies (user_id, user_name, amount, updated_at)
+            VALUES ($1, $2, $3, NOW())
+            ON CONFLICT (user_id)
+            DO UPDATE SET user_name = $2, amount = $3, updated_at = NOW();
             """,
-            amount,
             user_id,
+            user_name,
+            amount,
         )
         if user_id == first_place_user_id:
             await update_first_place_in_db(
@@ -147,7 +152,6 @@ async def update_trophies(bot, user: discord.Member, amount: int):
                 "info",
                 f"Updated trophies for first place {user.name} to {amount}.",
             )
-
 
 
 # Upsert trophy (insert or update)
@@ -241,26 +245,26 @@ async def get_first_place(bot):
 # Upsert row if table is empty
 async def upsert_leaderboard_msg_id(bot, message_id: int):
     """
-    Insert a trophy_leaderboard row if table is empty.
+    Insert a current_trophy_leaderboard row if table is empty.
     """
     try:
         async with bot.pg_pool.acquire() as conn:
             await conn.execute(
                 """
-                INSERT INTO trophy_leaderboard (message_id)
+                INSERT INTO current_trophy_leaderboard (message_id)
                 SELECT $1
-                WHERE NOT EXISTS (SELECT 1 FROM trophy_leaderboard);
+                WHERE NOT EXISTS (SELECT 1 FROM current_trophy_leaderboard);
                 """,
                 message_id,
             )
             pretty_log(
                 "info",
-                f"Upserted trophy_leaderboard with message_id {message_id} if table was empty.",
+                f"Upserted current_trophy_leaderboard with message_id {message_id} if table was empty.",
             )
     except Exception as e:
         pretty_log(
             "error",
-            f"Error upserting trophy_leaderboard: {e}",
+            f"Error upserting current_trophy_leaderboard: {e}",
         )
 
 
@@ -272,7 +276,7 @@ async def fetch_leaderboard_message_id(bot):
     async with bot.pg_pool.acquire() as conn:
         row = await conn.fetchrow(
             """
-            SELECT * FROM trophy_leaderboard
+            SELECT * FROM current_trophy_leaderboard
             LIMIT 1;
             """
         )
@@ -283,15 +287,15 @@ async def fetch_leaderboard_message_id(bot):
 
 async def reset_leaderboard(bot):
     """
-    Delete all rows from trophy_leaderboard table.
+    Delete all rows from current_trophy_leaderboard table.
     """
     async with bot.pg_pool.acquire() as conn:
         await conn.execute(
             """
-            TRUNCATE TABLE trophy_leaderboard;
+            TRUNCATE TABLE current_trophy_leaderboard;
             """
         )
         pretty_log(
             "success",
-            "Reset trophy_leaderboard table.",
+            "Reset current_trophy_leaderboard table.",
         )

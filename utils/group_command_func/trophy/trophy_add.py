@@ -1,8 +1,8 @@
 import discord
 from discord import app_commands
 from discord.ext import commands
-
-from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
+from utils.essentials.pretty_defer import pretty_defer
+from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS, KHY_USER_ID
 from utils.db.trophy import (
     add_trophies,
     fetch_all_trophies,
@@ -19,6 +19,8 @@ from .trophy_update_leaderboard import (
     trophy_update_leaderboard_func,
 )
 from utils.functions.webhook_func import send_webhook
+from constants.aesthetic import Thumbnails
+TROPHY_THUMBNAIL_URL = Thumbnails.trophy
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 
@@ -36,19 +38,22 @@ async def trophy_add_func(
     user = interaction.user
     staff_role = guild.get_role(VN_ALLSTARS_ROLES.staff)
 
+    # Defer response
+    loader = await pretty_defer(
+        interaction=interaction,
+        content="Adding trophies...",
+        ephemeral=False,
+    )
+
     # Check if staff role is in user's roles
     is_staff = await is_staff_member(interaction=interaction)
     if not is_staff:
-        await interaction.response.send_message(
-            "Only staff members can add trophies.", ephemeral=True
-        )
+        await loader.error("You do not have permission to add trophies.")
         return
 
     # Validate amount
     if amount <= 0:
-        await interaction.response.send_message(
-            "Amount must be a positive integer.", ephemeral=True
-        )
+        await loader.error("Invalid amount provided for trophies addition.")
         return
 
     # Get current trophies
@@ -56,7 +61,19 @@ async def trophy_add_func(
     current_trophies = current_trophies_info["amount"] if current_trophies_info else 0
     new_amount = current_trophies + amount
     # Add trophies to the member
-    await update_trophies(bot, member, new_amount)
+    try:
+        await update_trophies(bot, member, new_amount)
+        pretty_log(
+            "info",
+            f"{user} added {amount} trophies to {member}. New total: {new_amount}",
+        )
+    except Exception as e:
+        await loader.error("An error occurred while adding trophies.")
+        pretty_log(
+            "error",
+            f"Error adding trophies: {e}",
+        )
+        return
 
     # Update the trophy leaderboard
     await trophy_update_leaderboard_func(bot, guild)
@@ -70,7 +87,7 @@ async def trophy_add_func(
         # Check if this is a new first place
         current_leaderboard_info = await fetch_current_leaderboard_info(bot)
         first_place_user_id = (
-            current_leaderboard_info.get("first_place_user_id")
+            current_leaderboard_info.get("first_place_id")
             if current_leaderboard_info
             else None
         )
@@ -88,15 +105,16 @@ async def trophy_add_func(
     # Create and send the embed message
     embed = discord.Embed(
         title=f"{crown_emoji} {member.display_name}'s trophies Updated",
-        description=f"**Added trophies:** {amount}\n**Total trophies:** {new_amount}",
+        description=f"**Added trophies:** 🏆 {amount}\n**Total trophies:**  🏆 {new_amount}",
         color=discord.Color.green(),
     )
     embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
-    await interaction.response.send_message(embed=embed, ephemeral=False)
+    embed.set_thumbnail(url=TROPHY_THUMBNAIL_URL)
+    await loader.success(embed=embed, content="")
 
     # Log the action in the log channel
     log_channel = guild.get_channel(LOG_CHANNEL_ID)
-    if log_channel:
+    if log_channel and member.id != KHY_USER_ID:
         if new_first_place:
             crown_emoji = "👑"
             pretty_log(
@@ -109,6 +127,8 @@ async def trophy_add_func(
             description=f"**Member:** {member.mention}\n**Added By:** {user.mention}\n**trophies Added:** {amount}\n**Total trophies:** {new_amount}",
             color=discord.Color.blue(),
         )
+        embed.set_thumbnail(url=TROPHY_THUMBNAIL_URL)
+        embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         await send_webhook(
             bot=bot,
             channel=log_channel,
