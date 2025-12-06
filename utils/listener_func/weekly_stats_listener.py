@@ -11,6 +11,7 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
+    PROBATION_EXEMPTED_USER_IDS
 )
 from utils.cache.cache_list import (
     kick_list_cache,
@@ -382,8 +383,8 @@ async def weekly_stats_checker(
     for member, username, catches, fishes in known_members:
         member_id = member.id
         total_catches = int(catches) + int(fishes)
-        if member_id == HARMLESS_USER_ID:
-            continue  # Skip harmless
+        if member_id in PROBATION_EXEMPTED_USER_IDS:
+            continue  # Skip probation exempted users
 
         if clan_break_role in member.roles:
             continue  # Skip members on clan break
