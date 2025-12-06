@@ -45,7 +45,7 @@ async def create_leaderboard_embed(
             else None
         )
 
-        for index, trophy_info in enumerate(sorted_trophies[:20], start=1):
+        for index, trophy_info in enumerate(sorted_trophies[:25], start=1):
             user_id = trophy_info["user_id"]
             amount = trophy_info["amount"]
             user = guild.get_member(user_id)

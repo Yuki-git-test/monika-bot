@@ -1,23 +1,32 @@
+from datetime import datetime
+
 import discord
 from discord import app_commands
 from discord.ext import commands
+from discord.ui import Button, View
 
 from constants.aesthetic import Thumbnails
 from constants.vn_allstars_constants import (
     MONIKA_EMBED_COLOR,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
+    VNA_EMBED_COLOR,
+    VNA_SERVER_ID,
 )
 from utils.db.trophy import (
     fetch_all_trophies,
+    fetch_current_leaderboard_info,
+    fetch_leaderboard_message_id,
     fetch_user_place_and_trophies,
     get_first_place,
+    update_first_place_in_db,
+    upsert_leaderboard_msg_id,
 )
 from utils.essentials.pretty_defer import pretty_defer
 from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
 
-from .trophy_update_leaderboard import create_leaderboard_embed
+from .trophy_update_leaderboard import create_leaderboard_embed, get_first_place
 
 TROPHY_THUMBNAIL_URL = Thumbnails.trophy
 
@@ -106,6 +115,113 @@ async def trophies_view_func(
 
 
 # 🍭──────────────────────────────
+#   🎀 Trophy Leaderboard Paginator View
+# 🍭──────────────────────────────
+class Trophy_Leaderboard_Paginator(View):
+    def __init__(self, bot, user: discord.Member, trophy_members, per_page=25):
+        super().__init__(timeout=120)
+        self.bot = bot
+        self.user = user
+        self.trophy_members = trophy_members
+        self.per_page = per_page
+        self.page = 0
+        self.max_page = (len(trophy_members) - 1) // per_page
+        self.message = None  # store the message object
+
+        # If there's only one page, remove buttons
+        if self.max_page == 0:
+            self.clear_items()
+    @discord.ui.button(label="Previous", style=discord.ButtonStyle.secondary)
+    async def previous_page(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id != self.user.id:
+            await interaction.response.send_message(
+                "You cannot interact with this paginator.", ephemeral=True
+            )
+            return
+        if self.page > 0:
+            self.page -= 1
+            embed = await self.get_embed()
+            await interaction.response.edit_message(embed=embed, view=self)
+
+    @discord.ui.button(label="Next", style=discord.ButtonStyle.secondary)
+    async def next_page(self, interaction: discord.Interaction, button: Button):
+        if interaction.user.id != self.user.id:
+            await interaction.response.send_message(
+                "You cannot interact with this paginator.", ephemeral=True
+            )
+            return
+        if self.page < self.max_page:
+            self.page += 1
+            embed = await self.get_embed()
+            await interaction.response.edit_message(embed=embed, view=self)
+
+    async def get_embed(self):
+        total_trophy_members = len(self.trophy_members)
+        start = self.page * self.per_page
+        end = start + self.per_page
+        page_trophy_members = self.trophy_members[start:end]
+        guild: discord.Guild = self.bot.get_guild(VNA_SERVER_ID)
+
+        first_place_user_id = None
+        current_leaderboard_info = await fetch_current_leaderboard_info(self.bot)
+        first_place_user_id = (
+            current_leaderboard_info.get("first_place_id")
+            if current_leaderboard_info
+            else None
+        )
+        embed = discord.Embed(
+            title=f"🏆 {guild.name} Leaderboard",
+            color=VNA_EMBED_COLOR,
+            timestamp=datetime.now(),
+        )
+        for index, trophy_info in enumerate(page_trophy_members, start=start + 1):
+            user_id = trophy_info["user_id"]
+            amount = trophy_info["amount"]
+            user = guild.get_member(user_id)
+            if not user:
+                continue
+            if user_id == first_place_user_id:
+                crown_emoji = "👑 "
+            else:
+                crown_emoji = ""
+            embed.add_field(
+                name=f"{index}. {crown_emoji}{user.display_name}",
+                value=f"> - 🏆 {amount}",
+                inline=False,
+            )
+
+        # Get user place info
+        user_place_info = await fetch_user_place_and_trophies(self.bot, self.user)
+        if not user_place_info or user_place_info["amount"] == 0:
+            embed.add_field(
+                name="\u200b",
+                value="You have no trophies yet.",
+                inline=False,
+            )
+        else:
+            embed.add_field(
+                name="\u200b",
+                value=f"You are currently in #{user_place_info['place']} with \U0001f3c6 {user_place_info['amount']}",
+                inline=False,
+            )
+        embed.set_footer(
+            text=f"Page {self.page + 1} of {self.max_page + 1} | Total Members: {total_trophy_members}",
+            icon_url=guild.icon.url if guild.icon else None,
+        )
+        embed.set_thumbnail(url=guild.icon.url if guild.icon else None)
+        return embed
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
+        if self.message:
+            try:
+                await self.message.edit(view=self)
+            except Exception as e:
+                pass  # Message was deleted, nothing to do
+
+
+# 🍭──────────────────────────────
 #   🎀 View Leaderboard
 # 🍭──────────────────────────────
 async def view_leaderboard_func(bot: commands.Bot, interaction: discord.Interaction):
@@ -118,8 +234,15 @@ async def view_leaderboard_func(bot: commands.Bot, interaction: discord.Interact
         content="Fetching the trophy leaderboard...",
         ephemeral=False,
     )
-
-    embed = await create_leaderboard_embed(
-        bot, guild, command_user=user, context="view leaderboard"
+    # Fetch member trophies and create embed
+    member_trophies = await fetch_all_trophies(bot=bot)
+    if not member_trophies:
+        await loader.error("No trophies have been awarded yet.")
+        return
+    sorted_trophies = sorted(member_trophies, key=lambda x: x["amount"], reverse=True)
+    paginator = Trophy_Leaderboard_Paginator(
+        bot=bot, user=user, trophy_members=sorted_trophies
     )
-    await loader.success(embed=embed, content="")
+    embed = await paginator.get_embed()
+    sent_msg = await loader.success(embed=embed, content="", view=paginator)
+    paginator.message = sent_msg

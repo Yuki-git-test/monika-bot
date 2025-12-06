@@ -29,6 +29,12 @@ async def message_edit_log(bot, before: discord.Message, after: discord.Message)
     guild = after.guild
     if not guild or guild.id != VNA_SERVER_ID:
         return
+
+    if after.content == after.content:
+        return
+    if after.content is None or before.content is None:
+        return
+    
     desc = (
         f"**Member:**{after.author.mention}\n**Before:** {before.content}\n\n**After +:** {after.content}"
         if before.content or after.content

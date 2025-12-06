@@ -24,7 +24,6 @@ class Clan_Members_Paginator(View):
         self.user = user
         self.members = members
         self.per_page = per_page
-        self.per_page = per_page
         self.page = 0
         self.max_page = (len(members) - 1) // per_page
         self.message = None  # store the message object

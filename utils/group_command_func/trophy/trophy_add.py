@@ -93,19 +93,20 @@ async def trophy_add_func(
         )
         if first_place_user_id != member.id:
             # Announce new first place
-            await new_first_place_announcement(
+            pass
+            """await new_first_place_announcement(
                 bot=bot,
                 guild=guild,
                 member=member,
                 trophy_amount=new_amount,
-            )
+            )"""
     else:
         crown_emoji = ""
 
     # Create and send the embed message
     embed = discord.Embed(
         title=f"{crown_emoji} {member.display_name}'s trophies Updated",
-        description=f"**Added trophies:** 🏆 {amount}\n**Total trophies:**  🏆 {new_amount}",
+        description=f"**Added Trophies:** 🏆 {amount}\n**Total Trophies:**  🏆 {new_amount}",
         color=discord.Color.green(),
     )
     embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
@@ -124,7 +125,7 @@ async def trophy_add_func(
             crown_emoji = ""
         embed = discord.Embed(
             title=f"{crown_emoji} Trophies Added",
-            description=f"**Member:** {member.mention}\n**Added By:** {user.mention}\n**trophies Added:** {amount}\n**Total trophies:** {new_amount}",
+            description=f"**Member:** {member.mention}\n**Added By:** {user.mention}\n**Trophies Added:** {amount}\n**Total Trophies:** {new_amount}",
             color=discord.Color.blue(),
         )
         embed.set_thumbnail(url=TROPHY_THUMBNAIL_URL)
