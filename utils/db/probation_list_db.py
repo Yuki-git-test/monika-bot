@@ -62,7 +62,6 @@ async def update_probation_catch_requirement(bot, user: discord.Member, catch_re
         update_probation_catch_requirement_cache(user, catch_requirement)
 
 
-
 async def remove_probation_member(bot, user: discord.Member):
     """
     Remove a probation_list row for a user.
@@ -94,11 +93,17 @@ async def fetch_all_probation_members(bot):
     async with bot.pg_pool.acquire() as conn:
         rows = await conn.fetch(
             """
-            SELECT user_id, user_name, pokemeow_name FROM probation_list;
+            SELECT user_id, user_name, pokemeow_name, catch_requirement FROM probation_list;
             """
         )
         probation_members = [
-            (row["user_id"], row["user_name"], row["pokemeow_name"]) for row in rows
+            (
+                row["user_id"],
+                row["user_name"],
+                row["pokemeow_name"],
+                row["catch_requirement"],
+            )
+            for row in rows
         ]
         pretty_log(
             "info",

@@ -60,7 +60,10 @@ def upsert_probation_list_cache(user: discord.Member):
             label="Probation List Cache",
         )
 
-def update_probation_catch_requirement_cache(user: discord.Member, catch_requirement: int):
+
+def update_probation_catch_requirement_cache(
+    user: discord.Member, catch_requirement: int
+):
     """
     Update the catch requirement for a probation_list_cache member.
     """
@@ -71,6 +74,8 @@ def update_probation_catch_requirement_cache(user: discord.Member, catch_require
             f"Updated catch requirement for probation list cache member: {user} ({user.id}) to {catch_requirement}",
             label="Probation List Cache",
         )
+
+
 def remove_probation_list_cache(user: discord.Member):
     """
     Remove a user from the probation_list_cache.

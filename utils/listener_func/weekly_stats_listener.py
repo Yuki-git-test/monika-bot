@@ -35,7 +35,7 @@ from utils.logs.pretty_log import pretty_log
 
 PROBATION_LIST_DAYS = [6, 13, 20, 27]  # Every Saturday
 WEEKLY_REQUIREMENT_CATCHES = 1500
-
+MODERATOR_PLAY_CHANNEL_ID = 952810535928348732
 
 def is_past_11pm_probation_day_est():
     est = pytz.timezone("US/Eastern")
@@ -140,6 +140,7 @@ async def probation_assignment_handler(
     fishes: int,
     total_catches: int,
 ):
+
     # Get roles
     guild = bot.get_guild(VNA_SERVER_ID)
     kick_role = guild.get_role(VN_ALLSTARS_ROLES.kick_list)
@@ -287,6 +288,15 @@ async def weekly_stats_checker(
             label="Weekly Stats Listener",
         )
         return
+
+    if after_message.channel.id != MODERATOR_PLAY_CHANNEL_ID:
+        pretty_log(
+            "info",
+            "Weekly stats message not in the designated Moderator Play channel.",
+            label="Weekly Stats Listener",
+        )
+        return
+    
     # Get member first
     command_user = await get_pokemeow_reply_member(before_message)
     if not command_user:
