@@ -32,7 +32,7 @@ class OnMessageDeleteCog(commands.Cog):
         # Return if bot deleted the message or message is from a bot
         if message.author.bot:
             return
-        
+
         pretty_log(
             "info",
             f"Message deleted in {guild.name} by {message.author} in #{message.channel}: {message.content}",
@@ -63,6 +63,9 @@ class OnMessageDeleteCog(commands.Cog):
             "info",
             f"Logging deleted message attachments to channel ID {LOG_CHANNEL_ID}.",
         )
+        if len(media_attachments) == 0 and not message.content:
+            return
+
         if len(media_attachments) == 0:
 
             embed = discord.Embed(
