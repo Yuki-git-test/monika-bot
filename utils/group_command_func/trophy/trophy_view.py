@@ -169,6 +169,12 @@ class Trophy_Leaderboard_Paginator(View):
             if current_leaderboard_info
             else None
         )
+        # Get user place info
+        user_place_info = await fetch_user_place_and_trophies(self.bot, self.user)
+        if not user_place_info or user_place_info["amount"] == 0:
+            desc = "You have no trophies yet."
+        else:
+            desc = f"You are currently in #{user_place_info['place']} with \U0001f3c6 {user_place_info['amount']}"
         embed = discord.Embed(
             title=f"🏆 {guild.name} Leaderboard",
             color=VNA_EMBED_COLOR,
@@ -190,20 +196,6 @@ class Trophy_Leaderboard_Paginator(View):
                 inline=False,
             )
 
-        # Get user place info
-        user_place_info = await fetch_user_place_and_trophies(self.bot, self.user)
-        if not user_place_info or user_place_info["amount"] == 0:
-            embed.add_field(
-                name="\u200b",
-                value="You have no trophies yet.",
-                inline=False,
-            )
-        else:
-            embed.add_field(
-                name="\u200b",
-                value=f"You are currently in #{user_place_info['place']} with \U0001f3c6 {user_place_info['amount']}",
-                inline=False,
-            )
         embed.set_footer(
             text=f"Page {self.page + 1} of {self.max_page + 1} | Total Members: {total_trophy_members}",
             icon_url=guild.icon.url if guild.icon else None,
