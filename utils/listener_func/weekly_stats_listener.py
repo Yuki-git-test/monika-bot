@@ -171,7 +171,7 @@ async def probation_assignment_handler(
         msg = f"Member {member.display_name} is new to clan (joined less than 7 days)."
         return False, msg
 
-    if catches >= WEEKLY_REQUIREMENT_CATCHES:
+    if catches >= WEEKLY_REQUIREMENT_CATCHES or total_catches >= WEEKLY_REQUIREMENT_CATCHES:
         msg = f"Member {member.display_name} met weekly catches requirement with {catches} catches."
         return False, msg
 
@@ -180,7 +180,7 @@ async def probation_assignment_handler(
         msg = f"Member {member.display_name} is on clan break."
         return False, msg
 
-    if catches < WEEKLY_REQUIREMENT_CATCHES:
+    if catches < WEEKLY_REQUIREMENT_CATCHES and total_catches < WEEKLY_REQUIREMENT_CATCHES:
         if probation_role not in member.roles:
             await member.add_roles(
                 probation_role,

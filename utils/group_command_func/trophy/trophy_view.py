@@ -177,6 +177,7 @@ class Trophy_Leaderboard_Paginator(View):
             desc = f"You are currently in #{user_place_info['place']} with \U0001f3c6 {user_place_info['amount']}"
         embed = discord.Embed(
             title=f"🏆 {guild.name} Leaderboard",
+            description=desc,
             color=VNA_EMBED_COLOR,
             timestamp=datetime.now(),
         )
