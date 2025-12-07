@@ -93,13 +93,12 @@ async def trophy_add_func(
         )
         if first_place_user_id != member.id:
             # Announce new first place
-            pass
-            """await new_first_place_announcement(
+            await new_first_place_announcement(
                 bot=bot,
                 guild=guild,
                 member=member,
                 trophy_amount=new_amount,
-            )"""
+            )
     else:
         crown_emoji = ""
 

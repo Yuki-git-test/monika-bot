@@ -107,8 +107,13 @@ async def new_first_place_announcement(
         first_place_name=member.name,
         first_place_trophy=trophy_amount,
     )
+    pretty_log(
+        tag="info",
+        message=f"Updating new first place: {member.display_name} with {trophy_amount} trophies.",
+        label="First Place Announcement",
+    )
 
-    announcement_channel = guild.get_channel(
+    """announcement_channel = guild.get_channel(
         VN_ALLSTARS_TEXT_CHANNELS.khys_chamber
     )  # Testing channel for now
     if not announcement_channel:
@@ -128,7 +133,7 @@ async def new_first_place_announcement(
     await announcement_channel.send(
         embed=embed,
         content=f"🎉 {member.mention} is now in first place on the trophy leaderboard! 🎉",
-    )
+    )"""
 
 
 # 🍭──────────────────────────────
