@@ -142,6 +142,63 @@ class TrophyGroupCommand(commands.Cog):
             command_func=trophy_reset_func,
         )
 
+    # 🎀────────────────────────────────────────────
+    #          🌸 /trophy multi 🌸
+    # 🎀────────────────────────────────────────────
+    @trophy_group.command(
+        name="multi",
+        description="Add or remove trophies to/from multiple members (staff only)",
+    )
+    @app_commands.describe(
+        action="Whether to add or remove trophies",
+        amount="The amount of trophies to add or remove",
+        member1="The first member",
+        member2="The second member (optional)",
+        member3="The third member (optional)",
+        member4="The fourth member (optional)",
+        member5="The fifth member (optional)",
+        member6="The sixth member (optional)",
+        member7="The seventh member (optional)",
+        member8="The eighth member (optional)",
+        member9="The ninth member (optional)",
+        member10="The tenth member (optional)",
+    )
+    async def trophy_multi(
+        self,
+        interaction: discord.Interaction,
+        action: Literal["add", "remove"],
+        amount: int,
+        member1: discord.Member,
+        member2: discord.Member = None,
+        member3: discord.Member = None,
+        member4: discord.Member = None,
+        member5: discord.Member = None,
+        member6: discord.Member = None,
+        member7: discord.Member = None,
+        member8: discord.Member = None,
+        member9: discord.Member = None,
+        member10: discord.Member = None,
+    ):
+        slash_cmd_name = "trophy multi"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=trophy_multi_func,
+            action=action,
+            amount=amount,
+            member1=member1,
+            member2=member2,
+            member3=member3,
+            member4=member4,
+            member5=member5,
+            member6=member6,
+            member7=member7,
+            member8=member8,
+            member9=member9,
+            member10=member10,
+        )
 
 # 🎀────────────────────────────────────────────
 #           🌸 Cog Setup Function 🌸

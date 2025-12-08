@@ -299,3 +299,53 @@ async def reset_leaderboard(bot):
             "success",
             "Reset current_trophy_leaderboard table.",
         )
+
+
+async def update_leaderboard_first_place(bot):
+    """
+    Scan the trophies table and update the leaderboard with the user who has the highest trophy amount.
+    If tied, pick the user with the oldest updated_at.
+    """
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT user_id, user_name, amount, updated_at
+                FROM trophies
+                WHERE amount = (SELECT MAX(amount) FROM trophies)
+                ORDER BY updated_at ASC
+                LIMIT 1;
+                """
+            )
+            if row:
+                message_id_row = await conn.fetchrow(
+                    """SELECT message_id FROM current_trophy_leaderboard LIMIT 1;"""
+                )
+                message_id = message_id_row["message_id"] if message_id_row else None
+                await conn.execute(
+                    """
+                    UPDATE current_trophy_leaderboard
+                    SET message_id = $1,
+                        first_place_id = $2,
+                        first_place_name = $3,
+                        first_place_trophy = $4;
+                    """,
+                    message_id,
+                    row["user_id"],
+                    row["user_name"],
+                    row["amount"],
+                )
+                pretty_log(
+                    "info",
+                    f"Updated current_trophy_leaderboard with message_id {message_id} , first place name {row['user_name']} with {row['amount']} trophies.",
+                )
+            else:
+                pretty_log(
+                    "info",
+                    "No trophies found to update leaderboard.",
+                )
+    except Exception as e:
+        pretty_log(
+            "error",
+            f"Error updating current_trophy_leaderboard: {e}",
+        )

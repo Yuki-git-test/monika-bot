@@ -99,7 +99,7 @@ def update_vna_member_clan_joined_date_cache(user_id: int, clan_joined_date: int
             "cache",
             f"Updated clan_joined_date for vna_member ({user_id}) to {clan_joined_date} in cache.",
         )
-        
+
 def update_vna_member_channel_cache(user_id: int, channel_id: int):
     """
     Update the channel_id of a vna_member in the cache.
