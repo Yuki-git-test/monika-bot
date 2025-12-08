@@ -145,7 +145,7 @@ class BackHomeButton(discord.ui.Button):
             )
 
             embed = discord.Embed(
-                title=f"{Emojis.brown_bear} Command Categories",
+                title=f"{Emojis.orange_butterfly} Command Categories",
                 description=description,
                 color=MONIKA_EMBED_COLOR,
             )
@@ -240,7 +240,7 @@ class CommandsView(commands.Cog):
             )
 
             embed = discord.Embed(
-                title=f"{Emojis.brown_bear} Command Categories",
+                title=f"{Emojis.orange_butterfly} Command Categories",
                 description=description,
                 color=MONIKA_EMBED_COLOR,
             )
