@@ -98,6 +98,7 @@ class Ping_Me_Roles(commands.Cog):
             )
             return
 
+    ping_me_roles.extras = {"category": "Staff"}
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(Ping_Me_Roles(bot))

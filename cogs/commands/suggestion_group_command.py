@@ -40,7 +40,7 @@ class SuggestionGroupCommand(commands.Cog):
             slash_cmd_name=slash_cmd_name,
             command_func=submit_suggestion_func,
         )
-
+    submit.extras = {"category": "Public"}
     # 🎀───────────────────────────────────────────
     #          🌸 /suggestion verdict
     # 🎀───────────────────────────────────────────
@@ -71,6 +71,7 @@ class SuggestionGroupCommand(commands.Cog):
             verdict=verdict,
             reason=reason,
         )
-
+    verdict.extras = {"category": "Staff"}
+    
 async def setup(bot: commands.Bot):
     await bot.add_cog(SuggestionGroupCommand(bot))

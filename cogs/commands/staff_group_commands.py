@@ -27,7 +27,7 @@ class StaffGroupCommand(commands.Cog):
     # 🎀───────────────────────────────────────────
     #          🌸 /staff list-top-grinders 🌸
     # 🎀───────────────────────────────────────────
-    @staff_group.command(
+    """@staff_group.command(
         name="list-top-grinders",
         description="Assign Top Monthly Grinder roles to members",
     )
@@ -45,6 +45,8 @@ class StaffGroupCommand(commands.Cog):
             command_func=assign_top_grinder_roles,
             message_link=message_link,
         )
+    list_top_grinders.extras = {"category": "Staff"}"""
+
     # 🎀───────────────────────────────────────────
     #          🌸 /staff role-members 🌸
     # 🎀───────────────────────────────────────────
@@ -69,7 +71,7 @@ class StaffGroupCommand(commands.Cog):
             command_func=role_members_func,
             role=role,
         )
-
+    role_members.extras = {"category": "Staff"}
     # 🎀───────────────────────────────────────────
     #          🌸 /staff invite 🌸
     # 🎀───────────────────────────────────────────
@@ -97,13 +99,14 @@ class StaffGroupCommand(commands.Cog):
             channel_name=channel_name,
             member=member,
         )
+    clan_invite.extras = {"category": "Staff"}
 
     # 🎀───────────────────────────────────────────
     #          🌸 /staff list-members 🌸
     # 🎀───────────────────────────────────────────
-    @staff_group.command(
+    """@staff_group.command(
         name="list-members",
-        description="List all VNA members to the database",
+        description="List all VNA members to the database ",
     )
     @app_commands.describe(
         message_link="The link to the message to list members from",
@@ -122,7 +125,7 @@ class StaffGroupCommand(commands.Cog):
             command_func=list_vna_members_func,
             message_link=message_link,
         )
-
+    list_members.extras = {"category": "Staff"}"""
     # 🎀───────────────────────────────────────────
     #          🌸 /staff set-channel 🌸
     # 🎀───────────────────────────────────────────
@@ -151,6 +154,9 @@ class StaffGroupCommand(commands.Cog):
             channel=channel,
 
         )
+
+    set_channel.extras = {"category": "Staff"}
+
     # 🎀───────────────────────────────────────────
     #          🌸 /staff clan-members 🌸
     # 🎀───────────────────────────────────────────
@@ -170,6 +176,7 @@ class StaffGroupCommand(commands.Cog):
             slash_cmd_name=slash_cmd_name,
             command_func=clan_members_func,
         )
+    clan_members.extras = {"category": "Staff"}
     # 🎀───────────────────────────────────────────
     #          🌸 /staff message send 🌸
     # 🎀───────────────────────────────────────────
@@ -197,7 +204,7 @@ class StaffGroupCommand(commands.Cog):
             channel=channel,
             ping_role=ping_role,
         )
-
+    message_send.extras = {"category": "Staff"}
     # 🎀───────────────────────────────────────────
     #          🌸 /staff message edit 🌸
     # 🎀───────────────────────────────────────────
@@ -225,7 +232,7 @@ class StaffGroupCommand(commands.Cog):
             channel=channel,
             message_id=message_id,
         )
-
+    message_edit.extras = {"category": "Staff"}
     # 🎀───────────────────────────────────────────
     #          🌸 /staff extract-joined-date 🌸
     # 🎀───────────────────────────────────────────
@@ -250,7 +257,7 @@ class StaffGroupCommand(commands.Cog):
             command_func=extract_joined_date_func,
             message_link=message_link,
         )
-
+    extract_joined_date.extras = {"category": "Staff"}
     # 🎀───────────────────────────────────────────
     #          🌸 /staff update-member 🌸
     # 🎀───────────────────────────────────────────
@@ -290,7 +297,7 @@ class StaffGroupCommand(commands.Cog):
             faction=faction,
             clan_joined_date=clan_joined_date,
         )
-
+    update_member.extras = {"category": "Staff"}
 # 🎀────────────────────────────────────────────
 #           🌸 Cog Setup Function 🌸
 # ─────────────────────────────────────────────

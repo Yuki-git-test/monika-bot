@@ -49,6 +49,7 @@ class EchoCog(commands.Cog):
             f"Message echoed to {channel.mention}.", ephemeral=True
         )
 
-
+    echo.extras = {"category": "Staff"}
+    
 async def setup(bot: commands.Bot):
     await bot.add_cog(EchoCog(bot))

@@ -45,7 +45,7 @@ class TrophyGroupCommand(commands.Cog):
             command_func=trophies_view_func,
             member=member,
         )
-
+    trophy_view.extras = {"category": "Public"}
     # 🎀────────────────────────────────────────────
     #          🌸 /trophy remove 🌸
     # 🎀────────────────────────────────────────────
@@ -73,7 +73,7 @@ class TrophyGroupCommand(commands.Cog):
             member=member,
             amount=amount,
         )
-
+    trophy_remove.extras = {"category": "Staff"}
     # 🎀────────────────────────────────────────────
     #          🌸 /trophy add 🌸
     # 🎀────────────────────────────────────────────
@@ -101,7 +101,7 @@ class TrophyGroupCommand(commands.Cog):
             member=member,
             amount=amount,
         )
-
+    trophy_add.extras = {"category": "Staff"}
     # 🎀────────────────────────────────────────────
     #          🌸 /trophy leaderboard 🌸
     # 🎀────────────────────────────────────────────
@@ -121,7 +121,7 @@ class TrophyGroupCommand(commands.Cog):
             slash_cmd_name=slash_cmd_name,
             command_func=view_leaderboard_func,
         )
-
+    trophy_leaderboard.extras = {"category": "Public"}
     # 🎀────────────────────────────────────────────
     #          🌸 /trophy reset 🌸
     # 🎀────────────────────────────────────────────
@@ -141,7 +141,7 @@ class TrophyGroupCommand(commands.Cog):
             slash_cmd_name=slash_cmd_name,
             command_func=trophy_reset_func,
         )
-
+    trophy_reset.extras = {"category": "Staff"}
     # 🎀────────────────────────────────────────────
     #          🌸 /trophy multi 🌸
     # 🎀────────────────────────────────────────────
@@ -199,7 +199,7 @@ class TrophyGroupCommand(commands.Cog):
             member9=member9,
             member10=member10,
         )
-
+    trophy_multi.extras = {"category": "Staff"}
 # 🎀────────────────────────────────────────────
 #           🌸 Cog Setup Function 🌸
 # ─────────────────────────────────────────────

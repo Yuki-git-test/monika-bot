@@ -87,6 +87,7 @@ class CatchRequirements(commands.Cog):
 
         await loader.success(embed=embed, content="")
 
-
+    catch_requirements.extras = {"category": "Public"}
+    
 async def setup(bot: commands.Bot):
     await bot.add_cog(CatchRequirements(bot))

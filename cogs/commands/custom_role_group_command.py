@@ -51,7 +51,7 @@ class CustomRoleGroupCommand(commands.Cog):
             role_name=role_name,
             color_type=color_type,
         )
-
+    custom_role_create.extras = {"category": "Public"}
     # 🎀────────────────────────────────────────────
     #          🌸 /custom-role edit 🌸
     # 🎀────────────────────────────────────────────
@@ -80,6 +80,8 @@ class CustomRoleGroupCommand(commands.Cog):
             color_type=color_type,
         )
 
+    custom_role_edit.extras = {"category": "Public"}
+
     # 🎀────────────────────────────────────────────
     #          🌸 /custom-role edit-icon 🌸
     # 🎀────────────────────────────────────────────
@@ -99,6 +101,7 @@ class CustomRoleGroupCommand(commands.Cog):
             slash_cmd_name=slash_cmd_name,
             command_func=custom_role_edit_icon_func,
         )
+    custom_role_edit_icon.extras = {"category": "Public"}
 
     # 🎀────────────────────────────────────────────
     #          🌸 /custom-role remove 🌸
@@ -124,6 +127,7 @@ class CustomRoleGroupCommand(commands.Cog):
             command_func=custom_role_remove_func,
             member=member,
         )
+    custom_role_remove.extras = {"category": "Staff"}
     # 🎀────────────────────────────────────────────
     #          🌸 /custom-role set 🌸
     # 🎀────────────────────────────────────────────
@@ -151,7 +155,7 @@ class CustomRoleGroupCommand(commands.Cog):
             member=member,
             role=role,
         )
-
+    custom_role_set.extras = {"category": "Staff"}
 
 # 🎀────────────────────────────────────────────
 #           🌸 Cog Setup Function 🌸
