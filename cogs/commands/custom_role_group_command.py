@@ -51,7 +51,7 @@ class CustomRoleGroupCommand(commands.Cog):
             role_name=role_name,
             color_type=color_type,
         )
-    custom_role_create.extras = {"category": "Public"}
+    custom_role_create.extras = {"category": "Staff"}
     # 🎀────────────────────────────────────────────
     #          🌸 /custom-role edit 🌸
     # 🎀────────────────────────────────────────────

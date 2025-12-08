@@ -23,7 +23,7 @@ CATEGORY_CONFIG = {
     },
     "Staff": {
         "emoji": Emojis.orange_flower,
-        "label": "Owner",
+        "label": "Staff",
         "color": 0xFF7F50 , # Coral
         "thumbnail": Thumbnails.orange_flower,
     },
