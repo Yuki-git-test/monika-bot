@@ -20,7 +20,7 @@ class CatchRequirements(commands.Cog):
         self.bot = bot
 
     @app_commands.command(
-        name="catchrequirements",
+        name="catch-requirements",
         description="Shows your catch requirements if you are on probation.",
     )
     async def catch_requirements(self, interaction: discord.Interaction):
@@ -88,6 +88,6 @@ class CatchRequirements(commands.Cog):
         await loader.success(embed=embed, content="")
 
     catch_requirements.extras = {"category": "Public"}
-    
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(CatchRequirements(bot))
