@@ -5,10 +5,17 @@ class Emojis:
     orange_butterfly = "<:orange_butterfly:1429847831807656008>"
     orange_flower = "<:orange_flower:1447566013985067119>"
     orange_star = "<:orange_star:1447565886293540976>"
+    crown = "<a:crown:1447926768672706590>"
+    purple_mod = "<a:purple_mod:1447926786590507018>"
+    purple_star = "<:purple_star_four:1447926801232826511>"
+    purple_exclamation = "<:purple_exclamation:1447926817993527449>"
+
 
 class Dividers:
     orange_stars = "https://media.discordapp.net/attachments/1380367804804497448/1441986969054871663/image.png?ex=6923ca84&is=69227904&hm=bc5438704ece136bdf19c1605d08f249331ee7593ac4e407ce85ab88ea560a0d&=&format=webp&quality=lossless"
     orange_flower = "https://media.discordapp.net/attachments/1394913073520967680/1447579005195649246/image.png?ex=69382281&is=6936d101&hm=4e0b2dac311e592a356a92bae513d546ea2af5a7eb69d51dd404b510b2b6b651&=&format=webp&quality=lossless&width=1812&height=145"
+    purple_wave = "https://media.discordapp.net/attachments/1393740397905313912/1447895227808616551/image.png?ex=69394902&is=6937f782&hm=a98577561e7f4be98bbc607c9f51c6f9a24ee79d4b67c7f4b356270a8fd296a3&=&format=webp&quality=lossless"
+
 class Thumbnails:
     orange_book = "https://media.discordapp.net/attachments/1394913073520967680/1447577816081235998/image.png?ex=69382166&is=6936cfe6&hm=c55ffa2a5b22e8d537c0e3a401bec3313443dd6517e0a24768bf22c7545fc3cc&=&format=webp&quality=lossless"
     orange_ribbon = "https://media.discordapp.net/attachments/1394913073520967680/1447577332880507012/image.png?ex=693820f2&is=6936cf72&hm=62a541962219892a1ce7e9bbdb16c6dc29f52a41f6206e8c0b80e68bd8715214&=&format=webp&quality=lossless"

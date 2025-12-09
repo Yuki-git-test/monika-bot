@@ -27,6 +27,7 @@ from utils.quick_codes.sync_members import sync_members_func
 from utils.quick_codes.cleanup import clean_graveyard_channels_func
 from utils.listener_func.stats_listener import stats_command_handler
 from utils.listener_func.monthly_stats_listener import monthly_stats_checker
+from utils.quick_codes.quick_codes_handler import quick_codes_handler
 dot_role_id = 1375712535512354898
 
 FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
@@ -91,18 +92,11 @@ class MessageCreateListener(commands.Cog):
                 first_embed_title = first_embed.title if first_embed else ""
 
                 # ————————————————————————————————
-                # 🔄 Sync Members Quick Code Handler
+                # 🔄 Quick Code Handler
                 # ————————————————————————————————
-                if (
-                    message.author.id == 952071312124313611
-                    and message.content == "!sync_members"
-                ):
-                    await sync_members_func(self.bot, message)
-                # ————————————————————————————————
-                # 🧹 Cleanup Graveyard Channels Quick Code Handler
-                # ————————————————————————————————
-                if message.content.lower() == "!clean_graveyard":
-                    await clean_graveyard_channels_func(message)
+                if message.content.startswith("!"):
+                    await quick_codes_handler(message)
+
                 # ————————————————————————————————
                 # 🎭 Perks Handler
                 # ————————————————————————————————
