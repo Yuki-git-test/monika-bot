@@ -144,9 +144,10 @@ async def trophy_multi_func(
             processed_members.append(desc_line)
 
     # Build confirmation embed
+    action_str = "Added" if action == "add" else "Removed"
     embed = discord.Embed(
         title=title,
-        description=f"**Amount {action}ed:** 🏆 {amount}\n",
+        description=f"**Amount {action_str}:** 🏆 {amount}\n",
         color=MONIKA_EMBED_COLOR,
     )
     if processed_members:
