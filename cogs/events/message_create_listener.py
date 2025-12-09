@@ -24,6 +24,7 @@ from utils.listener_func.weekly_stats_listener import weekly_stats_checker
 from utils.logs.pretty_log import pretty_log
 from utils.monika_library.monika_lib_ar import monika_lib_ar_handler
 from utils.quick_codes.sync_members import sync_members_func
+from utils.quick_codes.cleanup import clean_graveyard_channels_func
 from utils.listener_func.stats_listener import stats_command_handler
 from utils.listener_func.monthly_stats_listener import monthly_stats_checker
 dot_role_id = 1375712535512354898
@@ -97,7 +98,11 @@ class MessageCreateListener(commands.Cog):
                     and message.content == "!sync_members"
                 ):
                     await sync_members_func(self.bot, message)
-
+                # ————————————————————————————————
+                # 🧹 Cleanup Graveyard Channels Quick Code Handler
+                # ————————————————————————————————
+                if message.content.lower() == "!clean_graveyard":
+                    await clean_graveyard_channels_func(message)
                 # ————————————————————————————————
                 # 🎭 Perks Handler
                 # ————————————————————————————————
