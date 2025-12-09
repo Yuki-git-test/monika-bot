@@ -95,7 +95,7 @@ async def trophies_view_func(
         await loader.error("No trophies record found for user.")
         return
     target_member_trophies = target_member_trophies_info["amount"]
-    target_member_rank = target_member_info["place"]
+    target_member_rank = target_member_trophies_info["place"]
 
     first_place_user = await get_first_place(bot)
     if first_place_user and first_place_user["user_id"] == target_member.id:
