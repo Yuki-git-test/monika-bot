@@ -13,7 +13,7 @@ from utils.logs.pretty_log import pretty_log
 from utils.cache.cache_list import vna_members_cache
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
 from utils.functions.webhook_func import send_webhook
-
+GRAVEYARD_CATEGORY_ID = 1329157603573633126
 # 🍭──────────────────────────────
 #   🎀 Event: On Member Leave
 # 🍭──────────────────────────────

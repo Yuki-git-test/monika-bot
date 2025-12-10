@@ -43,24 +43,25 @@ async def trophies_view_func(
     user = interaction.user
     staff_role = guild.get_role(VN_ALLSTARS_ROLES.staff)
 
+    # Initialize loader
+    loader = await pretty_defer(
+        interaction=interaction,
+        content=f"Fetching trophies...",
+        ephemeral=False,
+    )
+
     # Check if member field has a value
     if member is not None:
         # Check if staff role is in user's roles
         is_staff = await is_staff_member(interaction=interaction)
         if not is_staff:
-            await interaction.response.send_message(
-                "Only staff members can view other members' trophies.", ephemeral=True
+            await loader.error(
+                f"{user.mention}, you do not have permission to view other members' trophies."
             )
             return
 
         target_member = member
 
-        # Initialize loader
-        loader = await pretty_defer(
-            interaction=interaction,
-            content=f"Fetching {target_member.display_name}'s trophies...",
-            ephemeral=False,
-        )
 
         target_member_info = await fetch_user_place_and_trophies(bot, target_member)
         if not target_member_info:
