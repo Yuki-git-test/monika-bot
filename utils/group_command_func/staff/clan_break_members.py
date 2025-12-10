@@ -78,7 +78,7 @@ class Clan_Break_Paginator(View):
             member = guild.get_member(member_id)
             if member:
                 member_str = f"> - {member.mention}"
-                ends_on_str = f"> - **Ends On:** <t:{ends_on}:f> in <t:{ends_on}:R>"
+                ends_on_str = f"> - **Ends On:** <t:{ends_on}:f> <t:{ends_on}:R>"
                 assigned_on_str = f"> - **Assigned On:** <t:{assigned_on}:f>"
                 embed.add_field(
                     name=f"👤 {member.display_name}",

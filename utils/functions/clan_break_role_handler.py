@@ -35,7 +35,7 @@ async def handle_clan_break_add_role(bot: discord.Client, member: discord.Member
     log_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.server_log)
     clan_break_role = guild.get_role(VN_ALLSTARS_ROLES.clan_break)
     assigned_on = int(time.time())
-    ends_on_dt = f"<t:{ends_on}:f> in <t:{ends_on}:R>" if ends_on else "Unknown"
+    ends_on_dt = f"<t:{ends_on}:f> <t:{ends_on}:R>" if ends_on else "Unknown"
     assigned_on_dt = f"<t:{assigned_on}:f>"
     if log_channel:
         embed = discord.Embed(
