@@ -169,13 +169,11 @@ async def role_members_func(
         )
         guild = await bot.fetch_guild(interaction.guild.id)
         server_icon = guild.icon.url if guild.icon else None
-        thumbnail_url = server_icon
+        thumbnail_url = role.icon.url if role.icon else server_icon
         # 🌿 Get members with this role
         members = [m for m in interaction.guild.members if role in m.roles]
 
-        role_icon_url = role.icon.url
-        if role_icon_url:
-            thumbnail_url = role_icon_url
+
 
         embed_title = f"{Emojis.orange_butterfly} Members with {role.name} Role"
 
