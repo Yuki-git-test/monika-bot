@@ -13,7 +13,7 @@ from utils.db.top_monthly_grinders_db import upsert_top_monthly_grinder
 from utils.db.vna_members_db_func import upsert_member
 from utils.functions.server_booster_handler import handle_server_booster_role_add
 from utils.logs.pretty_log import pretty_log
-
+from utils.functions.clan_break_role_handler import handle_clan_break_add_role
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
 from utils.functions.webhook_func import send_webhook
 
@@ -63,7 +63,12 @@ async def handle_role_add(
                 bot,
                 user=member,
             )
-
+    # ————————————————————————————————
+    # 🩵 VNA Clan Break Role Add
+    # ————————————————————————————————
+    if role_id == VN_ALLSTARS_ROLES.clan_break:
+        # Handle clan break role addition
+        await handle_clan_break_add_role(bot, member)
     # ————————————————————————————————
     # 🩵 VNA Role Logs
     # ————————————————————————————————
@@ -72,23 +77,24 @@ async def handle_role_add(
         tag="info",
         label="Member Update Event",
     )
-    log_channel = member.guild.get_channel(LOG_CHANNEL_ID)
-    if log_channel:
-        embed = discord.Embed(
-            title="✅ Role Added",
-            color=discord.Color.green(),
-            description=(f"**Member:** {member.mention}\n" f"**Role:** {role.mention}"),
-            timestamp=datetime.now(),
-        )
-        if role.icon:
-            embed.set_thumbnail(url=role.icon.url)
-        embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
-        embed.set_footer(
-            text=f"Role ID: {role.id}",
-            icon_url=member.guild.icon.url if member.guild.icon else None,
-        )
-        await send_webhook(
-            bot=bot,
-            channel=log_channel,
-            embed=embed,
-        )
+    if role_id != VN_ALLSTARS_ROLES.clan_break:
+        log_channel = member.guild.get_channel(LOG_CHANNEL_ID)
+        if log_channel:
+            embed = discord.Embed(
+                title="✅ Role Added",
+                color=discord.Color.green(),
+                description=(f"**Member:** {member.mention}\n" f"**Role:** {role.mention}"),
+                timestamp=datetime.now(),
+            )
+            if role.icon:
+                embed.set_thumbnail(url=role.icon.url)
+            embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+            embed.set_footer(
+                text=f"Role ID: {role.id}",
+                icon_url=member.guild.icon.url if member.guild.icon else None,
+            )
+            await send_webhook(
+                bot=bot,
+                channel=log_channel,
+                embed=embed,
+            )

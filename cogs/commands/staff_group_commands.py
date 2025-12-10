@@ -298,6 +298,27 @@ class StaffGroupCommand(commands.Cog):
             clan_joined_date=clan_joined_date,
         )
     update_member.extras = {"category": "Staff"}
+
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff clan-break-members 🌸
+    # 🎀───────────────────────────────────────────
+    @staff_group.command(
+        name="clan-break-members",
+        description="List all clan break members",
+    )
+    async def clan_break_members(
+        self,
+        interaction: discord.Interaction,
+    ):
+        slash_cmd_name = "staff clan-break-members"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=clan_break_members_func,
+        )
+    clan_break_members.extras = {"category": "Staff"}
 # 🎀────────────────────────────────────────────
 #           🌸 Cog Setup Function 🌸
 # ─────────────────────────────────────────────

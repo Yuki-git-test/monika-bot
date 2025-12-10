@@ -12,6 +12,7 @@ class Emojis:
 
 
 class Dividers:
+    starry_sky = "https://media.discordapp.net/attachments/1394913073520967680/1448140397368049694/tumblr_15d2f7069ff551c7802c5e8e82bebad5_71db4d67_2048.png?ex=693a2d57&is=6938dbd7&hm=e661efff4467527ab475c3d4f956de187c03dac339defcfa28d7b0d94628b32d&=&format=webp&quality=lossless"
     orange_stars = "https://media.discordapp.net/attachments/1380367804804497448/1441986969054871663/image.png?ex=6923ca84&is=69227904&hm=bc5438704ece136bdf19c1605d08f249331ee7593ac4e407ce85ab88ea560a0d&=&format=webp&quality=lossless"
     orange_flower = "https://media.discordapp.net/attachments/1394913073520967680/1447579005195649246/image.png?ex=69382281&is=6936d101&hm=4e0b2dac311e592a356a92bae513d546ea2af5a7eb69d51dd404b510b2b6b651&=&format=webp&quality=lossless&width=1812&height=145"
     purple_wave = "https://media.discordapp.net/attachments/1393740397905313912/1447895227808616551/image.png?ex=69394902&is=6937f782&hm=a98577561e7f4be98bbc607c9f51c6f9a24ee79d4b67c7f4b356270a8fd296a3&=&format=webp&quality=lossless"

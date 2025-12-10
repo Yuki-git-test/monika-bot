@@ -41,3 +41,4 @@ kick_list_cache: dict[int, dict] = {}
 #  "pokemeow_name": str,
 # }
 #
+

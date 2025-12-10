@@ -31,6 +31,7 @@ TAGS = {
     "debug": "🔍 DEBUG",
     "success": "✅ SUCCESS",
     "scheduler": "⏰ SCHEDULER",
+    "background_task": "⌚ BG TASK",
 }
 
 # -------------------- 🍑 Monika's ANSI Colors --------------------

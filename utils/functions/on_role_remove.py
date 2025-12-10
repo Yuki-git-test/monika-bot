@@ -11,6 +11,7 @@ from constants.vn_allstars_constants import (
 from utils.cache.cache_list import top_monthly_grinders_cache, vna_members_cache
 from utils.db.top_monthly_grinders_db import delete_top_monthly_grinder
 from utils.db.vna_members_db_func import remove_member
+from utils.functions.clan_break_role_handler import handle_clan_break_remove_role
 from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
@@ -51,7 +52,54 @@ async def handle_role_remove(
         if cached_grinder:
             # Remove from db
             await delete_top_monthly_grinder(bot, member)
+    # ————————————————————————————————
+    # 🩵 VNA Clan Break Role Remove
+    # ————————————————————————————————
+    if role_id == VN_ALLSTARS_ROLES.clan_break:
+        # Remove from clan break members db
+        # Try to get the user who removed the role from audit logs
+        remover = None
+        try:
+            async for entry in member.guild.audit_logs(
+                limit=5, action=discord.AuditLogAction.member_role_update
+            ):
+                # Robustly check for the roles attribute in changes.before
+                before_roles = None
+                if (
+                    hasattr(entry, "changes")
+                    and hasattr(entry.changes, "before")
+                    and hasattr(entry.changes.before, "roles")
+                ):
+                    before_roles = entry.changes.before.roles
+                if (
+                    entry.target.id == member.id
+                    and before_roles
+                    and any(r.id == role_id for r in before_roles)
+                ):
+                    remover = entry.user
+                    break
+        except Exception as e:
+            pretty_log(
+                message=f"Error fetching audit log for clan break role removal: {e}",
+                tag="error",
+                label="Audit Log Fetch",
+            )
+        # Log who removed the role if found
+        if remover:
+            pretty_log(
+                message=f"Clan Break role removed from {member.display_name} by {remover.display_name} ({remover.id})",
+                tag="info",
+                label="Clan Break Role Removal",
+            )
+        else:
+            pretty_log(
+                message=f"Clan Break role removed from {member.display_name}, remover unknown.",
+                tag="info",
+                label="Clan Break Role Removal",
+            )
+        # You can also call your DB removal here if needed
 
+        await handle_clan_break_remove_role(bot, member, remover)
     # ————————————————————————————————
     # 🩵 VNA Role Logs
     # ————————————————————————————————
@@ -60,23 +108,24 @@ async def handle_role_remove(
         tag="info",
         label="Member Update Event",
     )
-    log_channel = member.guild.get_channel(LOG_CHANNEL_ID)
-    if log_channel:
-        embed = discord.Embed(
-            title="❌ Role Removed",
-            color=discord.Color.red(),
-            description=(f"**Member:** {member.mention}\n" f"**Role:** {role.mention}"),
-            timestamp=datetime.now(),
-        )
-        if role.icon:
-            embed.set_thumbnail(url=role.icon.url)
-        embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
-        embed.set_footer(
-            text=f"Role ID: {role.id}",
-            icon_url=member.guild.icon.url if member.guild.icon else None,
-        )
-        await send_webhook(
-            bot=bot,
-            channel=log_channel,
-            embed=embed,
-        )
+    if role_id != VN_ALLSTARS_ROLES.clan_break:
+        log_channel = member.guild.get_channel(LOG_CHANNEL_ID)
+        if log_channel:
+            embed = discord.Embed(
+                title="❌ Role Removed",
+                color=discord.Color.red(),
+                description=(f"**Member:** {member.mention}\n" f"**Role:** {role.mention}"),
+                timestamp=datetime.now(),
+            )
+            if role.icon:
+                embed.set_thumbnail(url=role.icon.url)
+            embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+            embed.set_footer(
+                text=f"Role ID: {role.id}",
+                icon_url=member.guild.icon.url if member.guild.icon else None,
+            )
+            await send_webhook(
+                bot=bot,
+                channel=log_channel,
+                embed=embed,
+            )
