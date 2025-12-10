@@ -9,11 +9,15 @@ from constants.vn_allstars_constants import (
     VNA_EMBED_COLOR,
     VNA_SERVER_ID,
 )
-from utils.logs.pretty_log import pretty_log
 from utils.cache.cache_list import vna_members_cache
+from utils.logs.pretty_log import pretty_log
+
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
 from utils.functions.webhook_func import send_webhook
+
 GRAVEYARD_CATEGORY_ID = 1329157603573633126
+
+
 # 🍭──────────────────────────────
 #   🎀 Event: On Member Leave
 # 🍭──────────────────────────────
@@ -38,9 +42,25 @@ class OnMemberLeaveCog(commands.Cog):
         log_channel = member.guild.get_channel(LOG_CHANNEL_ID)
         title_str = "👋 Member Left Server"
         # Check if its a clan member
-        member_info  = vna_members_cache.get(member.id)
+        member_info = vna_members_cache.get(member.id)
+        personal_channel = None
         if member_info:
             title_str = "💔 Clan Member Left Server"
+            channel_id = member_info.get("channel_id")
+            if channel_id:
+                personal_channel = member.guild.get_channel(channel_id)
+                # Move personal channel to Graveyard category
+                if personal_channel:
+                    graveyard_category = discord.utils.get(
+                        member.guild.categories, id=GRAVEYARD_CATEGORY_ID
+                    )
+                    if graveyard_category:
+                        await personal_channel.edit(
+                            category=graveyard_category,
+                            reason=f"Member {member} ({member.id}) left the server.",
+                        )
+                        # Sync permissions to the new category
+                        await personal_channel.edit(sync_permissions=True)
         if log_channel:
             embed = discord.Embed(
                 title=title_str,
@@ -64,6 +84,7 @@ class OnMemberLeaveCog(commands.Cog):
                 channel=log_channel,
                 embed=embed,
             )
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMemberLeaveCog(bot))
