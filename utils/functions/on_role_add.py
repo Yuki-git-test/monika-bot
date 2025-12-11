@@ -49,6 +49,11 @@ async def handle_role_add(
         cached_member = vna_members_cache.get(member.id)
         if not cached_member:
             # Upsert member into the database
+            pretty_log(
+                message=f"Upserting VNA member '{member.display_name}' into the database.",
+                tag="info",
+                label="Role Add Event",
+            )
             await upsert_member(bot, member)
 
     # ————————————————————————————————

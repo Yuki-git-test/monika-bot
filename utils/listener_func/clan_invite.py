@@ -3,13 +3,14 @@ import re
 import discord
 
 from constants.vn_allstars_constants import (
+    POKEMEOW_APP_ID,
     VN_ALLSTARS_CATEGORIES,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
-    POKEMEOW_APP_ID
 )
 from utils.functions.webhook_func import send_webhook
 from utils.logs.pretty_log import pretty_log
+from utils.db.vna_members_db_func import upsert_member
 
 image_url = "https://media.discordapp.net/attachments/1220786720082235403/1382956264102826004/image.png?ex=684d09e3&is=684bb863&hm=8e69e66a6897337d74b88efac9a84b6ad95e1dc42b6cc269ea352e9e766d0299&=&format=webp&quality=lossless&width=1600&height=128"
 
@@ -40,6 +41,20 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
             try:
                 user = await bot.fetch_user(int(user_id))
                 pretty_log(f"User found: {user.display_name} ({user.name})")
+                pokemeow_name = user.name
+                # Get replied message
+                replied_message = (
+                    message.reference.resolved if message.reference else None
+                )
+                if replied_message:
+                    replied_msg_content = replied_message.content
+                    if replied_msg_content:
+                        # Extract PokéMeow name from the replied message
+                        match = re.search(
+                            r"has invited \*\*(.*?)\*\* to join", replied_msg_content
+                        )
+                        if match:
+                            pokemeow_name = match.group(1)
 
                 guild = message.guild
                 # Roles
@@ -50,14 +65,6 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                 staff_role = guild.get_role(VN_ALLSTARS_ROLES.staff)
                 bots_role = guild.get_role(VN_ALLSTARS_ROLES.bots)
 
-                # Assign roles to user
-                await user.add_roles(
-                    vna_member_role,
-                    lottery_role,
-                    giveaway_role,
-                    announcment_role,
-                    reason="Auto role assignment on clan join",
-                )
                 # Channel info and creation
                 channel_name = f"《👾》{user.name}"
                 channel_topic = (
@@ -74,6 +81,22 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                     label="Auto Clan Invite",
                 )
 
+                # Upsert member into the database
+                await upsert_member(
+                    bot=bot,
+                    user = user,
+                    channel_id=new_channel.id,
+                    pokemeow_name=pokemeow_name,
+                )
+                # Assign roles to user
+                await user.add_roles(
+                    vna_member_role,
+                    lottery_role,
+                    giveaway_role,
+                    announcment_role,
+                    reason="Auto role assignment on clan join",
+                )
+
                 # Set channel permissions so only the user and admins can access it
                 pokemeow_bot = guild.get_member(POKEMEOW_APP_ID)
                 user_permissions = discord.PermissionOverwrite(
@@ -86,7 +109,6 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                     attach_files=True,
                     pin_messages=True,
                     manage_threads=True,
-
                 )
 
                 everyone_permissions = discord.PermissionOverwrite(

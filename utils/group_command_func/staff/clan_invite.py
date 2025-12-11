@@ -10,6 +10,7 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
 )
+from utils.db.vna_members_db_func import upsert_member
 from utils.functions.webhook_func import send_webhook
 from utils.logs.pretty_log import pretty_log
 
@@ -55,14 +56,6 @@ async def clan_invite_func(
 
     bots_role = guild.get_role(VN_ALLSTARS_ROLES.bots)
 
-    # Assign roles to user
-    await user.add_roles(
-        vna_member_role,
-        lottery_role,
-        giveaway_role,
-        announcment_role,
-        reason="Auto role assignment on clan join",
-    )
     # Channel info and creation
     channel_name = f"《👾》{channel_name}"
     channel_topic = "This is your personal channel!! You may use this however you like."
@@ -75,6 +68,20 @@ async def clan_invite_func(
         "sucess",
         f"Channel '{new_channel.name}' created for user {user.display_name}",
         label="Clan Invite",
+    )
+    # Upsert member into the database
+    await upsert_member(
+        bot=bot,
+        user = user,
+        channel_id=new_channel.id,
+    )
+    # Assign roles to user
+    await user.add_roles(
+        vna_member_role,
+        lottery_role,
+        giveaway_role,
+        announcment_role,
+        reason="Auto role assignment on clan join",
     )
 
     # Set channel permissions so only the user and admins can access it
@@ -112,7 +119,7 @@ async def clan_invite_func(
     await new_channel.set_permissions(staff_role, overwrite=staff_permissions)
     await new_channel.set_permissions(bots_role, overwrite=bots_permissions)
     await new_channel.set_permissions(pokemeow_bot, overwrite=bots_permissions)
-    
+
     # Add an success embed for the new member
     desc = f"Successfully assigned {vna_member_role.mention} to {user.mention} and given access to your personal channel {new_channel.mention}!"
     embed = discord.Embed(
