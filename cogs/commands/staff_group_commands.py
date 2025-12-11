@@ -319,6 +319,36 @@ class StaffGroupCommand(commands.Cog):
             command_func=clan_break_members_func,
         )
     clan_break_members.extras = {"category": "Staff"}
+
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff whois 🌸
+    # 🎀───────────────────────────────────────────
+    @staff_group.command(
+        name="whois",
+        description="Get information about a server member",
+    )
+    @app_commands.describe(
+        member="The member to get information about",
+        member_id="The ID of the member to get information about",
+    )
+    async def whois(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member = None,
+        member_id: int = None,
+    ):
+        slash_cmd_name = "staff whois"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=whois_func,
+            member=member,
+            member_id=member_id,
+        )
+    whois.extras = {"category": "Staff"}
+    
 # 🎀────────────────────────────────────────────
 #           🌸 Cog Setup Function 🌸
 # ─────────────────────────────────────────────

@@ -9,6 +9,20 @@ class Emojis:
     purple_mod = "<a:purple_mod:1447926786590507018>"
     purple_star = "<:purple_star_four:1447926801232826511>"
     purple_exclamation = "<:purple_exclamation:1447926817993527449>"
+    aqua = "<:aqua:1448611604882259978>"
+    flare = "<:flare:1448612457651372212>"
+    galactic = "<:galatic:1448612470393671781>"
+    magma = "<:magma:1448612484478144672>"
+    rocket = "<:rocket:1448612497560174665>"
+    skull = "<:skull:1448612512810664037>"
+    yell = "<:yell:1448612537863114823>"
+    plasma = "<:plasma:1448615386265419927>"
+    bronze = "<:bronze:1448612559769964554>"
+    silver = "<:silver:1448612576777998419>"
+    gold = "<a:gold:1448612594301538385>"
+    diamond = "<a:diamond:1448612606150578176>"
+    amethyst = "<a:amethyst:1448612622382399572>"
+    onyx = "<a:onyx:1448612637142159451>"
 
 
 class Dividers:

@@ -108,7 +108,11 @@ class RoleMembersView(discord.ui.View):
     class PrevButton(discord.ui.Button):
         def __init__(self, parent: "RoleMembersView"):
             super().__init__(emoji="⬅️", style=discord.ButtonStyle.primary)
-            self.parent = parent
+            self._parent = parent
+
+        @property
+        def parent(self):
+            return self._parent
 
         async def callback(self, interaction: discord.Interaction):
             try:
@@ -130,7 +134,11 @@ class RoleMembersView(discord.ui.View):
     class NextButton(discord.ui.Button):
         def __init__(self, parent: "RoleMembersView"):
             super().__init__(emoji="➡️", style=discord.ButtonStyle.primary)
-            self.parent = parent
+            self._parent = parent
+
+        @property
+        def parent(self):
+            return self._parent
 
         async def callback(self, interaction: discord.Interaction):
             try:
@@ -172,8 +180,6 @@ async def role_members_func(
         thumbnail_url = role.icon.url if role.icon else server_icon
         # 🌿 Get members with this role
         members = [m for m in interaction.guild.members if role in m.roles]
-
-
 
         embed_title = f"{Emojis.orange_butterfly} Members with {role.name} Role"
 

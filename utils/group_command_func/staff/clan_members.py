@@ -15,7 +15,7 @@ from utils.db.vna_members_db_func import fetch_all_members
 from utils.essentials.pretty_defer import pretty_defer
 from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
-
+from utils.essentials.display_format import format_display_perks, format_display_faction
 
 class Clan_Members_Paginator(View):
     def __init__(self, bot, user: discord.Member, members, per_page=10):
@@ -84,19 +84,17 @@ class Clan_Members_Paginator(View):
             if clan_joined_date:
                 joined_date_str = f"<t:{clan_joined_date}:D>"
 
-            display_perks = perks.title() if perks not in (None, "None") else "None"
-            display_faction = (
-                faction.title() if faction not in (None, "None") else "None"
-            )
+            display_perks = format_display_perks(perks)
+            display_faction = format_display_faction(faction)
             embed.add_field(
                 name=f"👤 {member_name}",
                 value=(
-                    f"**Discord Member:** {discord_member.mention}\n"
-                    f"**Channel:** {channel_mention}\n"
-                    f"**PokéMeow Name:** {pokemeow_name}\n"
-                    f"**Perks:** {display_perks}\n"
-                    f"**Faction:** {display_faction}\n"
-                    f"**Joined Date:** {joined_date_str}"
+                    f"> - **Discord Member:** {discord_member.mention}\n"
+                    f"> - **Channel:** {channel_mention}\n"
+                    f"> - **PokéMeow Name:** {pokemeow_name}\n"
+                    f"> - **Perks:** {display_perks}\n"
+                    f"> - **Faction:** {display_faction}\n"
+                    f"> - **Joined Date:** {joined_date_str}"
                 ),
                 inline=False,
             )

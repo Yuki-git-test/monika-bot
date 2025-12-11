@@ -2,6 +2,8 @@ import discord
 
 from utils.logs.pretty_log import pretty_log
 
+from .personal_channels_db import delete_personal_channel, upsert_personal_channel
+
 # SQL Script to create the vna_members table
 """CREATE TABLE vna_members (
     user_id           BIGINT PRIMARY KEY,
@@ -104,6 +106,9 @@ async def upsert_member(
                 faction=faction,
                 clan_joined_date=clan_joined_date,
             )
+            # Upsert channel in personal_channels table as well
+            if channel_id:
+                await upsert_personal_channel(bot=bot, user=user, channel_id=channel_id)
             return True
     except Exception as e:
         pretty_log("error", f"Failed to upsert vna_members for {user.name}: {e}")
@@ -192,6 +197,9 @@ async def update_member_fields(
                 faction=faction,
                 clan_joined_date=clan_joined_date,
             )
+            # Upsert channel in personal_channels table if channel_id is updated
+            if channel_id is not None:
+                await upsert_personal_channel(bot=bot, user=user, channel_id=channel_id)
             return True
         else:
             pretty_log("info", f"No fields to update for {user.name}.")
@@ -251,6 +259,9 @@ async def update_member_channel(bot, user: discord.Member, channel_id: int):
         from utils.cache.vna_members_cache import update_vna_member_channel_cache
 
         update_vna_member_channel_cache(user_id, channel_id)
+
+        # Upsert channel in personal_channels table as well
+        await upsert_personal_channel(bot=bot, user=user, channel_id=channel_id)
 
 
 # Update member perks for a user
