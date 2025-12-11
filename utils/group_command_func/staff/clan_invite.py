@@ -5,6 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from constants.vn_allstars_constants import (
+    POKEMEOW_APP_ID,
     VN_ALLSTARS_CATEGORIES,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
@@ -77,32 +78,48 @@ async def clan_invite_func(
     )
 
     # Set channel permissions so only the user and admins can access it
+    pokemeow_bot = guild.get_member(POKEMEOW_APP_ID)
     user_permissions = discord.PermissionOverwrite(
         view_channel=True,
+        manage_channels=True,
         send_messages=True,
         manage_messages=True,
+        send_messages_in_threads=True,
+        create_public_threads=True,
+        attach_files=True,
+        pin_messages=True,
+        manage_threads=True,
     )
 
     everyone_permissions = discord.PermissionOverwrite(
         view_channel=False,
     )
+    bots_permissions = discord.PermissionOverwrite(
+        view_channel=True,
+        send_messages=True,
+    )
 
+    staff_permissions = discord.PermissionOverwrite(
+        view_channel=True,
+        manage_channels=True,
+        manage_messages=True,
+        manage_threads=True,
+    )
     await new_channel.set_permissions(user, overwrite=user_permissions)
     await new_channel.set_permissions(
         guild.default_role, overwrite=everyone_permissions
     )
-    await new_channel.set_permissions(staff_role, overwrite=user_permissions)
-    await new_channel.set_permissions(bots_role, overwrite=user_permissions)
-
+    await new_channel.set_permissions(staff_role, overwrite=staff_permissions)
+    await new_channel.set_permissions(bots_role, overwrite=bots_permissions)
+    await new_channel.set_permissions(pokemeow_bot, overwrite=bots_permissions)
+    
     # Add an success embed for the new member
     desc = f"Successfully assigned {vna_member_role.mention} to {user.mention} and given access to your personal channel {new_channel.mention}!"
     embed = discord.Embed(
         description=desc,
         color=0xFF00EE,  # Magenta
     )
-    embed.set_author(
-        name=user.display_name, icon_url=user.display_avatar.url
-    )
+    embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
     embed.set_thumbnail(url=guild.icon.url if guild.icon else None)
     embed.set_image(url=image_url)
     await interaction.channel.send(embed=embed)
