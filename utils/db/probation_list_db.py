@@ -8,24 +8,33 @@ import discord
 from utils.logs.pretty_log import pretty_log
 
 
-async def upsert_probation_member(bot, user: discord.Member, pokemeow_name: str, catch_requirement: int):
+async def upsert_probation_member(
+    bot, user: discord.Member, pokemeow_name: str, catch_requirement: int
+):
     """
     Insert or update a probation_list row for a user.
     """
     user_id = user.id
     user_name = user.name
+    import time
+
+    assigned_on = int(time.time())
     async with bot.pg_pool.acquire() as conn:
         await conn.execute(
             """
-            INSERT INTO probation_list (user_id, user_name, pokemeow_name, catch_requirement)
-            VALUES ($1, $2, $3, $4)
+            INSERT INTO probation_list (user_id, user_name, pokemeow_name, catch_requirement, assigned_on)
+            VALUES ($1, $2, $3, $4, $5)
             ON CONFLICT (user_id) DO UPDATE
-            SET user_name = EXCLUDED.user_name, pokemeow_name = EXCLUDED.pokemeow_name;
+            SET user_name = EXCLUDED.user_name,
+                pokemeow_name = EXCLUDED.pokemeow_name,
+                catch_requirement = EXCLUDED.catch_requirement,
+                assigned_on = EXCLUDED.assigned_on;
             """,
             user_id,
             user_name,
             pokemeow_name,
             catch_requirement,
+            assigned_on,
         )
         pretty_log(
             "info",
@@ -35,9 +44,12 @@ async def upsert_probation_member(bot, user: discord.Member, pokemeow_name: str,
         # Update cache as well
         from utils.cache.probation_list_cache import upsert_probation_list_cache
 
-        upsert_probation_list_cache(user, pokemeow_name, catch_requirement)
+        upsert_probation_list_cache(user, pokemeow_name, catch_requirement, assigned_on)
 
-async def update_probation_catch_requirement(bot, user: discord.Member, catch_requirement: int):
+
+async def update_probation_catch_requirement(
+    bot, user: discord.Member, catch_requirement: int
+):
     """
     Update the catch requirement for a probation_list member.
     """
@@ -58,7 +70,10 @@ async def update_probation_catch_requirement(bot, user: discord.Member, catch_re
             label="Probation List DB",
         )
         # Update cache as well
-        from utils.cache.probation_list_cache import update_probation_catch_requirement_cache
+        from utils.cache.probation_list_cache import (
+            update_probation_catch_requirement_cache,
+        )
+
         update_probation_catch_requirement_cache(user, catch_requirement)
 
 
@@ -93,7 +108,7 @@ async def fetch_all_probation_members(bot):
     async with bot.pg_pool.acquire() as conn:
         rows = await conn.fetch(
             """
-            SELECT user_id, user_name, pokemeow_name, catch_requirement FROM probation_list;
+            SELECT user_id, user_name, pokemeow_name, catch_requirement, assigned_on FROM probation_list;
             """
         )
         probation_members = [
@@ -102,6 +117,7 @@ async def fetch_all_probation_members(bot):
                 row["user_name"],
                 row["pokemeow_name"],
                 row["catch_requirement"],
+                row["assigned_on"],
             )
             for row in rows
         ]

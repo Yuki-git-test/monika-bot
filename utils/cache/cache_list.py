@@ -32,6 +32,7 @@ probation_list_cache: dict[int, dict] = {}
 # "user_name": str,
 # "pokemeow_name": str,
 # "catch_requirement": int,
+# "assigned_on": int,
 # }
 
 kick_list_cache: dict[int, dict] = {}

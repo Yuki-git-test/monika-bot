@@ -8,6 +8,7 @@ from utils.essentials.safe_run_command import run_command_safe
 from utils.group_command_func.staff import *
 from utils.logs.pretty_log import pretty_log
 
+
 # 🍭──────────────────────────────
 #   🎀 Staff Group Command
 # 🍭──────────────────────────────
@@ -16,9 +17,7 @@ class StaffGroupCommand(commands.Cog):
         self.bot = bot
 
     # Register the group command
-    staff_group = app_commands.Group(
-        name="staff", description="Staff only commands"
-    )
+    staff_group = app_commands.Group(name="staff", description="Staff only commands")
 
     message_group = app_commands.Group(
         name="message", description="Staff message commands"
@@ -71,7 +70,9 @@ class StaffGroupCommand(commands.Cog):
             command_func=role_members_func,
             role=role,
         )
+
     role_members.extras = {"category": "Staff"}
+
     # 🎀───────────────────────────────────────────
     #          🌸 /staff invite 🌸
     # 🎀───────────────────────────────────────────
@@ -99,6 +100,7 @@ class StaffGroupCommand(commands.Cog):
             channel_name=channel_name,
             member=member,
         )
+
     clan_invite.extras = {"category": "Staff"}
 
     # 🎀───────────────────────────────────────────
@@ -126,6 +128,7 @@ class StaffGroupCommand(commands.Cog):
             message_link=message_link,
         )
     list_members.extras = {"category": "Staff"}"""
+
     # 🎀───────────────────────────────────────────
     #          🌸 /staff set-channel 🌸
     # 🎀───────────────────────────────────────────
@@ -152,7 +155,6 @@ class StaffGroupCommand(commands.Cog):
             command_func=set_channel_func,
             member=member,
             channel=channel,
-
         )
 
     set_channel.extras = {"category": "Staff"}
@@ -176,7 +178,9 @@ class StaffGroupCommand(commands.Cog):
             slash_cmd_name=slash_cmd_name,
             command_func=clan_members_func,
         )
+
     clan_members.extras = {"category": "Staff"}
+
     # 🎀───────────────────────────────────────────
     #          🌸 /staff message send 🌸
     # 🎀───────────────────────────────────────────
@@ -204,7 +208,9 @@ class StaffGroupCommand(commands.Cog):
             channel=channel,
             ping_role=ping_role,
         )
+
     message_send.extras = {"category": "Staff"}
+
     # 🎀───────────────────────────────────────────
     #          🌸 /staff message edit 🌸
     # 🎀───────────────────────────────────────────
@@ -232,7 +238,9 @@ class StaffGroupCommand(commands.Cog):
             channel=channel,
             message_id=message_id,
         )
+
     message_edit.extras = {"category": "Staff"}
+
     # 🎀───────────────────────────────────────────
     #          🌸 /staff extract-joined-date 🌸
     # 🎀───────────────────────────────────────────
@@ -257,7 +265,9 @@ class StaffGroupCommand(commands.Cog):
             command_func=extract_joined_date_func,
             message_link=message_link,
         )
+
     extract_joined_date.extras = {"category": "Staff"}
+
     # 🎀───────────────────────────────────────────
     #          🌸 /staff update-member 🌸
     # 🎀───────────────────────────────────────────
@@ -297,6 +307,7 @@ class StaffGroupCommand(commands.Cog):
             faction=faction,
             clan_joined_date=clan_joined_date,
         )
+
     update_member.extras = {"category": "Staff"}
 
     # 🎀───────────────────────────────────────────
@@ -318,6 +329,7 @@ class StaffGroupCommand(commands.Cog):
             slash_cmd_name=slash_cmd_name,
             command_func=clan_break_members_func,
         )
+
     clan_break_members.extras = {"category": "Staff"}
 
     # 🎀───────────────────────────────────────────
@@ -347,8 +359,32 @@ class StaffGroupCommand(commands.Cog):
             member=member,
             member_id=member_id,
         )
+
     whois.extras = {"category": "Staff"}
-    
+
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff probation-members 🌸
+    # 🎀───────────────────────────────────────────
+    @staff_group.command(
+        name="probation-members",
+        description="List all members currently on probation",
+    )
+    async def probation_members(
+        self,
+        interaction: discord.Interaction,
+    ):
+        slash_cmd_name = "staff probation-members"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=probation_members_func,
+        )
+
+    probation_members.extras = {"category": "Staff"}
+
+
 # 🎀────────────────────────────────────────────
 #           🌸 Cog Setup Function 🌸
 # ─────────────────────────────────────────────

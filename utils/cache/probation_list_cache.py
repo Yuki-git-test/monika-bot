@@ -20,11 +20,18 @@ async def load_probation_list_cache(bot):
             )
             return
 
-        for user_id, user_name, pokemeow_name, catch_requirement in probation_members:
+        for (
+            user_id,
+            user_name,
+            pokemeow_name,
+            catch_requirement,
+            assigned_on,
+        ) in probation_members:
             probation_list_cache[user_id] = {
                 "user_name": user_name,
                 "pokemeow_name": pokemeow_name,
                 "catch_requirement": catch_requirement,
+                "assigned_on": assigned_on,
             }
         pretty_log(
             "info",
@@ -46,13 +53,17 @@ def upsert_probation_list_cache(user: discord.Member):
 
     # Accepts user and pokemeow_name
     def upsert_probation_list_cache(
-        user: discord.Member, pokemeow_name: str, catch_requirement: int
+        user: discord.Member,
+        pokemeow_name: str,
+        catch_requirement: int,
+        assigned_on: int,
     ):
         user_name = user.name
         probation_list_cache[user.id] = {
             "user_name": user_name,
             "pokemeow_name": pokemeow_name,
             "catch_requirement": catch_requirement,
+            "assigned_on": assigned_on,
         }
         pretty_log(
             "info",

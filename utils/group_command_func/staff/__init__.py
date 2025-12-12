@@ -10,6 +10,7 @@ from .extract_joined_date import extract_joined_date_func
 from .update_member import update_member_func
 from .clan_break_members import clan_break_members_func
 from .whois import whois_func
+from .probation_members import probation_members_func
 __all__ = [
     "assign_top_grinder_roles",
     "role_members_func",
@@ -23,5 +24,6 @@ __all__ = [
     "update_member_func",
     "clan_break_members_func",
     "whois_func",
+    "probation_members_func",
 ]
 

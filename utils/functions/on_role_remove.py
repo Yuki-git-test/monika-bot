@@ -9,6 +9,7 @@ from constants.vn_allstars_constants import (
     VNA_SERVER_ID,
 )
 from utils.cache.cache_list import top_monthly_grinders_cache, vna_members_cache
+from utils.db.probation_list_db import remove_probation_member
 from utils.db.top_monthly_grinders_db import delete_top_monthly_grinder
 from utils.db.vna_members_db_func import remove_member
 from utils.functions.clan_break_role_handler import handle_clan_break_remove_role
@@ -52,6 +53,17 @@ async def handle_role_remove(
         if cached_grinder:
             # Remove from db
             await delete_top_monthly_grinder(bot, member)
+    # ————————————————————————————————
+    # 🩵 VNA Probation Role Remove
+    # ————————————————————————————————
+    if role_id == VN_ALLSTARS_ROLES.probation or role_id == VN_ALLSTARS_ROLES.kick_list:
+        # Check if member is in probation cache
+        from utils.cache.probation_list_cache import probation_list_cache
+
+        cached_probation = probation_list_cache.get(member.id)
+        if cached_probation:
+            # Remove from probation db
+            await remove_probation_member(bot, member)
     # ————————————————————————————————
     # 🩵 VNA Clan Break Role Remove
     # ————————————————————————————————
@@ -114,12 +126,16 @@ async def handle_role_remove(
             embed = discord.Embed(
                 title="❌ Role Removed",
                 color=discord.Color.red(),
-                description=(f"**Member:** {member.mention}\n" f"**Role:** {role.mention}"),
+                description=(
+                    f"**Member:** {member.mention}\n" f"**Role:** {role.mention}"
+                ),
                 timestamp=datetime.now(),
             )
             if role.icon:
                 embed.set_thumbnail(url=role.icon.url)
-            embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+            embed.set_author(
+                name=member.display_name, icon_url=member.display_avatar.url
+            )
             embed.set_footer(
                 text=f"Role ID: {role.id}",
                 icon_url=member.guild.icon.url if member.guild.icon else None,

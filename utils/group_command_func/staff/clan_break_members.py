@@ -89,7 +89,7 @@ class Clan_Break_Paginator(View):
             text=f"Page {self.page + 1} of {self.max_page + 1} | Total Members: {total_members}",
             icon_url=guild.icon.url if guild.icon else None,
         )
-        embed.thumbnail(
+        embed.set_thumbnail(
             url=(
                 clan_break_role.icon.url
                 if clan_break_role and clan_break_role.icon
