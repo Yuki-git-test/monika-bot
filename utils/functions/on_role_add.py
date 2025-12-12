@@ -8,14 +8,20 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
 )
-from utils.cache.cache_list import top_monthly_grinders_cache, vna_members_cache
+from utils.cache.cache_list import (
+    probation_list_cache,
+    top_monthly_grinders_cache,
+    vna_members_cache,
+)
+from utils.db.probation_list_db import upsert_probation_member
 from utils.db.top_monthly_grinders_db import upsert_top_monthly_grinder
 from utils.db.vna_members_db_func import upsert_member
-from utils.functions.server_booster_handler import handle_server_booster_role_add
-from utils.logs.pretty_log import pretty_log
 from utils.functions.clan_break_role_handler import handle_clan_break_add_role
-LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
+from utils.functions.server_booster_handler import handle_server_booster_role_add
 from utils.functions.webhook_func import send_webhook
+from utils.logs.pretty_log import pretty_log
+
+LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
 
 
 # 🍭──────────────────────────────
@@ -74,6 +80,29 @@ async def handle_role_add(
     if role_id == VN_ALLSTARS_ROLES.clan_break:
         # Handle clan break role addition
         await handle_clan_break_add_role(bot, member)
+
+    # ————————————————————————————————
+    # 🩵 VNA Probation Role Add
+    # ————————————————————————————————
+    if role_id == VN_ALLSTARS_ROLES.probation:
+        member_probation_info = probation_list_cache.get(member.id)
+        if not member_probation_info:
+            vna_member_info = vna_members_cache.get(member.id)
+            if vna_member_info:
+                pokemeow_name = vna_member_info.get("pokemeow_name", "Unknown")
+                # Upsert probation member into the database
+                await upsert_probation_member(
+                    bot,
+                    user=member,
+                    pokemeow_name=pokemeow_name,
+                    catch_requirement=1500,
+                )
+                pretty_log(
+                    message=f"Upserted probation member '{member.display_name}' into the database.",
+                    tag="info",
+                    label="Role Add Event",
+                )
+
     # ————————————————————————————————
     # 🩵 VNA Role Logs
     # ————————————————————————————————
@@ -88,12 +117,16 @@ async def handle_role_add(
             embed = discord.Embed(
                 title="✅ Role Added",
                 color=discord.Color.green(),
-                description=(f"**Member:** {member.mention}\n" f"**Role:** {role.mention}"),
+                description=(
+                    f"**Member:** {member.mention}\n" f"**Role:** {role.mention}"
+                ),
                 timestamp=datetime.now(),
             )
             if role.icon:
                 embed.set_thumbnail(url=role.icon.url)
-            embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+            embed.set_author(
+                name=member.display_name, icon_url=member.display_avatar.url
+            )
             embed.set_footer(
                 text=f"Role ID: {role.id}",
                 icon_url=member.guild.icon.url if member.guild.icon else None,
