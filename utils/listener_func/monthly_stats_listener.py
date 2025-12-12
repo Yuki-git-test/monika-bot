@@ -128,7 +128,7 @@ async def monthly_stats_checker(
             label="Auto Probation Role Assignment",
         )
         return
-    
+
     # Get roles
     guild = bot.get_guild(VNA_SERVER_ID)
 
@@ -184,9 +184,9 @@ async def monthly_stats_checker(
         embed_description,
     )
     if command_user_top_line_match:
-        user_catches = int(command_user_top_line_match.group(1).replace(",", ""))
+        command_user_catches = int(command_user_top_line_match.group(1).replace(",", ""))
         pretty_log(
-            f"Command user catches parsed from embed: {user_catches}",
+            f"Command user catches parsed from embed: {command_user_catches}",
         )
 
     # Check command user first
