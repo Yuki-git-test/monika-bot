@@ -10,6 +10,8 @@ from utils.logs.pretty_log import pretty_log
 from utils.quick_codes.clan_info import post_clan_info
 from utils.quick_codes.cleanup import clean_graveyard_channels_func
 
+from .debug_role_move import debug_role_move
+
 
 async def quick_codes_handler(message: discord.Message):
     """Handles quick codes based on message content."""
@@ -26,4 +28,11 @@ async def quick_codes_handler(message: discord.Message):
     # ————————————————————————————————
     if message.content.lower() == "!post_info":
         await post_clan_info(message)
+        return
+
+    # ————————————————————————————————
+    # 🐞 Debug Role Move Quick Code Handler
+    # ————————————————————————————————
+    if message.content.lower() == "!debug_role_move":
+        await debug_role_move(message)
         return
