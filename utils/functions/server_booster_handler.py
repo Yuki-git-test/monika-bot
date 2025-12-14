@@ -72,6 +72,37 @@ async def handle_server_booster_role_remove(
         )
 
 
+async def safe_set_role_position(
+    guild: discord.Guild,
+    role: discord.Role,
+    reference_role: discord.Role,
+    bot: discord.Client,
+):
+    # Fetch fresh role list to avoid stale cache
+    roles = await guild.fetch_roles()
+    ref_pos = reference_role.position
+    bot_pos = guild.me.top_role.position
+
+    if bot_pos > ref_pos:
+        try:
+            await role.edit(position=ref_pos - 1)
+            pretty_log(
+                message=f"Moved role '{role.name}' below reference role '{reference_role.name}'.",
+                tag="success",
+            )
+        except Exception as e:
+            pretty_log(
+                message=f"Failed to move role '{role.name}': {e}",
+                tag="error",
+            )
+    else:
+        pretty_log(
+            message=f"Bot cannot move role '{role.name}' below '{reference_role.name}' "
+            f"because its top role is too low (bot: {bot_pos}, ref: {ref_pos}).",
+            tag="warning",
+        )
+
+
 # 🍭──────────────────────────────
 #   🎀 Handle Server Booster Role Addition
 # 🍭──────────────────────────────
@@ -148,7 +179,8 @@ async def handle_server_booster_role_add(
                 1
             )  # Small delay to ensure role is created before positioning
             try:
-                await new_role.edit(position=reference_role.position - 1)
+                # Use safe helper here
+                await safe_set_role_position(guild, new_role, reference_role, bot)
                 pretty_log(
                     message=f"Set position for new custom role '{new_role.name}' to {reference_role.position - 1}.",
                     tag="success",
@@ -195,7 +227,7 @@ async def handle_server_booster_role_add(
                 name=member.display_name, icon_url=member.display_avatar.url
             )
             embed.set_footer(
-                name=guild.name, icon_url=guild.icon.url if guild.icon else None
+                text=guild.name, icon_url=guild.icon.url if guild.icon else None
             )
             # Send message in General Channel
             general_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.general)
@@ -216,7 +248,7 @@ async def handle_server_booster_role_add(
                             name=member.display_name, icon_url=member.display_avatar.url
                         )
                         log_embed.set_footer(
-                            name=guild.name,
+                            text=guild.name,
                             icon_url=guild.icon.url if guild.icon else None,
                         )
                         await send_webhook(

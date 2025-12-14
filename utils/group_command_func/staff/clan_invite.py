@@ -63,6 +63,7 @@ async def clan_invite_func(
         name=channel_name,
         topic=channel_topic,
         category=guild.get_channel(VN_ALLSTARS_CATEGORIES.CLAN_MEMBERS),
+        sync_permissions=False,
     )
     pretty_log(
         "sucess",
