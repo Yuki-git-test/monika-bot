@@ -13,20 +13,17 @@ from constants.vn_allstars_constants import (
     VNA_EMBED_COLOR,
     VNA_SERVER_ID,
 )
-from utils.db.trophy import (
-    fetch_all_trophies,
-    fetch_current_leaderboard_info,
-    fetch_leaderboard_message_id,
-    fetch_user_place_and_trophies,
-    get_first_place,
-    update_first_place_in_db,
-    upsert_leaderboard_msg_id,
+from utils.db.public_trophy_db import (
+    fetch_all_public_trophies,
+    fetch_current_public_leaderboard_info,
+    fetch_user_place_and_public_trophies,
+    get_public_first_place,
 )
 from utils.essentials.pretty_defer import pretty_defer
 from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
 
-from .trophy_update_leaderboard import create_leaderboard_embed, get_first_place
+from .trophy_update_leaderboard import create_public_leaderboard_embed
 
 TROPHY_THUMBNAIL_URL = Thumbnails.trophy
 
@@ -36,7 +33,7 @@ LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 # 🍭──────────────────────────────
 #   🎀 trophies View Command Function
 # 🍭──────────────────────────────
-async def trophies_view_func(
+async def public_trophies_view_func(
     bot: commands.Bot, interaction: discord.Interaction, member: discord.Member = None
 ):
     guild = interaction.guild
@@ -46,7 +43,7 @@ async def trophies_view_func(
     # Initialize loader
     loader = await pretty_defer(
         interaction=interaction,
-        content=f"Fetching trophies...",
+        content=f"Fetching public trophies...",
         ephemeral=False,
     )
 
@@ -62,21 +59,24 @@ async def trophies_view_func(
 
         target_member = member
 
-
-        target_member_info = await fetch_user_place_and_trophies(bot, target_member)
+        target_member_info = await fetch_user_place_and_public_trophies(
+            bot, target_member
+        )
         if not target_member_info:
-            await loader.error(f"{target_member.display_name} has no trophies record.")
+            await loader.error(
+                f"{target_member.display_name} has no public trophies record."
+            )
             return
         target_member_trophies = target_member_info["amount"]
         target_member_rank = target_member_info["place"]
-        first_place_user = await get_first_place(bot)
+        first_place_user = await get_public_first_place(bot)
         if first_place_user and first_place_user["user_id"] == target_member.id:
             crown_emoji = "👑"
         else:
             crown_emoji = ""
 
         embed = discord.Embed(
-            title=f"{crown_emoji} {target_member.display_name}'s trophies",
+            title=f"{crown_emoji} {target_member.display_name}'s Public trophies",
             description=f"**Rank:**{target_member_rank}\n**Trophies:** 🏆 {target_member_trophies}",
             color=discord.Color.blue(),
         )
@@ -89,7 +89,7 @@ async def trophies_view_func(
 
     # If no member specified, show own trophies
     target_member = user
-    target_member_trophies_info = await fetch_user_place_and_trophies(
+    target_member_trophies_info = await fetch_user_place_and_public_trophies(
         bot, target_member
     )
     if not target_member_trophies_info:
@@ -98,7 +98,7 @@ async def trophies_view_func(
     target_member_trophies = target_member_trophies_info["amount"]
     target_member_rank = target_member_trophies_info["place"]
 
-    first_place_user = await get_first_place(bot)
+    first_place_user = await get_public_first_place(bot)
     if first_place_user and first_place_user["user_id"] == target_member.id:
         crown_emoji = "👑"
     else:
@@ -132,6 +132,7 @@ class Trophy_Leaderboard_Paginator(View):
         # If there's only one page, remove buttons
         if self.max_page == 0:
             self.clear_items()
+
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.secondary)
     async def previous_page(self, interaction: discord.Interaction, button: Button):
         if interaction.user.id != self.user.id:
@@ -164,20 +165,22 @@ class Trophy_Leaderboard_Paginator(View):
         guild: discord.Guild = self.bot.get_guild(VNA_SERVER_ID)
 
         first_place_user_id = None
-        current_leaderboard_info = await fetch_current_leaderboard_info(self.bot)
+        current_leaderboard_info = await fetch_current_public_leaderboard_info(self.bot)
         first_place_user_id = (
             current_leaderboard_info.get("first_place_id")
             if current_leaderboard_info
             else None
         )
         # Get user place info
-        user_place_info = await fetch_user_place_and_trophies(self.bot, self.user)
+        user_place_info = await fetch_user_place_and_public_trophies(
+            self.bot, self.user
+        )
         if not user_place_info or user_place_info["amount"] == 0:
             desc = "You have no trophies yet."
         else:
             desc = f"You are currently in #{user_place_info['place']} with \U0001f3c6 {user_place_info['amount']}"
         embed = discord.Embed(
-            title=f"🏆 {guild.name} Trophy Leaderboard",
+            title=f"🏆 {guild.name} Public Trophy Leaderboard",
             description=desc,
             color=VNA_EMBED_COLOR,
             timestamp=datetime.now(),
@@ -218,7 +221,9 @@ class Trophy_Leaderboard_Paginator(View):
 # 🍭──────────────────────────────
 #   🎀 View Leaderboard
 # 🍭──────────────────────────────
-async def view_leaderboard_func(bot: commands.Bot, interaction: discord.Interaction):
+async def view_public_leaderboard_func(
+    bot: commands.Bot, interaction: discord.Interaction
+):
     guild = interaction.guild
     user = interaction.user
 
@@ -229,7 +234,7 @@ async def view_leaderboard_func(bot: commands.Bot, interaction: discord.Interact
         ephemeral=False,
     )
     # Fetch member trophies and create embed
-    member_trophies = await fetch_all_trophies(bot=bot)
+    member_trophies = await fetch_all_public_trophies(bot=bot)
     if not member_trophies:
         await loader.error("No trophies have been awarded yet.")
         return

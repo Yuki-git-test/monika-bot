@@ -5,7 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 
 from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
-from utils.db.trophy import remove_leaderboard_info, reset_trophies
+from utils.db.public_trophy_db import reset_public_trophies, remove_public_leaderboard_info
 from utils.essentials.pretty_defer import pretty_defer
 from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
@@ -17,7 +17,7 @@ LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 # 🍭──────────────────────────────
 #   🎀 trophies Reset Command Function
 # 🍭──────────────────────────────
-async def trophy_reset_func(
+async def public_trophy_reset_func(
     bot: commands.Bot,
     interaction: discord.Interaction,
 ):
@@ -32,20 +32,20 @@ async def trophy_reset_func(
     # Initialize loader
     loader = await pretty_defer(
         interaction=interaction,
-        content="Resetting all trophies...",
+        content="Resetting all public trophies...",
         ephemeral=False,
     )
     # Reset trophies in the database
     try:
-        await reset_trophies(bot)
-        await remove_leaderboard_info(bot)
-        await loader.success(content="All trophies have been reset.")
+        await reset_public_trophies(bot)
+        await remove_public_leaderboard_info(bot)
+        await loader.success(content="All public trophies have been reset.")
 
         # Send log embed to log channel
         log_channel = guild.get_channel(LOG_CHANNEL_ID)
         if log_channel:
             embed = discord.Embed(
-                title="Trophies Reset",
+                title="Public Trophies Reset",
                 description=f"All trophies have been reset by {interaction.user.mention}.",
                 color=discord.Color.red(),
                 timestamp=datetime.now(),
@@ -63,7 +63,7 @@ async def trophy_reset_func(
     except Exception as e:
         await loader.error(content="An error occurred while resetting trophies.")
         pretty_log(
-            message=f"Error resetting trophies: {e}",
+            message=f"Error resetting Public trophies: {e}",
             tag="error",
         )
         return

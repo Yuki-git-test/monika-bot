@@ -271,6 +271,16 @@ async def probation_assignment_handler(
             return True, None
 
 
+EXEMPTED_FROM_PROBATION_ROLE_IDS = [
+    VN_ALLSTARS_ROLES.clan_break,
+    VN_ALLSTARS_ROLES.coowner,
+    VN_ALLSTARS_ROLES.staff,
+    VN_ALLSTARS_ROLES.legendary_donator,
+    VN_ALLSTARS_ROLES.shiny_donator,
+    VN_ALLSTARS_ROLES.owner,
+]
+
+
 async def weekly_stats_checker(
     bot: discord.Client, before_message: discord.Message, after_message: discord.Message
 ):
@@ -347,8 +357,6 @@ async def weekly_stats_checker(
 
     # Get roles
     guild = bot.get_guild(VNA_SERVER_ID)
-    clan_break_role = guild.get_role(VN_ALLSTARS_ROLES.clan_break)
-    coowner_role = guild.get_role(VN_ALLSTARS_ROLES.coowner)
 
     # Parse clan stats from embed description
     clan_members_stats = parse_clan_stats_message(embed_description)
@@ -363,7 +371,7 @@ async def weekly_stats_checker(
         guild=guild,
         members=clan_members_stats,
     )
-    """if unknown_members:
+    if unknown_members:
         desc_lines = []
         for username, catches, fishes in unknown_members:
             desc_lines.append(f"- {username} (Catches: {catches}, Fishes: {fishes})")
@@ -394,7 +402,6 @@ async def weekly_stats_checker(
                 f"Logged {unknow_member_count} unknown members to server log channel.",
                 label="Auto Probation Role Assignment",
             )
-    """
 
     # Get top line
     command_user_catches = 0
@@ -439,10 +446,8 @@ async def weekly_stats_checker(
         if member_id in PROBATION_EXEMPTED_USER_IDS:
             continue  # Skip probation exempted users
 
-        if clan_break_role in member.roles:
-            continue  # Skip members on clan break
-        if coowner_role in member.roles:
-            continue  # Skip coowners
+        if any(role.id in EXEMPTED_FROM_PROBATION_ROLE_IDS for role in member.roles):
+            continue  # Skip members on clan break, coowners, or staff
         success, message = await probation_assignment_handler(
             bot=bot,
             member=member,
