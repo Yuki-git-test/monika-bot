@@ -503,6 +503,7 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
+    coowner = 1449518747231584316
     paldean_snipe = 1446581017501503628
     probation = 1426299800386539521
     kick_list = 1445374287098937418

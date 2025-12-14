@@ -8,10 +8,10 @@ from discord.ext import commands
 from constants.vn_allstars_constants import (
     HARMLESS_USER_ID,
     MONIKA_EMBED_COLOR,
+    PROBATION_EXEMPTED_USER_IDS,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
-    PROBATION_EXEMPTED_USER_IDS
 )
 from utils.cache.cache_list import (
     kick_list_cache,
@@ -36,6 +36,9 @@ from utils.logs.pretty_log import pretty_log
 PROBATION_LIST_DAYS = [6, 13, 20, 27]  # Every Saturday
 WEEKLY_REQUIREMENT_CATCHES = 1500
 MODERATOR_PLAY_CHANNEL_ID = 952810535928348732
+PROCESSED_WEEKLY_STATS_PAGES = set()
+PROCESSED_WEEKLY_STATS_END_TIMESTAMPS = set()
+
 
 def is_past_11pm_probation_day_est():
     est = pytz.timezone("US/Eastern")
@@ -172,7 +175,10 @@ async def probation_assignment_handler(
         msg = f"Member {member.display_name} is new to clan (joined less than 7 days)."
         return False, msg
 
-    if catches >= WEEKLY_REQUIREMENT_CATCHES or total_catches >= WEEKLY_REQUIREMENT_CATCHES:
+    if (
+        catches >= WEEKLY_REQUIREMENT_CATCHES
+        or total_catches >= WEEKLY_REQUIREMENT_CATCHES
+    ):
         msg = f"Member {member.display_name} met weekly catches requirement with {catches} catches."
         return False, msg
 
@@ -181,7 +187,10 @@ async def probation_assignment_handler(
         msg = f"Member {member.display_name} is on clan break."
         return False, msg
 
-    if catches < WEEKLY_REQUIREMENT_CATCHES and total_catches < WEEKLY_REQUIREMENT_CATCHES:
+    if (
+        catches < WEEKLY_REQUIREMENT_CATCHES
+        and total_catches < WEEKLY_REQUIREMENT_CATCHES
+    ):
         if probation_role not in member.roles:
             await member.add_roles(
                 probation_role,
@@ -297,6 +306,40 @@ async def weekly_stats_checker(
         )
         return
 
+    # Get reset timestamp from embed description
+    reset_timestamp = None
+    match = re.search(r"<t:(\d+):f>", embed_description)
+    if not match:
+        return
+
+    reset_timestamp = int(match.group(1))
+    if reset_timestamp not in PROCESSED_WEEKLY_STATS_END_TIMESTAMPS:
+        # Clear processed pages for new reset
+        PROCESSED_WEEKLY_STATS_PAGES.clear()
+        # Clear processed timestamps
+        PROCESSED_WEEKLY_STATS_END_TIMESTAMPS.clear()
+
+        PROCESSED_WEEKLY_STATS_END_TIMESTAMPS.add(reset_timestamp)
+
+    # Get current page number from footer
+    footer_text = (
+        embed.footer.text
+    )  # This will give you "Page 1/5 • Stat categories: ;clan stats daily/weekly/monthly/yearly"
+    page_match = re.search(r"Page\s+(\d+)/(\d+)", footer_text)
+    if not page_match:
+        return
+    current_page = int(page_match.group(1))
+    total_pages = int(page_match.group(2))
+
+    if current_page in PROCESSED_WEEKLY_STATS_PAGES:
+        pretty_log(
+            "info",
+            f"Weekly stats page {current_page} has already been processed. Skipping.",
+            label="Weekly Stats Listener",
+        )
+        return
+    PROCESSED_WEEKLY_STATS_PAGES.add(current_page)
+
     # Get member first
     command_user = await get_pokemeow_reply_member(before_message)
     if not command_user:
@@ -305,6 +348,7 @@ async def weekly_stats_checker(
     # Get roles
     guild = bot.get_guild(VNA_SERVER_ID)
     clan_break_role = guild.get_role(VN_ALLSTARS_ROLES.clan_break)
+    coowner_role = guild.get_role(VN_ALLSTARS_ROLES.coowner)
 
     # Parse clan stats from embed description
     clan_members_stats = parse_clan_stats_message(embed_description)
@@ -397,7 +441,8 @@ async def weekly_stats_checker(
 
         if clan_break_role in member.roles:
             continue  # Skip members on clan break
-
+        if coowner_role in member.roles:
+            continue  # Skip coowners
         success, message = await probation_assignment_handler(
             bot=bot,
             member=member,
