@@ -11,7 +11,7 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
-    PROBATION_EXEMPTED_USER_IDS
+    PROBATION_EXEMPTED_USER_IDS,
 )
 from utils.cache.cache_list import (
     kick_list_cache,
@@ -36,6 +36,7 @@ from utils.logs.pretty_log import pretty_log
 PROBATION_LIST_DAYS = [6, 13, 20, 27]  # Every Saturday
 WEEKLY_REQUIREMENT_CATCHES = 1500
 MODERATOR_PLAY_CHANNEL_ID = 952810535928348732
+
 
 def is_past_11pm_probation_day_est():
     est = pytz.timezone("US/Eastern")
@@ -172,7 +173,10 @@ async def probation_assignment_handler(
         msg = f"Member {member.display_name} is new to clan (joined less than 7 days)."
         return False, msg
 
-    if catches >= WEEKLY_REQUIREMENT_CATCHES or total_catches >= WEEKLY_REQUIREMENT_CATCHES:
+    if (
+        catches >= WEEKLY_REQUIREMENT_CATCHES
+        or total_catches >= WEEKLY_REQUIREMENT_CATCHES
+    ):
         msg = f"Member {member.display_name} met weekly catches requirement with {catches} catches."
         return False, msg
 
@@ -181,7 +185,10 @@ async def probation_assignment_handler(
         msg = f"Member {member.display_name} is on clan break."
         return False, msg
 
-    if catches < WEEKLY_REQUIREMENT_CATCHES and total_catches < WEEKLY_REQUIREMENT_CATCHES:
+    if (
+        catches < WEEKLY_REQUIREMENT_CATCHES
+        and total_catches < WEEKLY_REQUIREMENT_CATCHES
+    ):
         if probation_role not in member.roles:
             await member.add_roles(
                 probation_role,
@@ -262,12 +269,23 @@ async def probation_assignment_handler(
             return True, None
 
 
-async def weekly_stats_checker(
-    bot: discord.Client, before_message: discord.Message, after_message: discord.Message
+async def weekly_stats_checker_func(
+    bot: discord.Client, interaction: discord.Interaction, message_link: str
 ):
+    # Initialize loader
+    loader = await pretty_defer(
+        interaction=interaction,
+        content="Checking Weekly Stats...",
+        ephemeral=True,
+    )
+    # Fetch message object from link
+    message, error_message = await fetch_message_obj_from_link(bot, message_link)
+    if error_message:
+        await loader.error(content=error_message)
+        return
 
     # Extract stats from message
-    embed = after_message.embeds[0] if after_message.embeds else None
+    embed = message.embeds[0] if message.embeds else None
     if not embed:
         return
 
@@ -280,16 +298,7 @@ async def weekly_stats_checker(
     if not embed_description:
         return
 
-    # Check if 10 minutes before midnight EST on Saturday
-    if not is_saturday_10min_before_midnight_est():
-        pretty_log(
-            "info",
-            "Not the scheduled time for weekly stats check reminder.",
-            label="Weekly Stats Listener",
-        )
-        return
-
-    if after_message.channel.id != MODERATOR_PLAY_CHANNEL_ID:
+    if message.channel.id != MODERATOR_PLAY_CHANNEL_ID:
         pretty_log(
             "info",
             "Weekly stats message not in the designated Moderator Play channel.",
@@ -298,7 +307,7 @@ async def weekly_stats_checker(
         return
 
     # Get member first
-    command_user = await get_pokemeow_reply_member(before_message)
+    command_user = await get_pokemeow_reply_member(message)
     if not command_user:
         return
 
@@ -418,3 +427,4 @@ async def weekly_stats_checker(
                 label="Auto Probation Role Assignment",
             )
             continue
+    await loader.success(content="Weekly stats check completed.")

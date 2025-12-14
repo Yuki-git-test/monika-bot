@@ -46,30 +46,27 @@ async def load_probation_list_cache(bot):
         )
 
 
-def upsert_probation_list_cache(user: discord.Member):
-    """
-    Upsert a user into the probation_list_cache.
-    """
 
-    # Accepts user and pokemeow_name
-    def upsert_probation_list_cache(
-        user: discord.Member,
-        pokemeow_name: str,
-        catch_requirement: int,
-        assigned_on: int,
-    ):
-        user_name = user.name
-        probation_list_cache[user.id] = {
-            "user_name": user_name,
-            "pokemeow_name": pokemeow_name,
-            "catch_requirement": catch_requirement,
-            "assigned_on": assigned_on,
-        }
-        pretty_log(
-            "info",
-            f"Upserted probation list cache member: {user_name} ({user.id}) | Pokemeow: {pokemeow_name} | Catch Requirement: {catch_requirement}",
-            label="Probation List Cache",
-        )
+
+# Accepts user and pokemeow_name
+def upsert_probation_list_cache(
+    user: discord.Member,
+    pokemeow_name: str,
+    catch_requirement: int,
+    assigned_on: int,
+):
+    user_name = user.name
+    probation_list_cache[user.id] = {
+        "user_name": user_name,
+        "pokemeow_name": pokemeow_name,
+        "catch_requirement": catch_requirement,
+        "assigned_on": assigned_on,
+    }
+    pretty_log(
+        "info",
+        f"Upserted probation list cache member: {user_name} ({user.id}) | Pokemeow: {pokemeow_name} | Catch Requirement: {catch_requirement}",
+        label="Probation List Cache",
+    )
 
 
 def update_probation_catch_requirement_cache(

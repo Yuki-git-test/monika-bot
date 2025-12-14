@@ -384,6 +384,33 @@ class StaffGroupCommand(commands.Cog):
 
     probation_members.extras = {"category": "Staff"}
 
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff weekly-stats-checker 🌸
+    # 🎀───────────────────────────────────────────
+    @staff_group.command(
+        name="weekly-stats-checker",
+        description="Manually trigger the weekly stats checker",
+    )
+    @app_commands.describe(
+        message_link="The link to the message to check weekly stats from",
+    )
+    async def weekly_stats_checker(
+        self,
+        interaction: discord.Interaction,
+        message_link: str,
+    ):
+        slash_cmd_name = "staff weekly-stats-checker"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=weekly_stats_checker_func,
+            message_link=message_link,
+        )
+
+    weekly_stats_checker.extras = {"category": "Staff"}
+
 
 # 🎀────────────────────────────────────────────
 #           🌸 Cog Setup Function 🌸
