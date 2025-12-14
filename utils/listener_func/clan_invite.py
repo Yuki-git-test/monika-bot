@@ -107,7 +107,6 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                     send_messages_in_threads=True,
                     create_public_threads=True,
                     attach_files=True,
-                    pin_messages=True,
                     manage_threads=True,
                 )
 

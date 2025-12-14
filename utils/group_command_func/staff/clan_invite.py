@@ -94,7 +94,6 @@ async def clan_invite_func(
         send_messages_in_threads=True,
         create_public_threads=True,
         attach_files=True,
-        pin_messages=True,
         manage_threads=True,
     )
 
