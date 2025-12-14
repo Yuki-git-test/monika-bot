@@ -10,6 +10,12 @@ from constants.vn_allstars_constants import (
     VNA_SERVER_ID,
 )
 from utils.cache.cache_list import vna_members_cache
+from utils.db.custom_roles_db_func import (
+    fetch_custom_role_id,
+    remove_role,
+    update_gradient_role,
+    upsert_role,
+)
 from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
@@ -61,6 +67,7 @@ class OnMemberLeaveCog(commands.Cog):
                         )
                         # Sync permissions to the new category
                         await personal_channel.edit(sync_permissions=True)
+
         if log_channel:
             embed = discord.Embed(
                 title=title_str,
@@ -84,7 +91,29 @@ class OnMemberLeaveCog(commands.Cog):
                 channel=log_channel,
                 embed=embed,
             )
-
-
+        # Remove custom role if exists
+        custom_role_id = await fetch_custom_role_id(self.bot, member.id)
+        if custom_role_id:
+            # Delete the role from the server
+            role = member.guild.get_role(custom_role_id)
+            if role:
+                try:
+                    await role.delete(
+                        reason=f"Removing custom role for member {member} ({member.id}) who left the server."
+                    )
+                    pretty_log(
+                        message=f"Deleted custom role '{role.name}' ({role.id}) for member '{member.display_name}' who left the server.",
+                        tag="info",
+                        label="Custom Role Removal",
+                    )
+                except Exception as e:
+                    pretty_log(
+                        message=f"Error deleting custom role '{role.name}' ({role.id}): {e}",
+                        tag="error",
+                        label="Custom Role Removal",
+                    )
+            # Remove from database
+            await remove_role(self.bot, member.id)
+            
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMemberLeaveCog(bot))

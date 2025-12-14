@@ -13,6 +13,7 @@ from utils.db.probation_list_db import remove_probation_member
 from utils.db.top_monthly_grinders_db import delete_top_monthly_grinder
 from utils.db.vna_members_db_func import remove_member
 from utils.functions.clan_break_role_handler import handle_clan_break_remove_role
+from utils.functions.server_booster_handler import handle_server_booster_role_remove
 from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
@@ -34,6 +35,17 @@ async def handle_role_remove(
     # 🩵 VNA Server Role Remove Logic
     # ————————————————————————————————
 
+    # ————————————————————————————————
+    # 🩵 VNA Server Booster Role Removed
+    # ————————————————————————————————
+    if role_id == VN_ALLSTARS_ROLES.server_booster:
+        # Handle server booster role removal
+        pretty_log(
+            message=f"Detected server booster role removal for member '{member.display_name}'.",
+            tag="info",
+            label="Role Remove Event",
+        )
+        await handle_server_booster_role_remove(bot, member)
     # ————————————————————————————————
     # 🩵 VNA Member Role Removed
     # ————————————————————————————————

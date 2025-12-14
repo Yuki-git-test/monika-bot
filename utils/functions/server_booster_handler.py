@@ -25,6 +25,54 @@ from utils.functions.webhook_func import send_webhook
 
 
 # 🍭──────────────────────────────
+#   🎀 Handle Server Booster Role Removal
+# 🍭──────────────────────────────
+async def handle_server_booster_role_remove(
+    bot: discord.Client,
+    member: discord.Member,
+):
+    """Delete custom role when server booster role is removed."""
+
+    # Make exemption for staff members
+    staff_role = member.guild.get_role(VN_ALLSTARS_ROLES.staff)
+    seafoam_role = member.guild.get_role(VN_ALLSTARS_ROLES.seafoam)
+    if staff_role in member.roles or seafoam_role in member.roles:
+        pretty_log(
+            message=f"Member '{member.display_name}' is staff; skipping custom role deletion on server booster removal.",
+            tag="info",
+            label="Server Booster Role Remove",
+        )
+        return
+
+    # Fetch custom role ID from DB
+    custom_role_id = await fetch_custom_role_id(bot, member)
+    if custom_role_id:
+        # Check if custom role exists in guild
+        custom_role = member.guild.get_role(custom_role_id)
+        if custom_role:
+            try:
+                # Delete the custom role
+                await custom_role.delete(reason="Server booster role removed.")
+                pretty_log(
+                    message=f"Deleted custom role '{custom_role.name}' for member '{member.display_name}' after server booster role removal.",
+                    tag="success",
+                    label="Server Booster Role Remove",
+                )
+            except Exception as e:
+                pretty_log(
+                    message=f"Failed to delete custom role '{custom_role.name}' for member '{member.display_name}': {e}",
+                    tag="error",
+                )
+        # Remove from DB
+        await remove_role(bot, member)
+        pretty_log(
+            message=f"Removed custom role record from database for member '{member.display_name}' after server booster role removal.",
+            tag="info",
+            label="Server Booster Role Remove",
+        )
+
+
+# 🍭──────────────────────────────
 #   🎀 Handle Server Booster Role Addition
 # 🍭──────────────────────────────
 async def handle_server_booster_role_add(
@@ -96,7 +144,9 @@ async def handle_server_booster_role_add(
                 reason="Creating custom role after server boost.",
                 mentionable=False,
             )
-            await asyncio.sleep(1)  # Small delay to ensure role is created before positioning
+            await asyncio.sleep(
+                1
+            )  # Small delay to ensure role is created before positioning
             try:
                 await new_role.edit(position=reference_role.position - 1)
                 pretty_log(
