@@ -45,7 +45,7 @@ async def probation_removal_handler(
         )
         msg = f"Member {member.display_name} not found in VNA members cache."
         return False, msg
-
+    joined_date = member_info.get("clan_joined_date")
     probation_member_info = probation_list_cache.get(member.id)
     if not probation_member_info:
         pretty_log(
@@ -90,6 +90,7 @@ async def probation_removal_handler(
             fishes=fishes,
             total_catches=total_catches,
             required_catches=previous_catch_requirement,
+            clan_joined_date=joined_date,
         )
         # Remove from probation list db and kick list db
         await remove_probation_member(bot, member)
@@ -184,7 +185,9 @@ async def monthly_stats_checker(
         embed_description,
     )
     if command_user_top_line_match:
-        command_user_catches = int(command_user_top_line_match.group(1).replace(",", ""))
+        command_user_catches = int(
+            command_user_top_line_match.group(1).replace(",", "")
+        )
         pretty_log(
             f"Command user catches parsed from embed: {command_user_catches}",
         )
