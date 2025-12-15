@@ -17,6 +17,12 @@ from utils.db.probation_list_db import upsert_probation_member
 from utils.db.top_monthly_grinders_db import upsert_top_monthly_grinder
 from utils.db.vna_members_db_func import upsert_member
 from utils.functions.clan_break_role_handler import handle_clan_break_add_role
+from utils.functions.monthly_requirements_utils import (
+    get_member_weeks_in_clan,
+    is_member_less_than_a_month_old,
+    read_monthly_requirements,
+    write_monthly_requirements,
+)
 from utils.functions.server_booster_handler import handle_server_booster_role_add
 from utils.functions.webhook_func import send_webhook
 from utils.logs.pretty_log import pretty_log
@@ -88,17 +94,25 @@ async def handle_role_add(
         member_probation_info = probation_list_cache.get(member.id)
         if not member_probation_info:
             vna_member_info = vna_members_cache.get(member.id)
+            joined_date = vna_member_info.get("clan_joined_date")  # unix timestamp
             if vna_member_info:
                 pokemeow_name = vna_member_info.get("pokemeow_name", "Unknown")
                 # Upsert probation member into the database
+                expected_catches, _ = read_monthly_requirements()
+                # Adjust catch requirement if member is less than a month old
+                catch_requirement = expected_catches
+                if is_member_less_than_a_month_old(member.id):
+                    weeks_in_clan = get_member_weeks_in_clan(member.id)
+                    catch_requirement = 1500 * weeks_in_clan
+
                 await upsert_probation_member(
                     bot,
                     user=member,
                     pokemeow_name=pokemeow_name,
-                    catch_requirement=1500,
+                    catch_requirement=catch_requirement,
                 )
                 pretty_log(
-                    message=f"Upserted probation member '{member.display_name}' into the database.",
+                    message=f"Upserted probation member '{member.display_name}' into the database with catch requirement of {catch_requirement:,}.",
                     tag="info",
                     label="Role Add Event",
                 )

@@ -13,6 +13,7 @@ from .schedule_manager import SchedulerManager
 # Schedule Functions
 from .weekly_stats_check_reminder import weekly_stats_check_reminder
 from .prob_weekly_catch_reminder import prob_weekly_catch_reminder
+from .monthly_reqs_reset import monthly_reqs_reset_func
 # Timezones
 MANILA = zoneinfo.ZoneInfo("Asia/Manila")
 NYC = zoneinfo.ZoneInfo("America/New_York")  # auto-handles EST/EDT
@@ -71,6 +72,29 @@ async def setup_schedulers(bot):
         pretty_log(
             "error",
             message=(f"Failed to schedule PROB Weekly Catch Reminder. Error: {e}"),
+        )
+    # Monthly Requirements Reset on 1st of every month at 12:00 AM EST
+    try:
+        job = scheduler_manager.add_cron_job(
+            func=monthly_reqs_reset_func,
+            name="monthly_reqs_reset_func",
+            hour=0,
+            minute=0,
+            day_of_month=1,
+            timezone=NYC,
+            args=[bot],
+        )
+        pretty_log(
+            "scheduler",
+            message=(
+                f"Scheduled: Monthly Requirements Reset on the 1st of every month at 12:00 AM EST\n"
+                f"Next Scheduled Run: {job.next_run_time}"
+            ),
+        )
+    except Exception as e:
+        pretty_log(
+            "error",
+            message=(f"Failed to schedule Monthly Requirements Reset. Error: {e}"),
         )
 
     # Attach the scheduler manager to the bot for later access

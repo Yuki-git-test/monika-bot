@@ -33,11 +33,28 @@ from utils.essentials.stats_parsers import (
 from utils.functions.webhook_func import send_webhook
 from utils.logs.pretty_log import pretty_log
 
+EXEMPTED_FROM_PROBATION_ROLE_IDS = [
+    VN_ALLSTARS_ROLES.clan_break,
+    VN_ALLSTARS_ROLES.coowner,
+    VN_ALLSTARS_ROLES.staff,
+    VN_ALLSTARS_ROLES.legendary_donator,
+    VN_ALLSTARS_ROLES.shiny_donator,
+    VN_ALLSTARS_ROLES.owner,
+]
+from utils.functions.monthly_requirements_utils import (
+    read_monthly_requirements,
+    write_monthly_requirements,
+    is_member_less_than_a_month_old,
+    get_member_weeks_in_clan
+)
+
+EXPECTED_CATCHES = set()
 PROBATION_LIST_DAYS = [6, 13, 20, 27]  # Every Saturday
 WEEKLY_REQUIREMENT_CATCHES = 1500
 MODERATOR_PLAY_CHANNEL_ID = 952810535928348732
 PROCESSED_WEEKLY_STATS_PAGES = set()
 PROCESSED_WEEKLY_STATS_END_TIMESTAMPS = set()
+NEW_EXPECTED_CATCHES = None
 
 
 def is_past_11pm_probation_day_est():
@@ -91,6 +108,7 @@ async def send_probation_report_embed(
     total_catches: int,
     required_catches: int = None,
     old_required_catches: int = None,
+    clan_joined_date: int = None,
 ):
     if "add" in title.lower() or "assigned" in title.lower():
         color = discord.Color.red()
@@ -112,6 +130,7 @@ async def send_probation_report_embed(
             f"**Fishes:** {fishes}\n"
             f"**Total Catches:** {total_catches}\n"
             f"{required_catches_text}"
+            f"**Clan Joined Date:** <t:{clan_joined_date}:D> <t:{clan_joined_date}:R> \n"
         ),
         color=color,
         timestamp=datetime.now(),
@@ -187,6 +206,11 @@ async def probation_assignment_handler(
         msg = f"Member {member.display_name} is on clan break."
         return False, msg
 
+    upsert_catch_requirement = NEW_EXPECTED_CATCHES
+    if is_member_less_than_a_month_old(member.id):
+        week_in_clan = get_member_weeks_in_clan(member.id)
+        upsert_catch_requirement = WEEKLY_REQUIREMENT_CATCHES * week_in_clan
+
     if (
         catches < WEEKLY_REQUIREMENT_CATCHES
         and total_catches < WEEKLY_REQUIREMENT_CATCHES
@@ -208,13 +232,14 @@ async def probation_assignment_handler(
                 catches=catches,
                 fishes=fishes,
                 total_catches=total_catches,
+                clan_joined_date=joined_date,
             )
             # Upsert to probation list db with 1500 catch requirement
             await upsert_probation_member(
                 bot=bot,
                 user=member,
                 pokemeow_name=pokemeow_name,
-                catch_requirement=WEEKLY_REQUIREMENT_CATCHES,
+                catch_requirement=upsert_catch_requirement,
             )
             return True, None
         elif probation_role in member.roles:
@@ -249,6 +274,7 @@ async def probation_assignment_handler(
                     total_catches=total_catches,
                     required_catches=new_catch_requirement,
                     old_required_catches=int_previous_catch_requirement,
+                    clan_joined_date=joined_date,
                 )
             elif kick_role in member.roles:
                 title = "⚠️ Catch Requirement Updated for Member"
@@ -261,6 +287,7 @@ async def probation_assignment_handler(
                     total_catches=total_catches,
                     required_catches=new_catch_requirement,
                     old_required_catches=int_previous_catch_requirement,
+                    clan_joined_date=joined_date,
                 )
             # Update catch requirement in db
             await update_probation_catch_requirement(
@@ -269,16 +296,6 @@ async def probation_assignment_handler(
                 catch_requirement=new_catch_requirement,
             )
             return True, None
-
-
-EXEMPTED_FROM_PROBATION_ROLE_IDS = [
-    VN_ALLSTARS_ROLES.clan_break,
-    VN_ALLSTARS_ROLES.coowner,
-    VN_ALLSTARS_ROLES.staff,
-    VN_ALLSTARS_ROLES.legendary_donator,
-    VN_ALLSTARS_ROLES.shiny_donator,
-    VN_ALLSTARS_ROLES.owner,
-]
 
 
 async def weekly_stats_checker(
@@ -349,6 +366,24 @@ async def weekly_stats_checker(
         )
         return
     PROCESSED_WEEKLY_STATS_PAGES.add(current_page)
+    expected_catches, last_updated = read_monthly_requirements()
+    new_expected_catches = expected_catches + 1500
+    write_success = write_monthly_requirements(new_expected_catches)
+    if write_success:
+        global NEW_EXPECTED_CATCHES
+        NEW_EXPECTED_CATCHES = new_expected_catches
+        pretty_log(
+            "info",
+            f"Updated monthly expected catches to {NEW_EXPECTED_CATCHES} in monthly_requirements.json.",
+            label="Weekly Stats Listener",
+        )
+
+    else:
+        pretty_log(
+            "info",
+            "Monthly expected catches not updated; less than a day since last update.",
+            label="Weekly Stats Listener",
+        )
 
     # Get member first
     command_user = await get_pokemeow_reply_member(before_message)
