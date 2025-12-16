@@ -13,8 +13,8 @@ from constants.vn_allstars_constants import (
 from utils.cache.cache_list import vna_members_cache
 from utils.db.vna_members_db_func import remove_member
 from utils.essentials.pokemeow_member_reply import get_pokemeow_reply_member
-from utils.logs.pretty_log import pretty_log
 from utils.functions.webhook_func import send_webhook
+from utils.logs.pretty_log import pretty_log
 
 FORMER_MEMBERS_CATEGORY_ID = 927658364618571776
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
@@ -105,7 +105,7 @@ async def auto_clan_remove_handler(
 
         embed = discord.Embed(
             title=title,
-            url = message_link if message_link else None,
+            url=message_link if message_link else None,
             color=discord.Color.red(),
             description=(
                 f"{message_link}"
@@ -145,9 +145,7 @@ async def handle_clan_leave_command(bot: discord.Client, message: discord.Messag
         )
 
 
-async def handle_clan_kick_command(
-    bot: discord.Client, member: discord.Member, message: discord.Message
-):
+async def handle_clan_kick_command(bot: discord.Client, message: discord.Message):
     """Handle clan kick command"""
     content = message.content
     if not content:

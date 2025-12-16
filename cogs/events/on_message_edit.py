@@ -9,6 +9,7 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
 )
+from utils.functions.message_edit_log import message_edit_log
 from utils.listener_func.clan_remove import (
     handle_clan_kick_command,
     handle_clan_leave_command,
@@ -21,7 +22,7 @@ from utils.listener_func.perks_listener import (
 )
 from utils.listener_func.weekly_stats_listener import weekly_stats_checker
 from utils.logs.pretty_log import pretty_log
-from utils.functions.message_edit_log import message_edit_log
+
 TRIGGERS = {
     "pro_embed": "to view badge information",
     "clan_leave": "You left **VN Allstar**.",
@@ -67,7 +68,7 @@ class OnMessageEditCog(commands.Cog):
         #   🎀 Message Edit Log
         # 🍭──────────────────────────────
         await message_edit_log(self.bot, before, after)
-        
+
         # 🍭──────────────────────────────
         #   🎀 Clan Leave Processing
         # 🍭──────────────────────────────
@@ -88,7 +89,14 @@ class OnMessageEditCog(commands.Cog):
                 tag="info",
                 label="Clan Kick Command",
             )
-            await handle_clan_kick_command(self.bot, after)
+            try:
+                await handle_clan_kick_command(self.bot, after)
+            except Exception as e:
+                pretty_log(
+                    message=f"Error handling clan kick command for member '{after.author.display_name}': {e}",
+                    tag="error",
+                    label="Clan Kick Command",
+                )
 
         # ————————————————————————————————
         # 🎭 Perks Handler
