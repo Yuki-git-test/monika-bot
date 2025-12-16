@@ -211,54 +211,54 @@ async def handle_server_booster_role_add(
                 f"Feel free to customize it, using `/custom-role edit` and `/custom-role edit-icon`\n"
                 f"You can check out your the rest of your perks in <#{VN_ALLSTARS_TEXT_CHANNELS.perks}>"
             )
-            content = f"{member.mention} Thank you for boosting the server! 🎉"
-            color = get_random_monika_color()
-            if context == "restored custom role":
-                color = role.color
-
-            embed = discord.Embed(
-                description=description,
-                color=color,
-                timestamp=datetime.now(),
-            )
-            thumbnail_url = PEACH_SERVER_BOOSTER_ICON_URL
-            embed.set_thumbnail(url=thumbnail_url)
-            embed.set_author(
-                name=member.display_name, icon_url=member.display_avatar.url
-            )
-            embed.set_footer(
-                text=guild.name, icon_url=guild.icon.url if guild.icon else None
-            )
-            # Send message in General Channel
-            general_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.general)
-            if general_channel:
-                await general_channel.send(content=content, embed=embed)
-
-                if context != "existing custom role":
-                    # Log in Server Log Channel
-                    log_channel = guild.get_channel(LOG_CHANNEL_ID)
-                    if log_channel:
-                        log_embed = discord.Embed(
-                            title=log_embed_title,
-                            description=log_embed_description,
-                            color=color,
-                            timestamp=datetime.now(),
-                        )
-                        log_embed.set_author(
-                            name=member.display_name, icon_url=member.display_avatar.url
-                        )
-                        log_embed.set_footer(
-                            text=guild.name,
-                            icon_url=guild.icon.url if guild.icon else None,
-                        )
-                        await send_webhook(
-                            bot=bot,
-                            channel=log_channel,
-                            embed=log_embed,
-                        )
         except Exception as e:
             pretty_log(
                 message=f"Failed to create or assign custom role for member '{member.display_name}': {e}",
                 tag="error",
             )
             return
+
+
+    #Build embed
+    content = f"{member.mention} Thank you for boosting the server! 🎉"
+    color = get_random_monika_color()
+    if context == "restored custom role":
+        color = role.color
+
+    embed = discord.Embed(
+        description=description,
+        color=color,
+        timestamp=datetime.now(),
+    )
+    thumbnail_url = PEACH_SERVER_BOOSTER_ICON_URL
+    embed.set_thumbnail(url=thumbnail_url)
+    embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+    embed.set_footer(text=guild.name, icon_url=guild.icon.url if guild.icon else None)
+
+    # Send message in General Channel
+    general_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.general)
+    if general_channel:
+        await general_channel.send(content=content, embed=embed)
+
+        if context != "existing custom role":
+            # Log in Server Log Channel
+            log_channel = guild.get_channel(LOG_CHANNEL_ID)
+            if log_channel:
+                log_embed = discord.Embed(
+                    title=log_embed_title,
+                    description=log_embed_description,
+                    color=color,
+                    timestamp=datetime.now(),
+                )
+                log_embed.set_author(
+                    name=member.display_name, icon_url=member.display_avatar.url
+                )
+                log_embed.set_footer(
+                    text=guild.name,
+                    icon_url=guild.icon.url if guild.icon else None,
+                )
+                await send_webhook(
+                    bot=bot,
+                    channel=log_channel,
+                    embed=log_embed,
+                )
