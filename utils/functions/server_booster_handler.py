@@ -72,34 +72,25 @@ async def handle_server_booster_role_remove(
         )
 
 
-async def safe_set_role_position(
-    guild: discord.Guild,
-    role: discord.Role,
-    reference_role: discord.Role,
-    bot: discord.Client,
-):
-    # Fetch fresh role list to avoid stale cache
-    roles = await guild.fetch_roles()
+async def safe_set_role_position(guild, role, reference_role, bot):
     ref_pos = reference_role.position
     bot_pos = guild.me.top_role.position
 
-    if bot_pos > ref_pos:
-        try:
-            await role.edit(position=ref_pos - 1)
+    try:
+        if bot_pos <= ref_pos:
             pretty_log(
-                message=f"Moved role '{role.name}' below reference role '{reference_role.name}'.",
-                tag="success",
+                message=f"Bot top role ({bot_pos}) is not above reference role ({ref_pos}); attempting move anyway.",
+                tag="warning",
             )
-        except Exception as e:
-            pretty_log(
-                message=f"Failed to move role '{role.name}': {e}",
-                tag="error",
-            )
-    else:
+        await role.edit(position=ref_pos - 1)
         pretty_log(
-            message=f"Bot cannot move role '{role.name}' below '{reference_role.name}' "
-            f"because its top role is too low (bot: {bot_pos}, ref: {ref_pos}).",
-            tag="warning",
+            message=f"Moved role '{role.name}' below reference role '{reference_role.name}'.",
+            tag="success",
+        )
+    except Exception as e:
+        pretty_log(
+            message=f"Failed to move role '{role.name}': {e}",
+            tag="error",
         )
 
 
@@ -116,6 +107,7 @@ async def handle_server_booster_role_add(
     guild = member.guild
     first_line_str = ""
     role = None
+    reference_role = guild.get_role(REFERENCE_ROLE_ID)
     custom_role_id = await fetch_custom_role_id(bot, member)
     if custom_role_id:
         # Check if custom role exists in guild
@@ -168,7 +160,7 @@ async def handle_server_booster_role_add(
     # Create a new custom role
     if context == "new custom role":
         role_name = member.name
-        reference_role = guild.get_role(REFERENCE_ROLE_ID)
+
         try:
             new_role = await guild.create_role(
                 name=role_name,
@@ -218,8 +210,7 @@ async def handle_server_booster_role_add(
             )
             return
 
-
-    #Build embed
+    # Build embed
     content = f"{member.mention} Thank you for boosting the server! 🎉"
     color = get_random_monika_color()
     if context == "restored custom role":
