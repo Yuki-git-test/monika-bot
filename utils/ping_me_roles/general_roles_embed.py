@@ -153,6 +153,7 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
         giveaway_role = guild.get_role(VN_ALLSTARS_ROLES.giveaways)
         golden_hour_role = guild.get_role(VN_ALLSTARS_ROLES.golden_hour_ping)
         lottery_role = guild.get_role(VN_ALLSTARS_ROLES.lottery)
+        drops_role = guild.get_role(VN_ALLSTARS_ROLES.drops)
         incense_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
         meow_promo_team = guild.get_role(VN_ALLSTARS_ROLES.meow_promo)
         ee_spawn_ping = guild.get_role(VN_ALLSTARS_ROLES.ee_spawn_ping)
@@ -204,7 +205,16 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
                 )
             )
             roles.append(("🎟️", lottery_role))
-
+        if drops_role:
+            view.add_item(
+                ToggleRoleButton(
+                    role=drops_role,
+                    label="Drops",
+                    emoji="🎊",
+                )
+            )
+            roles.append(("🎊", drops_role))
+            
         if incense_role:
             view.add_item(
                 ToggleRoleButton(
