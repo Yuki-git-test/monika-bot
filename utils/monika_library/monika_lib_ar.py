@@ -149,7 +149,7 @@ async def monika_lib_ar_handler(message: discord.Message):
         await send_battle_mon_embed(message)
 
     elif content in battle_triggers_with_buttons:
-        await send_battle_mon_embed_with_buttons(message)
+        await send_battle_mon_embed(message)
 
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     #   🩸 Monika Rouge 🩸
@@ -181,4 +181,3 @@ async def monika_lib_ar_handler(message: discord.Message):
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     elif content in explore_ar_triggers:
         await send_main_explore_embed(message)
-

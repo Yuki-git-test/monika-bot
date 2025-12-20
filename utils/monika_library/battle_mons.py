@@ -682,7 +682,8 @@ Variant : `Mega-Mewtwo-X`  | `Golden Mega-Mewtwo-X`
         await send_report_embed(message)
         await message.reply(embed=embed, mention_author=False)
     else:
-        return embed
+        await send_report_embed(message)
+        await send_battle_mon_embed_with_buttons(message, embed)
 
 
 # 🐾────────────────────────────────────────────
