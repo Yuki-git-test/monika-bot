@@ -30,8 +30,25 @@ async def auto_clan_remove_handler(
     context: str,
 ):
     """Auto remove member from VNA members DB and move to Former Members category"""
+    # Get Roles
+    probation_role = member.guild.get_role(VN_ALLSTARS_ROLES.probation)
+    former_member_role = member.guild.get_role(VN_ALLSTARS_ROLES._former_members)
+    double_probation_role = member.guild.get_role(VN_ALLSTARS_ROLES.kick_list)
     # Check if member has VNA Member role
     vna_member_role = member.guild.get_role(VN_ALLSTARS_ROLES.vna_member)
+
+    # Remove probation roles and clan role and add former member role
+    roles_to_remove = []
+    if probation_role and probation_role in member.roles:
+        roles_to_remove.append(probation_role)
+    if double_probation_role and double_probation_role in member.roles:
+        roles_to_remove.append(double_probation_role)
+    if vna_member_role and vna_member_role in member.roles:
+        roles_to_remove.append(vna_member_role)
+    if former_member_role and former_member_role not in member.roles:
+        await member.add_roles(former_member_role, reason="Member removed from clan")
+    if roles_to_remove:
+        await member.remove_roles(*roles_to_remove, reason="Member removed from clan")
 
     # Get member channel id
     member_info = vna_members_cache.get(member.id)
@@ -99,7 +116,7 @@ async def auto_clan_remove_handler(
     if log_channel:
         if context == "clan_leave_command":
             title = "Clan Member Left via Command"
-            message_link = replied_message.jump_url if replied_message else None
+            message_link = replied_message.jump_url if replied_message else ""
         else:
             title = "Clan Member Removed"
 
