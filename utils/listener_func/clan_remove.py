@@ -57,6 +57,10 @@ async def auto_clan_remove_handler(
         return
 
     member_channel_id = member_info["channel_id"] if member_info else None
+    pretty_log(
+        "info",
+        f"Member {member.display_name} ({member.id}) channel ID: {member_channel_id}"
+    )
 
     channel_line = ""
     if vna_member_role and vna_member_role in member.roles:

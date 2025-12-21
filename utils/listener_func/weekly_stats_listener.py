@@ -42,10 +42,10 @@ EXEMPTED_FROM_PROBATION_ROLE_IDS = [
     VN_ALLSTARS_ROLES.owner,
 ]
 from utils.functions.monthly_requirements_utils import (
+    get_member_weeks_in_clan,
+    is_member_less_than_a_month_old,
     read_monthly_requirements,
     write_monthly_requirements,
-    is_member_less_than_a_month_old,
-    get_member_weeks_in_clan
 )
 
 EXPECTED_CATCHES = set()
@@ -168,6 +168,11 @@ async def probation_assignment_handler(
     kick_role = guild.get_role(VN_ALLSTARS_ROLES.kick_list)
     clan_break_role = guild.get_role(VN_ALLSTARS_ROLES.clan_break)
     probation_role = guild.get_role(VN_ALLSTARS_ROLES.probation)
+    staff_role = guild.get_role(VN_ALLSTARS_ROLES.staff)
+
+    if staff_role in member.roles:
+        msg = f"Member {member.display_name} is a staff member."
+        return False, msg
 
     # Get member info
     member_info = vna_members_cache.get(member.id)
@@ -441,7 +446,7 @@ async def weekly_stats_checker(
     # Get top line
     command_user_catches = 0
     command_user_top_line_match = re.search(
-        r"You're Rank \d+ in your clan's weekly stats — with ([\d,]+) catches!",
+        r".*You're Rank \d+ in your clan's weekly stats — with ([\d,]+) catches!",
         embed_description,
     )
     if command_user_top_line_match:
