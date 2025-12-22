@@ -1,3 +1,5 @@
+import time
+
 import discord
 
 from utils.cache.cache_list import probation_list_cache
@@ -26,12 +28,14 @@ async def load_probation_list_cache(bot):
             pokemeow_name,
             catch_requirement,
             assigned_on,
+            catch_req_updated_on,
         ) in probation_members:
             probation_list_cache[user_id] = {
                 "user_name": user_name,
                 "pokemeow_name": pokemeow_name,
                 "catch_requirement": catch_requirement,
                 "assigned_on": assigned_on,
+                "catch_req_updated_on": catch_req_updated_on,
             }
         pretty_log(
             "info",
@@ -46,6 +50,30 @@ async def load_probation_list_cache(bot):
         )
 
 
+def update_all_probation_catch_requirements_cache():
+    """
+    Update the catch requirement for all probation_list_cache members.
+    """
+    import time
+
+    one_day_ago = int(time.time()) - 86400
+    updated_count = 0
+    for user_id in probation_list_cache:
+        entry = probation_list_cache[user_id]
+        # Only update if catch_req_updated_on is not set or older than 1 day
+        if (
+            "catch_req_updated_on" not in entry
+            or entry["catch_req_updated_on"] is None
+            or entry["catch_req_updated_on"] < one_day_ago
+        ):
+            entry["catch_requirement"] = entry.get("catch_requirement", 0) + 1500
+            entry["catch_req_updated_on"] = int(time.time())
+            updated_count += 1
+    pretty_log(
+        "info",
+        f"Incremented catch requirement by 1500 for {updated_count} probation list cache members.",
+        label="Probation List Cache",
+    )
 
 
 # Accepts user and pokemeow_name
@@ -76,7 +104,9 @@ def update_probation_catch_requirement_cache(
     Update the catch requirement for a probation_list_cache member.
     """
     if user.id in probation_list_cache:
+
         probation_list_cache[user.id]["catch_requirement"] = catch_requirement
+        probation_list_cache[user.id]["catch_req_updated_on"] = int(time.time())
         pretty_log(
             "info",
             f"Updated catch requirement for probation list cache member: {user} ({user.id}) to {catch_requirement}",

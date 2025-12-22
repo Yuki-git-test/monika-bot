@@ -6,7 +6,7 @@
 import discord
 
 from utils.logs.pretty_log import pretty_log
-
+import time
 
 async def upsert_probation_member(
     bot, user: discord.Member, pokemeow_name: str, catch_requirement: int
@@ -45,6 +45,38 @@ async def upsert_probation_member(
         from utils.cache.probation_list_cache import upsert_probation_list_cache
 
         upsert_probation_list_cache(user, pokemeow_name, catch_requirement, assigned_on)
+
+
+# Update All required catches for all probation members
+async def update_all_probation_catch_requirements(bot):
+    """
+    Update the catch requirement for all probation_list members.
+    """
+
+
+    one_day_ago = int(time.time()) - 86400
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE probation_list
+            SET catch_requirement = catch_requirement + 1500,
+                catch_req_updated_on = $1
+            WHERE catch_req_updated_on IS NULL OR catch_req_updated_on < $2;
+            """,
+            int(time.time()),
+            one_day_ago,
+        )
+        pretty_log(
+            "info",
+            f"Updated catch requirement for all probation members by +1500 where applicable.",
+            label="Probation List DB",
+        )
+        # Update cache as well
+        from utils.cache.probation_list_cache import (
+            update_all_probation_catch_requirements_cache,
+        )
+
+        update_all_probation_catch_requirements_cache()
 
 
 async def update_probation_catch_requirement(

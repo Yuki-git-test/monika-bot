@@ -21,6 +21,7 @@ from utils.cache.cache_list import (
 from utils.db.probation_list_db import (
     update_probation_catch_requirement,
     upsert_probation_member,
+    update_all_probation_catch_requirements
 )
 from utils.essentials.pokemeow_member_reply import get_pokemeow_reply_member
 from utils.essentials.pretty_defer import pretty_defer
@@ -370,6 +371,7 @@ async def weekly_stats_checker(
             label="Weekly Stats Listener",
         )
         return
+
     PROCESSED_WEEKLY_STATS_PAGES.add(current_page)
     expected_catches, last_updated = read_monthly_requirements()
     new_expected_catches = expected_catches + 1500
@@ -508,3 +510,12 @@ async def weekly_stats_checker(
                 label="Auto Probation Role Assignment",
             )
             continue
+
+    if current_page == total_pages:
+        # At the end of all pages, update all probation members' catch requirements those who didnt get updated
+        await update_all_probation_catch_requirements(bot)
+        pretty_log(
+            "info",
+            "Updated all probation members' catch requirements after processing all weekly stats pages.",
+            label="Auto Probation Role Assignment",
+        )
