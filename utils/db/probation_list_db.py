@@ -140,7 +140,7 @@ async def fetch_all_probation_members(bot):
     async with bot.pg_pool.acquire() as conn:
         rows = await conn.fetch(
             """
-            SELECT user_id, user_name, pokemeow_name, catch_requirement, assigned_on FROM probation_list;
+            SELECT user_id, user_name, pokemeow_name, catch_requirement, assigned_on, catch_req_updated_on FROM probation_list;
             """
         )
         probation_members = [
@@ -150,6 +150,7 @@ async def fetch_all_probation_members(bot):
                 row["pokemeow_name"],
                 row["catch_requirement"],
                 row["assigned_on"],
+                row["catch_req_updated_on"],
             )
             for row in rows
         ]
