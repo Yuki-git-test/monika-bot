@@ -14,10 +14,12 @@ from utils.cache.cache_list import vna_members_cache
 from utils.db.vna_members_db_func import remove_member
 from utils.essentials.pokemeow_member_reply import get_pokemeow_reply_member
 from utils.functions.webhook_func import send_webhook
+from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 
 FORMER_MEMBERS_CATEGORY_ID = 927658364618571776
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
+enable_debug(f"{__name__}.auto_clan_remove_handler")
 
 
 # 🍭──────────────────────────────
@@ -30,13 +32,31 @@ async def auto_clan_remove_handler(
     context: str,
 ):
     """Auto remove member from VNA members DB and move to Former Members category"""
+    debug_log(
+        f"Auto removing member {member.display_name} ({member.id})", highlight=True
+    )
     # Get Roles
-    probation_role = member.guild.get_role(VN_ALLSTARS_ROLES.probation)
-    former_member_role = member.guild.get_role(VN_ALLSTARS_ROLES._former_members)
-    double_probation_role = member.guild.get_role(VN_ALLSTARS_ROLES.kick_list)
+    guild = bot.get_guild(VNA_SERVER_ID)
+    probation_role = guild.get_role(VN_ALLSTARS_ROLES.probation)
+    former_member_role = guild.get_role(VN_ALLSTARS_ROLES._former_members)
+    double_probation_role = guild.get_role(VN_ALLSTARS_ROLES.kick_list)
+    
     # Check if member has VNA Member role
-    vna_member_role = member.guild.get_role(VN_ALLSTARS_ROLES.vna_member)
+    vna_member_role = guild.get_role(VN_ALLSTARS_ROLES.vna_member)
 
+    # Get member channel id
+    member_info = vna_members_cache.get(member.id)
+    if not member_info:
+        pretty_log(f"No member info found in cache for member ID: {member.id}")
+        return
+
+    member_channel_id = member_info["channel_id"] if member_info else None
+    pretty_log(
+        "info",
+        f"Member {member.display_name} ({member.id}) channel ID: {member_channel_id}",
+    )
+
+    channel_line = ""
     # Remove probation roles and clan role and add former member role
     roles_to_remove = []
     if probation_role and probation_role in member.roles:
@@ -50,26 +70,12 @@ async def auto_clan_remove_handler(
     if roles_to_remove:
         await member.remove_roles(*roles_to_remove, reason="Member removed from clan")
 
-    # Get member channel id
-    member_info = vna_members_cache.get(member.id)
-    if not member_info:
-        pretty_log(f"No member info found in cache for member ID: {member.id}")
-        return
-
-    member_channel_id = member_info["channel_id"] if member_info else None
-    pretty_log(
-        "info",
-        f"Member {member.display_name} ({member.id}) channel ID: {member_channel_id}"
-    )
-
-    channel_line = ""
-    if vna_member_role and vna_member_role in member.roles:
-        # Remove member from VNA members database
-        await remove_member(bot, member)
+    # Remove member from VNA members database
+    await remove_member(bot, member)
 
     # Check if Former members category exists and category doesnt have 50 channels
     former_members_category = discord.utils.get(
-        member.guild.categories, id=FORMER_MEMBERS_CATEGORY_ID
+        guild.categories, id=FORMER_MEMBERS_CATEGORY_ID
     )
     # Check how many channels are in the Former Members category
     if (
@@ -78,10 +84,16 @@ async def auto_clan_remove_handler(
         and member_channel_id
     ):
         # Fetch member channel
-        member_channel = member.guild.get_channel(member_channel_id)
+        member_channel = guild.get_channel(member_channel_id)
         if member_channel:
+            debug_log(
+                f"Found member channel: {member_channel.name} ({member_channel.id})"
+            )
             # Move member channel to Former Members category
             try:
+                debug_log(
+                    f"Moving channel ID {member_channel.id} to Former Members category"
+                )
                 await member_channel.edit(category=former_members_category)
                 pretty_log(
                     f"Moved channel '{member_channel.name}' to Former Members category."
@@ -91,17 +103,24 @@ async def auto_clan_remove_handler(
                 pretty_log(
                     f"Failed to move channel '{member_channel.name}' to Former Members category. Error: {e}"
                 )
+        else:
+            debug_log(f"Member channel with ID {member_channel_id} not found in guild.")
     # Find another former members category with less than 50 channels
     elif former_members_category and len(former_members_category.channels) >= 50:
+        found_category = False
         for category in member.guild.categories:
             if (
                 category.id != FORMER_MEMBERS_CATEGORY_ID
                 and "former members" in category.name
             ):
                 if len(category.channels) < 50:
+                    found_category = True
                     # Fetch member channel
                     member_channel = member.guild.get_channel(member_channel_id)
                     if member_channel:
+                        debug_log(
+                            f"Found member channel: {member_channel.name} ({member_channel.id})"
+                        )
                         # Move member channel to this category
                         try:
                             await member_channel.edit(category=category)
@@ -114,6 +133,14 @@ async def auto_clan_remove_handler(
                             pretty_log(
                                 f"Failed to move channel '{member_channel.name}' to Former Members category '{category.name}'. Error: {e}"
                             )
+                    else:
+                        debug_log(
+                            f"Member channel with ID {member_channel_id} not found in guild."
+                        )
+        if not found_category:
+            debug_log(
+                "No suitable 'former members' category found with less than 50 channels."
+            )
     # Log the clan leave event
     log_channel = member.guild.get_channel(LOG_CHANNEL_ID)
     message_link = None

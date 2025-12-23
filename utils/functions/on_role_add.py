@@ -52,6 +52,15 @@ async def handle_role_add(
             label="Role Add Event",
         )
         await handle_server_booster_role_add(bot, member)
+        
+    """if role_id == VN_ALLSTARS_ROLES.other:
+        # Handle other role addition
+        pretty_log(
+            message=f"Detected 'Other' role addition for member '{member.display_name}'.",
+            tag="info",
+            label="Role Add Event",
+        )
+        await handle_server_booster_role_add(bot, member, role=role)"""
 
     # ————————————————————————————————
     # 🩵 VNA Member Role Add

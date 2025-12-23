@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 
 from constants.vn_allstars_constants import (
+    KHY_USER_ID,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
@@ -17,13 +18,17 @@ from utils.db.custom_roles_db_func import (
 )
 from utils.logs.pretty_log import pretty_log
 from utils.visuals.colors import get_random_monika_color
+from utils.logs.debug_log import debug_log, enable_debug
+from utils.functions.webhook_func import send_webhook
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 REFERENCE_ROLE_ID = VN_ALLSTARS_ROLES.personal_roles_divider
 PEACH_SERVER_BOOSTER_ICON_URL = "https://media.discordapp.net/attachments/1394913073520967680/1441576187099877529/ChatGPT_Image_Nov_22_2025_07_44_57_AM.png?ex=69224bf2&is=6920fa72&hm=bcfec42a965eb116e5dba345a4c3b68788e03adad7d9b0f532d848232fa6d0da&=&format=webp&quality=lossless&width=855&height=855"
-from utils.functions.webhook_func import send_webhook
 
 
+TEST_ROLE_ID = 1013465409049067632
+
+enable_debug(f"{__name__}.safe_set_role_position")
 # 🍭──────────────────────────────
 #   🎀 Handle Server Booster Role Removal
 # 🍭──────────────────────────────
@@ -75,21 +80,58 @@ async def handle_server_booster_role_remove(
 async def safe_set_role_position(guild, role, reference_role, bot):
     ref_pos = reference_role.position
     bot_pos = guild.me.top_role.position
+    role_pos = role.position
+    bot_member = guild.me
+    perms = bot_member.guild_permissions
+
+
+
+    debug_log(f"[RoleMove] Bot: {bot_member.display_name} (ID: {bot_member.id})")
+    debug_log(f"[RoleMove] Bot top role: {bot_member.top_role.name} (pos: {bot_pos})")
+    debug_log(f"[RoleMove] Reference role: {reference_role.name} (pos: {ref_pos})")
+    debug_log(f"[RoleMove] Target role: {role.name} (pos: {role_pos})")
+    debug_log(
+        f"[RoleMove] Bot permissions: manage_roles={perms.manage_roles}, administrator={perms.administrator}"
+    )
+
+    if not perms.manage_roles:
+        pretty_log(
+            message=f"Bot lacks 'Manage Roles' permission. Cannot move role.",
+            tag="error",
+        )
+        return
+
+    if bot_pos <= ref_pos:
+        pretty_log(
+            message=f"Bot top role ({bot_pos}) is not above reference role ({ref_pos}); cannot move role.",
+            tag="error",
+        )
+        return
+
+    if bot_pos <= role_pos:
+        pretty_log(
+            message=f"Bot top role ({bot_pos}) is not above target role ({role_pos}); cannot move role.",
+            tag="error",
+        )
+        return
 
     try:
-        if bot_pos <= ref_pos:
-            pretty_log(
-                message=f"Bot top role ({bot_pos}) is not above reference role ({ref_pos}); attempting move anyway.",
-                tag="warning",
-            )
         await role.edit(position=ref_pos - 1)
+        # Fetch updated role position
+        updated_role = guild.get_role(role.id)
+        debug_log(
+            f"[RoleMove] Role '{updated_role.name}' new position: {updated_role.position}"
+        )
         pretty_log(
             message=f"Moved role '{role.name}' below reference role '{reference_role.name}'.",
             tag="success",
         )
     except Exception as e:
+        import traceback
+
+        tb = traceback.format_exc()
         pretty_log(
-            message=f"Failed to move role '{role.name}': {e}",
+            message=f"Failed to move role '{role.name}': {e}\nTraceback:\n{tb}",
             tag="error",
         )
 
@@ -100,8 +142,37 @@ async def safe_set_role_position(guild, role, reference_role, bot):
 async def handle_server_booster_role_add(
     bot: discord.Client,
     member: discord.Member,
+    role: discord.Role = None,
 ):
     """Handle server booster role addition events."""
+
+    # If test role id and member is khy delete the old role in server and db
+    testing = False
+    if role and role.id == TEST_ROLE_ID and member.id == KHY_USER_ID:
+        testing = True
+        custom_role_id = await fetch_custom_role_id(bot, member)
+        if custom_role_id:
+            custom_role = member.guild.get_role(custom_role_id)
+            if custom_role:
+                try:
+                    await custom_role.delete(reason="Removing test custom role.")
+                    pretty_log(
+                        message=f"Deleted test custom role '{custom_role.name}' for member '{member.display_name}'.",
+                        tag="success",
+                        label="Test Role Cleanup",
+                    )
+                except Exception as e:
+                    pretty_log(
+                        message=f"Failed to delete test custom role '{custom_role.name}': {e}",
+                        tag="error",
+                    )
+            await remove_role(bot, member)
+            pretty_log(
+                message=f"Removed test custom role record from database for member '{member.display_name}'.",
+                tag="info",
+                label="Test Role Cleanup",
+            )
+
     #  Check if the member already has a custom role
     context = "new custom role"
     guild = member.guild
@@ -209,6 +280,10 @@ async def handle_server_booster_role_add(
                 tag="error",
             )
             return
+
+    # Don't send messages or logs if testing
+    if testing:
+        return
 
     # Build embed
     content = f"{member.mention} Thank you for boosting the server! 🎉"
