@@ -123,7 +123,23 @@ async def message_edit_func(
     message_id: str,
 ):
 
-    message_id = int(message_id)
+    # Allow both message ID and Discord message URL
+    if message_id.startswith("http"):
+        # Extract the last part after the last slash
+        try:
+            message_id = message_id.rstrip("/").split("/")[-1]
+        except Exception:
+            await interaction.response.send_message(
+                "❌ Invalid message URL provided.", ephemeral=True
+            )
+            return
+    try:
+        message_id = int(message_id)
+    except ValueError:
+        await interaction.response.send_message(
+            "❌ Invalid message ID or URL provided.", ephemeral=True
+        )
+        return
 
     # Check if the user is a staff member
     staff_member = await is_staff_member(interaction=interaction)
