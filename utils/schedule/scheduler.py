@@ -14,6 +14,7 @@ from .schedule_manager import SchedulerManager
 from .weekly_stats_check_reminder import weekly_stats_check_reminder
 from .prob_weekly_catch_reminder import prob_weekly_catch_reminder
 from .monthly_reqs_reset import monthly_reqs_reset_func
+from .custom_role_checker import custom_role_checker
 # Timezones
 MANILA = zoneinfo.ZoneInfo("Asia/Manila")
 NYC = zoneinfo.ZoneInfo("America/New_York")  # auto-handles EST/EDT
@@ -95,6 +96,30 @@ async def setup_schedulers(bot):
         pretty_log(
             "error",
             message=(f"Failed to schedule Monthly Requirements Reset. Error: {e}"),
+        )
+
+    # Custom Role Checker Every 2nd of the Month at 12:00 PM Manila Time
+    try:
+        job = scheduler_manager.add_cron_job(
+            func=custom_role_checker,
+            name="custom_role_checker",
+            hour=12,
+            minute=0,
+            day_of_month=2,
+            timezone=MANILA,
+            args=[bot],
+        )
+        pretty_log(
+            "scheduler",
+            message=(
+                f"Scheduled: Custom Role Checker every 2nd of the month at 12:00 PM Manila Time\n"
+                f"Next Scheduled Run: {job.next_run_time}"
+            ),
+        )
+    except Exception as e:
+        pretty_log(
+            "error",
+            message=(f"Failed to schedule Custom Role Checker. Error: {e}"),
         )
 
     # Attach the scheduler manager to the bot for later access

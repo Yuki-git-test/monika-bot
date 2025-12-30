@@ -12,7 +12,7 @@ from constants.vn_allstars_constants import (
 )
 
 from utils.logs.pretty_log import pretty_log
-
+from utils.db.monthly_req_db import increment_expected_catches
 
 
 # 🍭──────────────────────────────
@@ -23,6 +23,14 @@ async def weekly_stats_check_reminder(
 ):
     """Send a reminder to the staff channel to check weekly stats."""
 
+    # Increment expected catches by 1500
+    await increment_expected_catches(bot, increment=1500)
+    pretty_log(
+        "info",
+        "Incremented expected catches by 1500 for weekly stats check reminder.",
+        label="Weekly Stats Check Reminder",
+    )
+    
     guild = bot.get_guild(VNA_SERVER_ID)
     if not guild:
         pretty_log(

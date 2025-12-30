@@ -50,10 +50,10 @@ def is_past_11pm_probation_day_est():
     return now_est.day in PROBATION_LIST_DAYS and now_est.hour >= 23
 
 
-def is_saturday_10min_before_midnight_est(now=None):
+def is_saturday_30min_before_midnight_est(now=None):
     """
     Returns True if the current time (or provided datetime) is Saturday,
-    between 11:50 PM and 11:59:59 PM EST.
+    between 11:30 PM and 11:59:59 PM EST.
     """
     est = pytz.timezone("US/Eastern")
     if now is None:
@@ -63,7 +63,7 @@ def is_saturday_10min_before_midnight_est(now=None):
     return (
         now.weekday() == 5  # Saturday (Monday=0)
         and now.hour == 23
-        and 50 <= now.minute < 60
+        and 30 <= now.minute < 60
     )
 
 
@@ -387,7 +387,7 @@ async def weekly_stats_checker_func(
                 f"Logged {unknow_member_count} unknown members to server log channel.",
                 label="Auto Probation Role Assignment",
             )
-            
+
     expected_catches, last_updated = read_monthly_requirements()
     new_expected_catches = expected_catches + 1500
     write_success = write_monthly_requirements(new_expected_catches)

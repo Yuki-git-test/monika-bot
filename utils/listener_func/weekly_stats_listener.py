@@ -18,10 +18,11 @@ from utils.cache.cache_list import (
     probation_list_cache,
     vna_members_cache,
 )
+from utils.db.monthly_req_db import get_expected_catches, reset_expected_catches
 from utils.db.probation_list_db import (
+    update_all_probation_catch_requirements,
     update_probation_catch_requirement,
     upsert_probation_member,
-    update_all_probation_catch_requirements
 )
 from utils.essentials.pokemeow_member_reply import get_pokemeow_reply_member
 from utils.essentials.pretty_defer import pretty_defer
@@ -30,6 +31,12 @@ from utils.essentials.stats_parsers import (
     fetch_message_obj_from_link,
     parse_clan_stats_message,
     split_known_and_unknown_members,
+)
+from utils.functions.monthly_requirements_utils import (
+    get_member_weeks_in_clan,
+    is_member_less_than_a_month_old,
+    read_monthly_requirements,
+    write_monthly_requirements,
 )
 from utils.functions.webhook_func import send_webhook
 from utils.logs.pretty_log import pretty_log
@@ -42,12 +49,6 @@ EXEMPTED_FROM_PROBATION_ROLE_IDS = [
     VN_ALLSTARS_ROLES.shiny_donator,
     VN_ALLSTARS_ROLES.owner,
 ]
-from utils.functions.monthly_requirements_utils import (
-    get_member_weeks_in_clan,
-    is_member_less_than_a_month_old,
-    read_monthly_requirements,
-    write_monthly_requirements,
-)
 
 EXPECTED_CATCHES = set()
 PROBATION_LIST_DAYS = [6, 13, 20, 27]  # Every Saturday
@@ -64,10 +65,10 @@ def is_past_11pm_probation_day_est():
     return now_est.day in PROBATION_LIST_DAYS and now_est.hour >= 23
 
 
-def is_saturday_10min_before_midnight_est(now=None):
+def is_saturday_30min_before_midnight_est(now=None):
     """
     Returns True if the current time (or provided datetime) is Saturday,
-    between 11:50 PM and 11:59:59 PM EST.
+    between 11:30 PM and 11:59:59 PM EST.
     """
     est = pytz.timezone("US/Eastern")
     if now is None:
@@ -77,7 +78,7 @@ def is_saturday_10min_before_midnight_est(now=None):
     return (
         now.weekday() == 5  # Saturday (Monday=0)
         and now.hour == 23
-        and 50 <= now.minute < 60
+        and 30 <= now.minute < 60
     )
 
 
@@ -323,7 +324,7 @@ async def weekly_stats_checker(
         return
 
     # Check if 10 minutes before midnight EST on Saturday
-    if not is_saturday_10min_before_midnight_est():
+    if not is_saturday_30min_before_midnight_est():
         pretty_log(
             "info",
             "Not the scheduled time for weekly stats check reminder.",
@@ -373,24 +374,14 @@ async def weekly_stats_checker(
         return
 
     PROCESSED_WEEKLY_STATS_PAGES.add(current_page)
-    expected_catches, last_updated = read_monthly_requirements()
-    new_expected_catches = expected_catches + 1500
-    write_success = write_monthly_requirements(new_expected_catches)
-    if write_success:
-        global NEW_EXPECTED_CATCHES
-        NEW_EXPECTED_CATCHES = new_expected_catches
-        pretty_log(
-            "info",
-            f"Updated monthly expected catches to {NEW_EXPECTED_CATCHES} in monthly_requirements.json.",
-            label="Weekly Stats Listener",
-        )
-
-    else:
-        pretty_log(
-            "info",
-            "Monthly expected catches not updated; less than a day since last update.",
-            label="Weekly Stats Listener",
-        )
+    expected_catches = await get_expected_catches(bot)
+    global EXPECTED_CATCHES
+    EXPECTED_CATCHES = expected_catches
+    pretty_log(
+        "info",
+        f"Updated monthly expected catches to {EXPECTED_CATCHES} in monthly_requirements.json.",
+        label="Weekly Stats Listener",
+    )
 
     # Get member first
     command_user = await get_pokemeow_reply_member(before_message)

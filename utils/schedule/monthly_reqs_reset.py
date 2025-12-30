@@ -1,6 +1,6 @@
 import discord
 
-from utils.functions.monthly_requirements_utils import reset_monthly_requirements
+from utils.db.monthly_req_db import reset_expected_catches
 from utils.logs.pretty_log import pretty_log
 
 
@@ -12,7 +12,7 @@ async def monthly_reqs_reset_func(
 ):
     """Reset monthly requirements for all members."""
 
-    reset_monthly_requirements()
+    await reset_expected_catches(bot)
     pretty_log(
         "info",
         "Monthly requirements reset successfully.",

@@ -26,6 +26,21 @@ async def fetch_user_role(bot, user: discord.Member):
             user_id,
         )
 
+# Check if role id is in database
+async def is_custom_role(bot, role_id: int):
+    """
+    Check if a role_id exists in custom_roles.
+    Returns True if exists, False otherwise.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            SELECT 1 FROM custom_roles
+            WHERE role_id = $1;
+            """,
+            role_id,
+        )
+        return row is not None
 
 # Fetch all custom roles
 async def fetch_all_roles(bot):
@@ -38,7 +53,17 @@ async def fetch_all_roles(bot):
             SELECT * FROM custom_roles;
             """
         )
-
+async def fetch_all_user_ids_with_roles(bot):
+    """
+    Fetch all user_ids from custom_roles.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT user_id FROM custom_roles;
+            """
+        )
+        return [row["user_id"] for row in rows]
 
 # Update role_id for a user
 async def update_role(bot, user: discord.Member, role_id: int):
@@ -175,6 +200,20 @@ async def fetch_custom_role_id(bot, user: discord.Member):
         )
         return row["role_id"] if row else None
 
+async def fetch_custom_role_id_by_user_id(bot, user_id: int):
+    """
+    Fetch the custom role_id for a user by user_id.
+    Returns None if not found.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            SELECT role_id FROM custom_roles
+            WHERE user_id = $1;
+            """,
+            user_id,
+        )
+        return row["role_id"] if row else None
 
 # 🌸────────────────────────────────────────────
 #         ✨ Helper: Update Gradient Role ✨
