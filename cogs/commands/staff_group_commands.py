@@ -26,7 +26,7 @@ class StaffGroupCommand(commands.Cog):
     # 🎀───────────────────────────────────────────
     #          🌸 /staff list-top-grinders 🌸
     # 🎀───────────────────────────────────────────
-    """@staff_group.command(
+    @staff_group.command(
         name="list-top-grinders",
         description="Assign Top Monthly Grinder roles to members",
     )
@@ -44,7 +44,7 @@ class StaffGroupCommand(commands.Cog):
             command_func=assign_top_grinder_roles,
             message_link=message_link,
         )
-    list_top_grinders.extras = {"category": "Staff"}"""
+    list_top_grinders.extras = {"category": "Staff"}
 
     # 🎀───────────────────────────────────────────
     #          🌸 /staff role-members 🌸
