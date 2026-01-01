@@ -20,6 +20,9 @@ from utils.essentials.pretty_defer import pretty_defer
 from utils.essentials.role_checks import is_staff_member
 from utils.functions.webhook_func import send_webhook
 
+position = 90
+
+
 # 🍭──────────────────────────────
 #   🎀 Slash Command: Set Custom Role
 # 🍭──────────────────────────────
@@ -69,10 +72,10 @@ async def custom_role_set_func(
     if user_id_with_role:
         user_with_role = guild.get_member(user_id_with_role["user_id"])
         if user_with_role:
-            msg = f"The role {role.name} is already assigned to another {user_with_role.mention}."
-            await loader.error(content=msg)
-            return
-
+            pretty_log(
+                "info",
+                f"Role {role.name} is already assigned to {user_with_role.display_name}.",
+            )
         else:
             # The role is in the database but the user is not found in the guild
             await remove_role_by_role_id(bot, role_id=role.id)
@@ -81,6 +84,23 @@ async def custom_role_set_func(
                 "success",
                 f"Removed role {role.name} from database as it was assigned to a non-existent user.",
             )
+
+    # Check if role position is 90 or higher
+    if role.position < position:
+        # Move the role to position 90
+        try:
+            await role.edit(
+                position=position, reason="Moving custom role to position 90."
+            )
+            pretty_log("success", f"Moved role {role.name} to position {position}.")
+        except discord.Forbidden:
+            msg = "I don't have permission to move that role."
+            await loader.error(content=msg)
+            return
+        except discord.HTTPException as e:
+            msg = f"Failed to move role due to an error: {e}"
+            await loader.error(content=msg)
+            return
 
     # Assign the role to the member
     try:
