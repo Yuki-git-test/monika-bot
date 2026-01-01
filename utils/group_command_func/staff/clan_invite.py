@@ -14,7 +14,7 @@ from utils.logs.pretty_log import pretty_log
 
 image_url = "https://media.discordapp.net/attachments/.../image.png"
 
-
+CLAN_MEMBER_CATEGORY_TWO_ID = 1456263954526371861
 # 🟣────────────────────────────────────────────
 #          ⚡ Clan Invite ⚡
 # 🟣────────────────────────────────────────────
@@ -89,7 +89,7 @@ async def clan_invite_func(
     new_channel = await guild.create_text_channel(
         name=channel_name,
         topic=channel_topic,
-        category=guild.get_channel(VN_ALLSTARS_CATEGORIES.CLAN_MEMBERS),
+        category=guild.get_channel(CLAN_MEMBER_CATEGORY_TWO_ID),
         overwrites=overwrites,
     )
     pretty_log(

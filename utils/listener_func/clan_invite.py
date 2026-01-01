@@ -13,7 +13,7 @@ from utils.db.vna_members_db_func import upsert_member
 
 image_url = "https://media.discordapp.net/attachments/.../image.png"
 
-
+CLAN_MEMBER_CATEGORY_TWO_ID = 1456263954526371861
 # 🟣────────────────────────────────────────────
 #          ⚡ Auto Clan Invite ⚡
 # 🟣────────────────────────────────────────────
@@ -59,6 +59,7 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
             bots_role = guild.get_role(VN_ALLSTARS_ROLES.bots)
             pokemeow_bot = guild.get_member(POKEMEOW_APP_ID)
 
+
             # Permission overwrites
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(view_channel=False),
@@ -96,7 +97,7 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
             new_channel = await guild.create_text_channel(
                 name=channel_name,
                 topic=channel_topic,
-                category=guild.get_channel(VN_ALLSTARS_CATEGORIES.CLAN_MEMBERS),
+                category=guild.get_channel(CLAN_MEMBER_CATEGORY_TWO_ID),
                 overwrites=overwrites,
             )
             pretty_log(
