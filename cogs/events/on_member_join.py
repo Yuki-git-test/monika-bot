@@ -13,6 +13,7 @@ LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
 WELCOME_IMAGE_URL = "https://media.discordapp.net/attachments/1380367804804497448/1442017447585775636/Untitled10_20230430230329.png?ex=6923e6e6&is=69229566&hm=6034d945d49319aedbaa26014588fb7a7ef9a9b63d5e8a0a080a71c30d8b1538&=&format=webp&quality=lossless"
 from utils.functions.webhook_func import send_webhook
 
+
 # 🍭──────────────────────────────
 #   🎀 Event: On Member Join
 # 🍭──────────────────────────────
@@ -65,7 +66,7 @@ class OnMemberJoinCog(commands.Cog):
             embed = discord.Embed(
                 title="👋 Member Joined",
                 color=discord.Color.green(),
-                description=f"**Member:** {member.mention}\n**Account Created:** {member.created_at.strftime('%Y-%m-%d %H:%M:%S UTC')}",
+                description=f"**Member:** {member.mention}\n**Account Created:** <t:{int(member.created_at.timestamp())}:f>",
             )
             if member.avatar:
                 embed.set_thumbnail(url=member.avatar.url)
@@ -79,6 +80,7 @@ class OnMemberJoinCog(commands.Cog):
                 channel=log_channel,
                 embed=embed,
             )
+
 
 async def setup(bot: commands.Bot):
     """Setup the OnMemberJoinCog."""
