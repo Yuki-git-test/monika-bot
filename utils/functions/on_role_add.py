@@ -23,7 +23,10 @@ from utils.functions.monthly_requirements_utils import (
     read_monthly_requirements,
     write_monthly_requirements,
 )
-from utils.functions.server_booster_handler import handle_server_booster_role_add
+from utils.functions.server_booster_handler import (
+    handle_server_booster_role_add,
+    handle_top_grinder_role_add,
+)
 from utils.functions.webhook_func import send_webhook
 from utils.logs.pretty_log import pretty_log
 
@@ -52,15 +55,6 @@ async def handle_role_add(
             label="Role Add Event",
         )
         await handle_server_booster_role_add(bot, member)
-        
-    """if role_id == VN_ALLSTARS_ROLES.other:
-        # Handle other role addition
-        pretty_log(
-            message=f"Detected 'Other' role addition for member '{member.display_name}'.",
-            tag="info",
-            label="Role Add Event",
-        )
-        await handle_server_booster_role_add(bot, member, role=role)"""
 
     # ————————————————————————————————
     # 🩵 VNA Member Role Add
@@ -89,6 +83,9 @@ async def handle_role_add(
                 bot,
                 user=member,
             )
+        # Handle top grinder role addition
+        await handle_top_grinder_role_add(bot, member)
+        
     # ————————————————————————————————
     # 🩵 VNA Clan Break Role Add
     # ————————————————————————————————

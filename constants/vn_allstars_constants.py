@@ -503,6 +503,10 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
+    calm_waters = 1456030935941382235
+    os_lotto_ping = 1456081515736993792
+    daily_ping = 1456081448368083005
+    shiny_bonus = 1456081663078567986
     coowner = 1449518747231584316
     paldean_snipe = 1446581017501503628
     probation = 1426299800386539521

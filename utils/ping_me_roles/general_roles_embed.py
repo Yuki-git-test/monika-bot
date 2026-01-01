@@ -157,6 +157,10 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
         incense_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
         meow_promo_team = guild.get_role(VN_ALLSTARS_ROLES.meow_promo)
         ee_spawn_ping = guild.get_role(VN_ALLSTARS_ROLES.ee_spawn_ping)
+        daily_ping = guild.get_role(VN_ALLSTARS_ROLES.daily_ping)
+        calm_waters = guild.get_role(VN_ALLSTARS_ROLES.calm_waters)
+        shiny_bonus = guild.get_role(VN_ALLSTARS_ROLES.shiny_bonus)
+        os_lotto_ping = guild.get_role(VN_ALLSTARS_ROLES.os_lotto_ping)
 
         games = guild.get_role(VN_ALLSTARS_ROLES.games)
 
@@ -195,6 +199,15 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
                 )
             )
             roles.append(("🐟", golden_hour_role))
+        if calm_waters:
+            view.add_item(
+                ToggleRoleButton(
+                    role=calm_waters,
+                    label="Calm Waters Ping",
+                    emoji="🌊",
+                )
+            )
+            roles.append(("🌊", calm_waters))
 
         if lottery_role:
             view.add_item(
@@ -205,6 +218,16 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
                 )
             )
             roles.append(("🎟️", lottery_role))
+        if os_lotto_ping:
+            view.add_item(
+                ToggleRoleButton(
+                    role=os_lotto_ping,
+                    label="OS Lotto Ping",
+                    emoji="🎰",
+                )
+            )
+            roles.append(("🎰", os_lotto_ping))
+
         if drops_role:
             view.add_item(
                 ToggleRoleButton(
@@ -214,7 +237,7 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
                 )
             )
             roles.append(("🎊", drops_role))
-            
+
         if incense_role:
             view.add_item(
                 ToggleRoleButton(
@@ -224,6 +247,24 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
                 )
             )
             roles.append(("💠", incense_role))
+        if daily_ping:
+            view.add_item(
+                ToggleRoleButton(
+                    role=daily_ping,
+                    label="Daily Ping",
+                    emoji="📅",
+                )
+            )
+            roles.append(("📅", daily_ping))
+        if shiny_bonus:
+            view.add_item(
+                ToggleRoleButton(
+                    role=shiny_bonus,
+                    label="Shiny Bonus Ping",
+                    emoji="✨",
+                )
+            )
+            roles.append(("✨", shiny_bonus))
 
         if meow_promo_team:
             emoji = VN_ALLSTARS_EMOJIS.vna_golden
