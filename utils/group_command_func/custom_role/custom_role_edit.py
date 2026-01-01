@@ -13,7 +13,7 @@ from utils.db.custom_roles_db_func import (
 from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
-REFERENCE_ROLE_ID = VN_ALLSTARS_ROLES.server_booster
+REFERENCE_ROLE_ID = VN_ALLSTARS_ROLES.miks
 from utils.functions.webhook_func import send_webhook
 
 
@@ -51,6 +51,29 @@ async def custom_role_edit_func(
             ephemeral=True,
         )
         return
+
+    # Check if custom role is below the position variable, if below move above
+    custom_role_position = custom_role.position
+    reference_role = guild.get_role(REFERENCE_ROLE_ID)
+    reference_position = reference_role.position
+    if custom_role_position < reference_position:
+        new_position = reference_position + 1
+        try:
+            await custom_role.edit(
+                position=new_position,
+                reason="Ensuring custom role is above reference role",
+            )
+            pretty_log(
+                "info",
+                f"Moved role {custom_role.name} ({custom_role.id}) above reference role.",
+                label="CUSTOM ROLE",
+            )
+        except Exception as e:
+            pretty_log(
+                "error",
+                f"Could not move role position: {e}",
+            )
+
 
     # Check if they have inputted a color type
     if color_type and color_type == "solid":

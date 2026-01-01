@@ -12,7 +12,7 @@ from utils.logs.pretty_log import pretty_log
 from utils.functions.webhook_func import send_webhook
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
-REFERENCE_ROLE_ID = VN_ALLSTARS_ROLES.server_booster
+REFERENCE_ROLE_ID = VN_ALLSTARS_ROLES.miks
 ALLOWED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
 MAX_FILE_SIZE = 256 * 1024  # 256 KB
 
@@ -42,6 +42,29 @@ async def custom_role_edit_icon_func(
             "Your custom role was not found in the server.", ephemeral=True
         )
         return
+
+    # Check if custom role is below the position variable, if below move above
+    custom_role_position = custom_role.position
+    reference_role = guild.get_role(REFERENCE_ROLE_ID)
+    reference_position = reference_role.position
+    if custom_role_position < reference_position:
+        new_position = reference_position + 1
+        try:
+            await custom_role.edit(
+                position=new_position,
+                reason="Ensuring custom role is above reference role",
+            )
+            pretty_log(
+                "info",
+                f"Moved role {custom_role.name} ({custom_role.id}) above reference role.",
+                label="CUSTOM ROLE",
+            )
+        except Exception as e:
+            pretty_log(
+                "error",
+                f"Could not move role position: {e}",
+            )
+
     if not guild.premium_tier or guild.premium_tier < 2:
         await interaction.response.send_message(
             "Server needs to be at least Level 2 to have role icons.",
