@@ -9,3 +9,5 @@ from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_
 from constants.aesthetic import *
 from utils.functions.webhook_func import send_webhook
 from utils.essentials.pokemeow_member_reply import get_pokemeow_reply_member
+from utils.logs.debug_log import debug_log, enable_debug
+enable_debug(f"{__name__}.auto_clan_remove_handler")

@@ -9,11 +9,11 @@ from constants.vn_allstars_constants import (
 from utils.logs.pretty_log import pretty_log
 from utils.quick_codes.clan_info import post_clan_info
 from utils.quick_codes.cleanup import clean_graveyard_channels_func
-
+from utils.schedule.custom_role_checker import custom_role_checker
 from .debug_role_move import debug_role_move
 
 
-async def quick_codes_handler(message: discord.Message):
+async def quick_codes_handler(bot, message: discord.Message):
     """Handles quick codes based on message content."""
 
     # ————————————————————————————————
@@ -35,4 +35,10 @@ async def quick_codes_handler(message: discord.Message):
     # ————————————————————————————————
     if message.content.lower() == "!debug_role_move":
         await debug_role_move(message)
+        return
+    # ————————————————————————————————
+    # 🛡️ Custom Role Checker Quick Code Handler
+    # ————————————————————————————————
+    if message.content.lower() == "!custom_role_check":
+        await custom_role_checker(bot, message)
         return

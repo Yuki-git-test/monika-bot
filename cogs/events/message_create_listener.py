@@ -11,6 +11,7 @@ from constants.vn_allstars_constants import (
 )
 from utils.listener_func.faction_listener import extract_faction_from_faction_command
 from utils.listener_func.market_snipe_filter import check_market_buy_command
+from utils.listener_func.monthly_stats_listener import monthly_stats_checker
 from utils.listener_func.perks_listener import (
     extract_perks_from_perk_message,
     extract_perks_from_profile_message,
@@ -19,15 +20,15 @@ from utils.listener_func.perks_listener import (
 from utils.listener_func.pokemeow_username_listener import (
     update_pokemeow_username_by_command,
 )
+from utils.listener_func.stats_listener import stats_command_handler
 from utils.listener_func.top_grinder_listener import assign_top_grinder_roles_listener
 from utils.listener_func.weekly_stats_listener import weekly_stats_checker
 from utils.logs.pretty_log import pretty_log
 from utils.monika_library.monika_lib_ar import monika_lib_ar_handler
-from utils.quick_codes.sync_members import sync_members_func
 from utils.quick_codes.cleanup import clean_graveyard_channels_func
-from utils.listener_func.stats_listener import stats_command_handler
-from utils.listener_func.monthly_stats_listener import monthly_stats_checker
 from utils.quick_codes.quick_codes_handler import quick_codes_handler
+from utils.quick_codes.sync_members import sync_members_func
+
 dot_role_id = 1375712535512354898
 
 FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
@@ -95,7 +96,7 @@ class MessageCreateListener(commands.Cog):
                 # 🔄 Quick Code Handler
                 # ————————————————————————————————
                 if message.content.startswith("!"):
-                    await quick_codes_handler(message)
+                    await quick_codes_handler(self.bot, message)
 
                 # ————————————————————————————————
                 # 🎭 Perks Handler
