@@ -18,12 +18,13 @@ from utils.db.public_trophy_db import (
     fetch_current_public_leaderboard_info,
     fetch_user_place_and_public_trophies,
     get_public_first_place,
+    remove_public_trophy_info_user,
 )
 from utils.essentials.pretty_defer import pretty_defer
 from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
 
-from .trophy_update_leaderboard import create_public_leaderboard_embed
+from .trophy_update_leaderboard import create_public_leaderboard_embed, filter_members_public
 
 TROPHY_THUMBNAIL_URL = Thumbnails.trophy
 
@@ -113,6 +114,9 @@ async def public_trophies_view_func(
     )
     embed.set_thumbnail(url=TROPHY_THUMBNAIL_URL)
     await loader.success(embed=embed, content="")
+
+
+
 
 
 # 🍭──────────────────────────────
@@ -238,6 +242,8 @@ async def view_public_leaderboard_func(
     if not member_trophies:
         await loader.error("No trophies have been awarded yet.")
         return
+    # Filter members
+    member_trophies = await filter_members_public(bot, guild, member_trophies)
     sorted_trophies = sorted(member_trophies, key=lambda x: x["amount"], reverse=True)
     paginator = Trophy_Leaderboard_Paginator(
         bot=bot, user=user, trophy_members=sorted_trophies

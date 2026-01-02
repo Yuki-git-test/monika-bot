@@ -26,7 +26,11 @@ from utils.essentials.pretty_defer import pretty_defer
 from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
 
-from .trophy_update_leaderboard import create_leaderboard_embed, get_first_place
+from .trophy_update_leaderboard import (
+    create_leaderboard_embed,
+    filter_members_clan_leaderboard,
+    get_first_place,
+)
 
 TROPHY_THUMBNAIL_URL = Thumbnails.trophy
 
@@ -61,7 +65,6 @@ async def trophies_view_func(
             return
 
         target_member = member
-
 
         target_member_info = await fetch_user_place_and_trophies(bot, target_member)
         if not target_member_info:
@@ -132,6 +135,7 @@ class Trophy_Leaderboard_Paginator(View):
         # If there's only one page, remove buttons
         if self.max_page == 0:
             self.clear_items()
+
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.secondary)
     async def previous_page(self, interaction: discord.Interaction, button: Button):
         if interaction.user.id != self.user.id:
@@ -233,6 +237,8 @@ async def view_leaderboard_func(bot: commands.Bot, interaction: discord.Interact
     if not member_trophies:
         await loader.error("No trophies have been awarded yet.")
         return
+    # Filter out members who have left the guild
+    member_trophies = await filter_members_clan_leaderboard(bot, guild, member_trophies)
     sorted_trophies = sorted(member_trophies, key=lambda x: x["amount"], reverse=True)
     paginator = Trophy_Leaderboard_Paginator(
         bot=bot, user=user, trophy_members=sorted_trophies
