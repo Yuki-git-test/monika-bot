@@ -128,7 +128,25 @@ async def fetch_user_place_and_trophies(bot, user: discord.Member):
                 return row
         return None
 
+async def remove_trophy_info_user(bot, user_id: int):
+    """
+    Remove the trophy entry for a specific user.
+    """
 
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            DELETE FROM trophies
+            WHERE user_id = $1;
+            """,
+            user_id,
+        )
+        pretty_log(
+            "info",
+            f"Removed trophy entry for user ID {user_id}.",
+            label="Trophy DB",
+        )
+        
 # Fetch all trophies
 async def fetch_all_trophies(bot):
     """

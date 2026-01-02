@@ -15,7 +15,9 @@ from utils.db.custom_roles_db_func import fetch_custom_role_id, remove_role
 from utils.db.kick_list_db import remove_kick_list_member
 from utils.db.personal_channels_db import delete_personal_channel
 from utils.db.probation_list_db import remove_probation_member
+from utils.db.public_trophy_db import remove_public_trophy_info_user
 from utils.db.top_monthly_grinders_db import delete_top_monthly_grinder
+from utils.db.trophy import remove_trophy_info_user
 from utils.db.vna_members_db_func import remove_member
 from utils.logs.pretty_log import pretty_log
 
@@ -33,6 +35,8 @@ async def db_cleanup_on_member_leave(bot, member: discord.Member):
     await delete_top_monthly_grinder(bot, member.id)
     await remove_clan_break_member(bot, member.id)
     await delete_personal_channel(bot, member.id)
+    await remove_trophy_info_user(bot, member.id)
+    await remove_public_trophy_info_user(bot, member.id)
     pretty_log(
         message=f"Cleaned up database entries for member '{member.display_name}' ({member.id}) who left the server.",
         tag="info",
@@ -129,7 +133,7 @@ class OnMemberLeaveCog(commands.Cog):
                     )
             # Remove from database
             await remove_role(self.bot, member.id)
-            
+
         # Clean up other database entries
         await db_cleanup_on_member_leave(self.bot, member)
 

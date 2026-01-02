@@ -94,6 +94,25 @@ async def fetch_user_public_trophies(bot, user: discord.Member):
         )
 
 
+async def remove_public_trophy_info_user(bot, user_id: int):
+    """
+    Remove trophy info for a specific user.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            DELETE FROM public_trophies
+            WHERE user_id = $1;
+            """,
+            user_id,
+        )
+        pretty_log(
+            message=f"Removed trophy info for user ID {user_id}.",
+            tag="info",
+            label="Trophy Info Removal",
+        )
+
+
 async def fetch_user_place_and_public_trophies(bot, user: discord.Member):
     """
     Fetch the rank (place) and trophy amount for a user.

@@ -10,8 +10,9 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
 )
 from utils.db.public_trophy_db import *
-from utils.logs.pretty_log import pretty_log
 from utils.db.trophy import upsert_leaderboard_msg_id
+from utils.logs.pretty_log import pretty_log
+
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
 
 COLOR = MONIKA_EMBED_COLOR
@@ -46,12 +47,23 @@ async def create_public_leaderboard_embed(
             else None
         )
 
-        for index, trophy_info in enumerate(sorted_trophies[:25], start=1):
+        display_index = 1
+        for trophy_info in sorted_trophies[:25]:
             user_id = trophy_info["user_id"]
             amount = trophy_info["amount"]
             user = guild.get_member(user_id)
             if user:
-                field_name_str = f"{index}. {user.display_name}"
+                # Check if trophy is zero
+                if amount == 0:
+                    # Remove from db if trophy is zero
+                    await remove_public_trophy_info_user(bot, user_id)
+                    pretty_log(
+                        tag="info",
+                        message=f"Removed public trophy entry for user ID {user_id} as their trophy count is zero.",
+                        label="Trophy Leaderboard Embed",
+                    )
+                    continue
+                field_name_str = f"{display_index}. {user.display_name}"
                 if first_place_user_id and user_id == first_place_user_id:
                     field_name_str = f"👑 {field_name_str}"
                 embed.add_field(
@@ -59,8 +71,19 @@ async def create_public_leaderboard_embed(
                     value=f"> - 🏆 {amount}",
                     inline=False,
                 )
+                display_index += 1
+            else:
+                # Remove from db if user not found
+                await remove_public_trophy_info_user(bot, user_id)
+                pretty_log(
+                    tag="info",
+                    message=f"Removed public trophy entry for user ID {user_id} as they are no longer in the guild.",
+                    label="Trophy Leaderboard Embed",
+                )
         if command_user and context == "view leaderboard":
-            user_place_info = await fetch_user_place_and_public_trophies(bot, command_user)
+            user_place_info = await fetch_user_place_and_public_trophies(
+                bot, command_user
+            )
             if not user_place_info or user_place_info["amount"] == 0:
                 embed.add_field(
                     name="\u200b",
@@ -101,10 +124,8 @@ async def new_public_first_place_announcement(
 
     # Update in db first
     leaderboard_info = await fetch_current_public_leaderboard_info(bot)
-    message_id = (
-        leaderboard_info["message_id"] if leaderboard_info else None
-    )
-    
+    message_id = leaderboard_info["message_id"] if leaderboard_info else None
+
     await update_first_place_in_public_leaderboard(
         bot=bot,
         message_id=message_id,
@@ -117,7 +138,6 @@ async def new_public_first_place_announcement(
         message=f"Updating new first place: {member.display_name} with {trophy_amount} trophies.",
         label="First Place Announcement",
     )
-
 
 
 # 🍭──────────────────────────────
@@ -149,7 +169,9 @@ async def trophy_update_public_leaderboard_func(
         )
         leaderboard_embed = await create_public_leaderboard_embed(bot, guild)
         leaderboard_message = await leaderboard_channel.send(embed=leaderboard_embed)
-        await upsert_leaderboard_msg_id(bot, leaderboard_message.id, leaderboard_channel)
+        await upsert_leaderboard_msg_id(
+            bot, leaderboard_message.id, leaderboard_channel
+        )
         pretty_log(
             tag="success",
             message="Created new trophy leaderboard message.",
@@ -181,4 +203,6 @@ async def trophy_update_public_leaderboard_func(
             leaderboard_message = await leaderboard_channel.send(
                 embed=leaderboard_embed
             )
-            await upsert_leaderboard_msg_id(bot, leaderboard_message.id, leaderboard_channel)
+            await upsert_leaderboard_msg_id(
+                bot, leaderboard_message.id, leaderboard_channel
+            )

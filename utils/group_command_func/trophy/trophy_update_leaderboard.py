@@ -11,6 +11,7 @@ from utils.db.trophy import (
     fetch_leaderboard_message_id,
     fetch_user_place_and_trophies,
     get_first_place,
+    remove_trophy_info_user,
     update_first_place_in_db,
     upsert_leaderboard_msg_id,
 )
@@ -32,6 +33,7 @@ async def create_leaderboard_embed(
         color=0x135CC0,
     )
     footer_text = "Updated Trophy Leaderboard at"
+    vna_member_role = guild.get_role(VN_ALLSTARS_ROLES.vna_member)
     if all_trophies:
         sorted_trophies = sorted(all_trophies, key=lambda x: x["amount"], reverse=True)
         pretty_log(
@@ -48,12 +50,34 @@ async def create_leaderboard_embed(
             else None
         )
 
-        for index, trophy_info in enumerate(sorted_trophies[:25], start=1):
+        display_index = 1
+        for trophy_info in sorted_trophies[:25]:
             user_id = trophy_info["user_id"]
             amount = trophy_info["amount"]
             user = guild.get_member(user_id)
             if user:
-                field_name_str = f"{index}. {user.display_name}"
+                # Check if user has vna member role
+                if vna_member_role and vna_member_role not in user.roles:
+                    # Remove trophy entry for users without the role
+                    await remove_trophy_info_user(bot, user_id)
+                    pretty_log(
+                        tag="info",
+                        message=f"Removed trophy info for user ID {user_id} without VNA Member role.",
+                        label="Trophy Leaderboard Embed",
+                    )
+                    continue
+
+                # Remove from leaderboard if amount is 0
+                if amount == 0:
+                    await remove_trophy_info_user(bot, user_id)
+                    pretty_log(
+                        tag="info",
+                        message=f"Removed trophy info for user ID {user_id} with 0 trophies.",
+                        label="Trophy Leaderboard Embed",
+                    )
+                    continue
+
+                field_name_str = f"{display_index}. {user.display_name}"
                 if first_place_user_id and user_id == first_place_user_id:
                     field_name_str = f"👑 {field_name_str}"
                 embed.add_field(
@@ -61,6 +85,16 @@ async def create_leaderboard_embed(
                     value=f"> - 🏆 {amount}",
                     inline=False,
                 )
+                display_index += 1
+            else:
+                # Remove trophy entry for users no longer in the guild
+                await remove_trophy_info_user(bot, user_id)
+                pretty_log(
+                    tag="info",
+                    message=f"Removed trophy info for user ID {user_id} not found in guild.",
+                    label="Trophy Leaderboard Embed",
+                )
+
         if command_user and context == "view leaderboard":
             user_place_info = await fetch_user_place_and_trophies(bot, command_user)
             if not user_place_info or user_place_info["amount"] == 0:
@@ -202,4 +236,6 @@ async def trophy_update_leaderboard_func(
             leaderboard_message = await leaderboard_channel.send(
                 embed=leaderboard_embed
             )
-            await upsert_leaderboard_msg_id(bot, leaderboard_message.id, leaderboard_channel)
+            await upsert_leaderboard_msg_id(
+                bot, leaderboard_message.id, leaderboard_channel
+            )
