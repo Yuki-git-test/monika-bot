@@ -10,6 +10,7 @@ from constants.vn_allstars_constants import (
     VNA_SERVER_ID,
 )
 from utils.functions.message_edit_log import message_edit_log
+from utils.listener_func.clan_invite import auto_clan_invite
 from utils.listener_func.clan_remove import (
     handle_clan_kick_command,
     handle_clan_leave_command,
@@ -69,6 +70,20 @@ class OnMessageEditCog(commands.Cog):
         # 🍭──────────────────────────────
         await message_edit_log(self.bot, before, after)
 
+        # 🍭──────────────────────────────
+        #   🎀 Auto Clan Invite Processing
+        # 🍭──────────────────────────────
+        if (
+            ":tada: Welcome," in after.content
+            and "You have successfully joined" in after.content
+            and "VN Allstar" in after.content
+        ):
+            pretty_log(
+                message=f"Detected clan invite message edit for member '{after.author.display_name}'.",
+                tag="info",
+                label="Clan Invite Command",
+            )
+            await auto_clan_invite(self.bot, after)
         # 🍭──────────────────────────────
         #   🎀 Clan Leave Processing
         # 🍭──────────────────────────────
