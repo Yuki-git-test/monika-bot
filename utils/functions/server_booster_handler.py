@@ -5,6 +5,7 @@ import discord
 from discord.ext import commands
 
 from constants.vn_allstars_constants import (
+    HARMLESS_USER_ID,
     KHY_USER_ID,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
@@ -155,6 +156,13 @@ async def handle_server_booster_role_add(
 ):
     """Handle server booster role addition events."""
 
+    if member.id == HARMLESS_USER_ID:
+        pretty_log(
+            message=f"Member '{member.display_name}' is harmless bot; skipping custom role assignment on server boost.",
+            tag="info",
+            label="Server Booster Role Add",
+        )
+        return
     # If test role id and member is khy delete the old role in server and db
     testing = False
     if role and role.id == TEST_ROLE_ID and member.id == KHY_USER_ID:

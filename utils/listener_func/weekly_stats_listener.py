@@ -323,7 +323,7 @@ async def weekly_stats_checker(
     if not embed_description:
         return
 
-    # Check if 10 minutes before midnight EST on Saturday
+    # Check if 30 minutes before midnight EST on Saturday
     if not is_saturday_30min_before_midnight_est():
         pretty_log(
             "info",
@@ -399,42 +399,6 @@ async def weekly_stats_checker(
     # Split known and unknown members
     guild = bot.get_guild(VNA_SERVER_ID)
     log_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.server_log)
-    known_members, unknown_members = await split_known_and_unknown_members(
-        bot=bot,
-        guild=guild,
-        members=clan_members_stats,
-    )
-    if unknown_members:
-        desc_lines = []
-        for username, catches, fishes in unknown_members:
-            desc_lines.append(f"- {username} (Catches: {catches}, Fishes: {fishes})")
-        desc_text = "\n".join(desc_lines)
-        embed = discord.Embed(
-            title="⚠️ Unknown Members Detected",
-            description=(
-                "The following members were not found in the server. "
-                "Kindly update their info using `/staff update-member`:\n\n"
-                f"{desc_text}"
-            ),
-            color=discord.Color.yellow(),
-            timestamp=datetime.now(),
-        )
-        unknow_member_count = len(unknown_members)
-        embed.set_footer(
-            text=f"Total Unknown Members: {unknow_member_count}",
-            icon_url=guild.icon.url if guild.icon else None,
-        )
-        if log_channel:
-            await send_webhook(
-                bot=bot,
-                channel=log_channel,
-                embed=embed,
-            )
-            pretty_log(
-                "info",
-                f"Logged {unknow_member_count} unknown members to server log channel.",
-                label="Auto Probation Role Assignment",
-            )
 
     # Get top line
     command_user_catches = 0
@@ -469,6 +433,44 @@ async def weekly_stats_checker(
             pretty_log(
                 "info",
                 f"Skipped probation assignment for command user {command_user.display_name}. Reason: {message}",
+                label="Auto Probation Role Assignment",
+            )
+            
+    # Now process all clan members
+    known_members, unknown_members = await split_known_and_unknown_members(
+        bot=bot,
+        guild=guild,
+        members=clan_members_stats,
+    )
+    if unknown_members:
+        desc_lines = []
+        for username, catches, fishes in unknown_members:
+            desc_lines.append(f"- {username} (Catches: {catches}, Fishes: {fishes})")
+        desc_text = "\n".join(desc_lines)
+        embed = discord.Embed(
+            title="⚠️ Unknown Members Detected",
+            description=(
+                "The following members were not found in the server. "
+                "Kindly update their info using `/staff update-member`:\n\n"
+                f"{desc_text}"
+            ),
+            color=discord.Color.yellow(),
+            timestamp=datetime.now(),
+        )
+        unknow_member_count = len(unknown_members)
+        embed.set_footer(
+            text=f"Total Unknown Members: {unknow_member_count}",
+            icon_url=guild.icon.url if guild.icon else None,
+        )
+        if log_channel:
+            await send_webhook(
+                bot=bot,
+                channel=log_channel,
+                embed=embed,
+            )
+            pretty_log(
+                "info",
+                f"Logged {unknow_member_count} unknown members to server log channel.",
                 label="Auto Probation Role Assignment",
             )
 

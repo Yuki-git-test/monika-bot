@@ -1,0 +1,362 @@
+import asyncio
+import re
+from datetime import datetime
+
+import discord
+
+from constants.aesthetic import Emojis
+from constants.vn_allstars_constants import (
+    MONIKA_EMBED_COLOR,
+    POKEMEOW_APP_ID,
+    VN_ALLSTARS_CATEGORIES,
+    VN_ALLSTARS_ROLES,
+    VN_ALLSTARS_TEXT_CHANNELS,
+    VNA_SERVER_ID,
+)
+from utils.cache.cache_list import vna_members_cache
+from utils.functions.webhook_func import send_webhook
+from utils.logs.debug_log import debug_log, enable_debug
+from utils.logs.pretty_log import pretty_log
+
+enable_debug(f"{__name__}.move_to_members_category")
+enable_debug(f"{__name__}.clan_members_command_listener")
+
+PRO_MEMBERS_CATEGORY_ID = 1381773427362234488
+STAFF_ROLE_IDS = [VN_ALLSTARS_ROLES.staff, VN_ALLSTARS_ROLES.senior_mod]
+
+CLAN_MEMBER_CATEGORY_ONE_ID = 909881910505898044
+CLAN_MEMBER_CATEGORY_TWO_ID = 1456263954526371861
+STAFF_CATEGORY_ID = 1234042069991821386
+CATCH_CATEGORY_MAP = {
+    "Pro Members": {"category_id": PRO_MEMBERS_CATEGORY_ID, "min_catches": 100000},
+    "Clan Members 1": {
+        "category_id": CLAN_MEMBER_CATEGORY_ONE_ID,
+        "min_catches": 50000,
+    },
+    "Clan Members 2": {"category_id": CLAN_MEMBER_CATEGORY_TWO_ID, "min_catches": 0},
+}
+
+
+async def move_to_members_category(
+    bot, member: discord.Member, channel: discord.TextChannel, context: str
+):
+    """Move the given channel to the Pro Members category. If member has reached 100k catches."""
+    debug_log(
+        f"Called with channel={channel.name}, member={member.name}, context={context}"
+    )
+    # debug_log(f"Member roles: {[role.id for role in member.roles]}")
+    debug_log(f"Channel category: {channel.category.id if channel.category else None}")
+    shiny_donator_role = member.guild.get_role(VN_ALLSTARS_ROLES.shiny_donator)
+
+    target_category_id = CATCH_CATEGORY_MAP.get(context, {}).get("category_id")
+    if not target_category_id:
+        debug_log(f"Invalid context '{context}' - no target_category_id found.")
+        pretty_log(
+            "error",
+            f"Invalid context '{context}' provided for moving channel {channel.name}.",
+        )
+        return
+    # Check if its already in target category
+    if channel.category and channel.category.id == target_category_id:
+        debug_log(
+            f"Channel {channel.name} already in target category {target_category_id}."
+        )
+        pretty_log(
+            "info",
+            f"Channel {channel.name} is already in {context} category.",
+        )
+        return
+
+    # Check if staff member
+    if any(role.id in STAFF_ROLE_IDS for role in member.roles):
+        debug_log(f"Member {member.name} is staff. Skipping move.")
+        pretty_log(
+            "info",
+            f"Member {member.name} is a staff member. Skipping move.",
+        )
+        return
+
+    # Check if in staff category, if yes dnt move
+    if channel.category and channel.category.id == STAFF_CATEGORY_ID:
+        debug_log(f"Channel {channel.name} is in staff category. Skipping move.")
+        pretty_log(
+            "info",
+            f"Channel {channel.name} is in Staff category. Skipping move.",
+        )
+        return
+
+    # Check if has shiny donator role, if yes dnt move
+    if shiny_donator_role and shiny_donator_role in member.roles:
+        debug_log(f"Member {member.name} has shiny donator role. Skipping move.")
+        pretty_log(
+            "info",
+            f"Member {member.name} has Shiny Donator role. Skipping move.",
+        )
+        return
+
+    try:
+        target_members_category = channel.guild.get_channel(target_category_id)
+        if target_members_category is None:
+            debug_log(
+                f"Target members category with ID {target_category_id} not found."
+            )
+            pretty_log(
+                "error",
+                f" Members category with ID {target_category_id} not found in guild {channel.guild.name}.",
+            )
+            return
+        debug_log(
+            f"Moving channel {channel.name} to category {target_members_category.name}."
+        )
+        await channel.edit(category=target_members_category)
+        pretty_log(
+            "info",
+            f"Channel {channel.name} moved to {target_members_category.name} Category in guild {channel.guild.name}.",
+        )
+        log_channel = channel.guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.server_log)
+        if log_channel:
+            min_catches = CATCH_CATEGORY_MAP[context]["min_catches"]
+            reason_str = (
+                f"Reached {min_catches:,} catches"
+                if min_catches > 0
+                else "Haven't reached 50k catches"
+            )
+            embed = discord.Embed(
+                title=f"Channel Moved to {target_members_category.name} Category",
+                description=(
+                    f"**Member:** {member.mention} ({member.name})\n"
+                    f"**Channel:** {channel.mention}\n"
+                    f"**Reason:** {reason_str}"
+                ),
+                color=MONIKA_EMBED_COLOR,
+                timestamp=datetime.now(),
+            )
+            embed.set_thumbnail(url=member.display_avatar.url)
+            embed.set_author(
+                name=member.display_name, icon_url=member.display_avatar.url
+            )
+            embed.set_footer(
+                text=f"User ID: {member.id}",
+                icon_url=channel.guild.icon.url if channel.guild.icon else None,
+            )
+            await send_webhook(bot=bot, channel=log_channel, embed=embed)
+
+    except Exception as e:
+        debug_log(f"Exception occurred: {e}")
+        pretty_log(
+            "error",
+            f"Error moving channel {channel.name} to Pro Members category: {e}",
+        )
+        return
+
+
+def get_username_from_line(user_line):
+    # Remove bold and whitespace
+    cleaned = user_line.replace("**", "").strip()
+    # Try to match patterns like '<@id> - id}' or '<@id> - id' or just 'id'
+    # Regex for <@digits> - digits (with or without trailing })
+    match = re.match(r"\d+\s+<@(?P<uid1>\d+)>\s*-\s*(?P<uid2>\d+)}?", cleaned)
+    if match:
+        # Always use the second ID after the dash for cache lookup
+        user_id = int(match.group("uid2"))
+        return str(user_id)
+    # Try to match just <@id> - id (without leading number)
+    match2 = re.match(r"<@(?P<uid1>\d+)>\s*-\s*(?P<uid2>\d+)}?", cleaned)
+    if match2:
+        user_id = int(match2.group("uid2"))
+        return str(user_id)
+    # Fallback: try to extract last word as user id if it's all digits
+    parts = cleaned.split()
+    if parts and re.fullmatch(r"\d{10,}", parts[-1]):
+        user_id = int(parts[-1])
+        return str(user_id)
+    # Otherwise, fallback to original logic: everything after first space
+    user_name = cleaned.split(" ", 1)[-1] if " " in cleaned else cleaned
+    return user_name
+
+
+def get_member_from_line(guild: discord.Guild, user_line):
+    """Extract member object from user line in embed."""
+    cleaned = user_line.replace("**", "").strip()
+    # Try to match patterns like '<@id> - id}' or '<@id> - id' or just 'id'
+    # Regex for <@digits> - digits (with or without trailing })
+    match = re.match(r"\d+\s+<@(?P<uid1>\d+)>\s*-\s*(?P<uid2>\d+)}?", cleaned)
+    if match:
+        # Always use the second ID after the dash for cache lookup
+        user_id = int(match.group("uid2"))
+        member = guild.get_member(user_id)
+        if member:
+            return member
+        else:
+            return None
+
+    # Try to match just <@id> - id (without leading number)
+    match2 = re.match(r"<@(?P<uid1>\d+)>\s*-\s*(?P<uid2>\d+)}?", cleaned)
+    if match2:
+        user_id = int(match2.group("uid2"))
+        member = guild.get_member(user_id)
+        if member:
+            return member
+        else:
+            return None
+
+    # Fallback: try to extract last word as user id if it's all digits
+    parts = cleaned.split()
+    if parts and re.fullmatch(r"\d{10,}", parts[-1]):
+        user_id = int(parts[-1])
+        member = guild.get_member(user_id)
+        return member
+    # Otherwise, fallback to original logic: everything after first space
+    from utils.cache.vna_members_cache import (
+        fetch_vna_member_id_by_username_or_pokemeow_name,
+    )
+
+    user_name = cleaned.split(" ", 1)[-1] if " " in cleaned else cleaned
+    user_id = fetch_vna_member_id_by_username_or_pokemeow_name(user_name)
+    if user_id:
+        member = guild.get_member(user_id)
+        return member
+    else:
+        return None
+
+
+async def clan_members_command_listener(
+    bot, message: discord.Message, msg_context: str = None
+):
+    """Listener for clan members command."""
+
+    debug_log(f"Called with message.id={message.id}, msg_context={msg_context}")
+    processsing_msg = None
+    if msg_context and msg_context == "reply":
+        debug_log("Message context is reply, fetching replied message.")
+        replied_message = message.reference.resolved
+        if replied_message:
+            debug_log("Replied message found.")
+            message = replied_message
+            processsing_msg = await replied_message.reply(
+                f"{Emojis.orange_loading} Sorting channels...", mention_author=False
+            )
+        else:
+            debug_log("No replied message found.")
+            return
+
+    embed = message.embeds[0] if message.embeds else None
+    if not embed:
+        debug_log("No embed found in message.")
+
+        return
+
+    embed_description = embed.description or ""
+    if "Clan Member Information - VN Allstar" not in embed_description:
+        debug_log("Embed does not contain expected description header.")
+        return
+
+    vna_guild = bot.get_guild(VNA_SERVER_ID)
+    if not vna_guild:
+        debug_log(f"VNA guild with ID {VNA_SERVER_ID} not found.")
+        pretty_log(
+            "error",
+            f"VNA guild with ID {VNA_SERVER_ID} not found.",
+        )
+        return
+
+    user_lines = embed.fields[0].value.splitlines()
+    contribution_line = embed.fields[1].value.splitlines()
+
+    from utils.cache.vna_members_cache import (
+        fetch_vna_member_id_by_username_or_pokemeow_name,
+    )
+
+    for user_line, contrib_line in zip(user_lines, contribution_line):
+        debug_log(f"Processing user_line: {user_line}, contrib_line: {contrib_line}")
+        user_name = user_line.split(" ", 1)[-1].replace("**", "").strip()
+        member = get_member_from_line(vna_guild, user_line)
+
+        if not member:
+            debug_log(f"Member for user line '{user_line}' not found in VNA guild.")
+            pretty_log(
+                "info",
+                f"Member for user line '{user_line}' not found in VNA guild.",
+            )
+            continue
+
+        # Extract catches from contribution line
+        contrib_match = re.search(r"> ?\*?\*?([\d,]+)", contrib_line)
+        catches = (
+            int(contrib_match.group(1).replace(",", "")) if contrib_match else None
+        )
+
+        # Get info
+        user_id = member.id
+        member_info = vna_members_cache.get(user_id)
+        if not member_info:
+            debug_log(f"Member info for user ID {user_id} not found in cache.")
+            pretty_log(
+                "info",
+                f"Member info for user ID {user_id} not found in VNA members cache.",
+            )
+            continue
+        channel_id = member_info.get("channel_id")
+        if not channel_id:
+            debug_log(f"Channel ID for user ID {user_id} not found in cache.")
+            pretty_log(
+                "info",
+                f"Channel ID for user ID {user_id} not found in VNA members cache.",
+            )
+            continue
+        channel = vna_guild.get_channel(channel_id)
+        if not channel:
+            debug_log(f"Channel with ID {channel_id} not found in VNA guild.")
+            pretty_log(
+                "info",
+                f"Channel with ID {channel_id} not found in VNA guild.",
+            )
+            continue
+        # Move to Pro Members category if catches >= 100000
+        debug_log(f"Member {member.name} has {catches} catches.")
+        if catches is not None and catches >= 100000:
+            await move_to_members_category(bot, member, channel, context="Pro Members")
+        elif catches is not None and 50000 <= catches < 100000:
+            await move_to_members_category(
+                bot, member, channel, context="Clan Members 1"
+            )
+        elif catches is not None and catches < 50000:
+            await move_to_members_category(
+                bot, member, channel, context="Clan Members 2"
+            )
+
+        # Sleep for 3 seconds between moves to avoid rate limits
+        await asyncio.sleep(3)
+
+    debug_log("Processing completed.")
+    pretty_log(
+        "info",
+        "Clan members command listener processing completed.",
+    )
+    if processsing_msg:
+        # Get category channel number
+        pro_members_category = vna_guild.get_channel(PRO_MEMBERS_CATEGORY_ID)
+        clan_member_one_category = vna_guild.get_channel(CLAN_MEMBER_CATEGORY_ONE_ID)
+        clan_member_two_category = vna_guild.get_channel(CLAN_MEMBER_CATEGORY_TWO_ID)
+        pro_members_channel_count = (
+            len(pro_members_category.channels) if pro_members_category else 0
+        )
+        clan_member_one_channel_count = (
+            len(clan_member_one_category.channels) if clan_member_one_category else 0
+        )
+        clan_member_two_channel_count = (
+            len(clan_member_two_category.channels) if clan_member_two_category else 0
+        )
+        embed = discord.Embed(
+            title="Sorting Completed!",
+            description=(
+                f"**Pro Members Category Channels:** {pro_members_channel_count}\n"
+                f"**Clan Members 1 Category Channels:** {clan_member_one_channel_count}\n"
+                f"**Clan Members 2 Category Channels:** {clan_member_two_channel_count}\n"
+            ),
+            color=MONIKA_EMBED_COLOR,
+            timestamp=datetime.now(),
+        )
+        await processsing_msg.edit(
+            content=f"{Emojis.orange_check} Sorting completed!", embed=embed
+        )

@@ -23,6 +23,7 @@ from utils.listener_func.perks_listener import (
 )
 from utils.listener_func.weekly_stats_listener import weekly_stats_checker
 from utils.logs.pretty_log import pretty_log
+from utils.listener_func.clan_members_listener import clan_members_command_listener
 
 TRIGGERS = {
     "pro_embed": "to view badge information",
@@ -33,6 +34,7 @@ TRIGGERS = {
     ),
     "weekly_stats_checker": "**Clan Weekly Stats — VN Allstar**",
     "monthly_stats_checker": "**Clan Monthly Stats — VN Allstar**",
+    "clan_member": "Clan Member Information - VN Allstar",
 }
 
 
@@ -152,6 +154,17 @@ class OnMessageEditCog(commands.Cog):
                 )
                 await monthly_stats_checker(self.bot, before, after)
 
+        # ————————————————————————————————
+        # 📂 Clan Members Command Listener
+        # ————————————————————————————————
+        if first_embed:
+            if TRIGGERS["clan_member"] in first_embed_description:
+                pretty_log(
+                    message=f"Detected clan members command embed edit for member '{after.author.display_name}'.",
+                    tag="info",
+                    label="Clan Members Command",
+                )
+                await clan_members_command_listener(self.bot, after)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMessageEditCog(bot))

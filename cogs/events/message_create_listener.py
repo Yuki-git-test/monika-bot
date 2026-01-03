@@ -9,6 +9,8 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
 )
+from utils.listener_func.clan_command_listener import clan_command_listener
+from utils.listener_func.clan_members_listener import clan_members_command_listener
 from utils.listener_func.faction_listener import extract_faction_from_faction_command
 from utils.listener_func.market_snipe_filter import check_market_buy_command
 from utils.listener_func.monthly_stats_listener import monthly_stats_checker
@@ -42,6 +44,8 @@ TRIGGERS = {
     ),
     "monthly_stats_checker": "**Clan Monthly Stats — VN Allstar**",
     "weekly_stats_checker": "**Clan Weekly Stats — VN Allstar**",
+    "clan_stats": "Welcome to **VN Allstar**!",
+    "clan_member": "Clan Member Information - VN Allstar",
 }
 
 
@@ -204,6 +208,38 @@ class MessageCreateListener(commands.Cog):
                             "Detected Stats embed, processing stats command...",
                         )
                         await stats_command_handler(
+                            self.bot,
+                            message,
+                        )
+                # ————————————————————————————————
+                # 📂 Clan Command Listener
+                # ————————————————————————————————
+                if first_embed:
+                    if (
+                        first_embed_title
+                        and TRIGGERS["clan_stats"] in first_embed_title
+                    ):
+                        pretty_log(
+                            "info",
+                            "Detected Clan Stats embed, processing clan stats command...",
+                        )
+                        await clan_command_listener(
+                            self.bot,
+                            message,
+                        )
+                # ————————————————————————————————
+                # 👥 Clan Members Command Listener
+                # ————————————————————————————————
+                if first_embed:
+                    if (
+                        first_embed_description
+                        and TRIGGERS["clan_member"] in first_embed_description
+                    ):
+                        pretty_log(
+                            "info",
+                            "Detected Clan Member Information embed, processing clan members command...",
+                        )
+                        await clan_members_command_listener(
                             self.bot,
                             message,
                         )

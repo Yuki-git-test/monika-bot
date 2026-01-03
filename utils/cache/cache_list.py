@@ -43,3 +43,10 @@ kick_list_cache: dict[int, dict] = {}
 # }
 #
 
+channel_placement_cache: dict[int, dict] = {}
+# Structure:
+# channel_id -> {
+#   "user_id": int,
+#   "user_name": str,
+#   "catches": int,
+# }

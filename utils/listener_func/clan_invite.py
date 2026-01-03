@@ -2,6 +2,7 @@ import re
 
 import discord
 
+from constants.aesthetic import *
 from constants.vn_allstars_constants import (
     POKEMEOW_APP_ID,
     VN_ALLSTARS_CATEGORIES,
@@ -16,6 +17,7 @@ from utils.logs.pretty_log import pretty_log
 enable_debug(f"{__name__}.auto_clan_invite")
 image_url = "https://media.discordapp.net/attachments/.../image.png"
 
+CLAN_MEMBER_CATEGORY_ONE_ID = 909881910505898044
 CLAN_MEMBER_CATEGORY_TWO_ID = 1456263954526371861
 
 
@@ -65,6 +67,12 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                     )
 
             guild = message.guild
+            invoked_message = message.reference.resolved if message.reference else None
+            processing_msg = None
+            if invoked_message:
+                processing_msg = await invoked_message.reply(
+                    f"{Emojis.orange_loading} Making clan channel for {user.mention}..."
+                )
             debug_log(f"Guild: {guild.name} ({guild.id})")
             # Roles
             vna_member_role = guild.get_role(VN_ALLSTARS_ROLES.vna_member)
@@ -115,7 +123,6 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                 "This is your personal channel!! You may use this however you like."
             )
             debug_log(
-
                 f"Creating text channel: {channel_name} in category {CLAN_MEMBER_CATEGORY_TWO_ID}"
             )
             try:
@@ -139,9 +146,9 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                     f"Failed to create channel for user {user.display_name}: {e}",
                     label="Auto Clan Invite",
                 )
-                debug_log(
-                    f"Failed to create channel for user {user.display_name}: {e}"
-                )
+                debug_log(f"Failed to create channel for user {user.display_name}: {e}")
+                if processing_msg:
+                    await processing_msg.delete()
                 return
 
             # Upsert member into DB
@@ -172,6 +179,8 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
             embed.set_thumbnail(url=guild.icon.url if guild.icon else None)
             embed.set_image(url=image_url)
             debug_log(f"Sending success embed to channel {message.channel}")
+            if processing_msg:
+                await processing_msg.delete()
             await message.channel.send(embed=embed)
 
             pretty_log(

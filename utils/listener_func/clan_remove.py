@@ -40,7 +40,7 @@ async def auto_clan_remove_handler(
     probation_role = guild.get_role(VN_ALLSTARS_ROLES.probation)
     former_member_role = guild.get_role(VN_ALLSTARS_ROLES._former_members)
     double_probation_role = guild.get_role(VN_ALLSTARS_ROLES.kick_list)
-    
+
     # Check if member has VNA Member role
     vna_member_role = guild.get_role(VN_ALLSTARS_ROLES.vna_member)
 
@@ -156,7 +156,6 @@ async def auto_clan_remove_handler(
             url=message_link if message_link else None,
             color=discord.Color.red(),
             description=(
-                f"{message_link}"
                 f"**Member:** {member.mention} ({member.display_name})\n"
                 f"{channel_line}"
             ),

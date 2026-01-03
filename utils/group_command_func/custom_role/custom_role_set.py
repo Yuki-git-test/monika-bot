@@ -110,7 +110,7 @@ async def custom_role_set_func(
         # Build confirmation embed
         embed = discord.Embed(
             title="✅ Custom Role Assigned!",
-            description=f"**Member:** {member.mention}\n**Role:** {role.mention}\n**Assigned by:** {user.mention} 💜",
+            description=f"**Member:** {member.mention}\n**Role:** {role.mention}\n**Assigned by:** {user.mention}",
             color=role.color,
             timestamp=datetime.now(),
         )

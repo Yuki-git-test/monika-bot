@@ -151,7 +151,8 @@ def parse_clan_stats_message(message: str) -> Optional[List[Tuple[str, int, int]
     while i < len(lines):
         line = lines[i].strip()
 
-        if line.startswith("You're Rank"):
+        # Make detection smarter: skip any line containing "You're Rank"
+        if "You're Rank" in line:
             i += 1
             continue
 
@@ -182,7 +183,6 @@ def parse_clan_stats_message(message: str) -> Optional[List[Tuple[str, int, int]
             members.append((username, catches, fishes))
 
         i += 1
-        # print(f"{members}")
     return members
 
 
@@ -223,7 +223,8 @@ def parse_clan_stats_message_with_rank_number(
     while i < len(lines):
         line = lines[i].strip()
 
-        if line.startswith("You're Rank"):
+        # Make detection smarter: skip any line containing "You're Rank"
+        if "You're Rank" in line:
             i += 1
             continue
 
