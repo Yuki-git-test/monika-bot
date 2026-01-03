@@ -97,7 +97,7 @@ class CreateSolidRoleModal(discord.ui.Modal, title="🎨 Create Solid Custom Rol
             await self.member.add_roles(new_role)
 
             # Save to DB
-            await upsert_role(bot=self.bot, user_id=self.member, role_id=new_role.id)
+            await upsert_role(bot=self.bot, user=self.member, role_id=new_role.id)
 
             # Build success embed
             embed = discord.Embed(
@@ -182,7 +182,7 @@ class CreateGradientRoleModal(discord.ui.Modal, title="🌈 Create Gradient Cust
             await self.member.add_roles(new_role)
 
             # 2. Save to DB
-            await upsert_role(bot=self.bot, user_id=self.member, role_id=new_role.id)
+            await upsert_role(bot=self.bot, user=self.member, role_id=new_role.id)
 
             # 3. Patch with gradient via helper
             success = await update_gradient_role(
