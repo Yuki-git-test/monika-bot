@@ -8,11 +8,11 @@ from discord.http import Route
 
 from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VN_ALLSTARS_TEXT_CHANNELS
 from utils.db.custom_roles_db_func import fetch_custom_role_id
-from utils.logs.pretty_log import pretty_log
 from utils.functions.webhook_func import send_webhook
+from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.server_log
-REFERENCE_ROLE_ID = VN_ALLSTARS_ROLES.miks
+REFERENCE_ROLE_ID = VN_ALLSTARS_ROLES.personal_roles_divider
 ALLOWED_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp", ".gif")
 MAX_FILE_SIZE = 256 * 1024  # 256 KB
 
@@ -46,17 +46,19 @@ async def custom_role_edit_icon_func(
     # Check if custom role is below the position variable, if below move above
     custom_role_position = custom_role.position
     reference_role = guild.get_role(REFERENCE_ROLE_ID)
+    top_grinder_role = guild.get_role(VN_ALLSTARS_ROLES.top_monthly_grinder)
+    top_grinder_role_position = top_grinder_role.position
     reference_position = reference_role.position
-    if custom_role_position < reference_position:
-        new_position = reference_position + 1
+    if custom_role_position < top_grinder_role_position:
+        new_position = reference_position - 1
         try:
             await custom_role.edit(
                 position=new_position,
-                reason="Ensuring custom role is above reference role",
+                reason="Ensuring custom role is below reference role",
             )
             pretty_log(
                 "info",
-                f"Moved role {custom_role.name} ({custom_role.id}) above reference role.",
+                f"Moved role {custom_role.name} ({custom_role.id}) below reference role.",
                 label="CUSTOM ROLE",
             )
         except Exception as e:
@@ -201,7 +203,9 @@ class UploadRoleIconView(discord.ui.View):
                 name=self.user.display_name, icon_url=self.user.display_avatar.url
             )
             embed.set_thumbnail(url=attachment.url)
-            content = f"✅ Successfully updated the icon for the role {self.role.mention}."
+            content = (
+                f"✅ Successfully updated the icon for the role {self.role.mention}."
+            )
             await interaction.edit_original_response(content=content, embed=embed)
 
             # -------------------- Log Channel --------------------
