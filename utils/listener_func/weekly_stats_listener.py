@@ -435,7 +435,7 @@ async def weekly_stats_checker(
                 f"Skipped probation assignment for command user {command_user.display_name}. Reason: {message}",
                 label="Auto Probation Role Assignment",
             )
-            
+
     # Now process all clan members
     known_members, unknown_members = await split_known_and_unknown_members(
         bot=bot,
