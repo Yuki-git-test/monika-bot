@@ -56,6 +56,8 @@ async def probation_removal_handler(
         msg = f"Member {member.display_name} not found in probation list cache."
         return False, msg
     previous_catch_requirement = probation_member_info.get("catch_requirement", 1500)
+    if previous_catch_requirement is None:
+        previous_catch_requirement = 1500
 
     if (
         catches < previous_catch_requirement
