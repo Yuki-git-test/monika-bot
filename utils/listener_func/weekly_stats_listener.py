@@ -57,6 +57,7 @@ MODERATOR_PLAY_CHANNEL_ID = 952810535928348732
 PROCESSED_WEEKLY_STATS_PAGES = set()
 PROCESSED_WEEKLY_STATS_END_TIMESTAMPS = set()
 NEW_EXPECTED_CATCHES = None
+UNKNOWN_MEMBERS = set()
 
 
 def is_past_11pm_probation_day_est():
@@ -442,37 +443,17 @@ async def weekly_stats_checker(
         guild=guild,
         members=clan_members_stats,
     )
+
     if unknown_members:
-        desc_lines = []
+        global UNKNOWN_MEMBERS
+
         for username, catches, fishes in unknown_members:
-            desc_lines.append(f"- {username} (Catches: {catches}, Fishes: {fishes})")
-        desc_text = "\n".join(desc_lines)
-        embed = discord.Embed(
-            title="⚠️ Unknown Members Detected",
-            description=(
-                "The following members were not found in the server. "
-                "Kindly update their info using `/staff update-member`:\n\n"
-                f"{desc_text}"
-            ),
-            color=discord.Color.yellow(),
-            timestamp=datetime.now(),
-        )
-        unknow_member_count = len(unknown_members)
-        embed.set_footer(
-            text=f"Total Unknown Members: {unknow_member_count}",
-            icon_url=guild.icon.url if guild.icon else None,
-        )
-        if log_channel:
-            await send_webhook(
-                bot=bot,
-                channel=log_channel,
-                embed=embed,
-            )
-            pretty_log(
-                "info",
-                f"Logged {unknow_member_count} unknown members to server log channel.",
-                label="Auto Probation Role Assignment",
-            )
+            # If it's already in the global set, skip
+            if (username, catches, fishes) in UNKNOWN_MEMBERS:
+                continue
+
+            # Add to global unknown members set
+            UNKNOWN_MEMBERS.add((username, catches, fishes))
 
     # Assign roles to top 10
     for member, username, catches, fishes in known_members:
@@ -512,3 +493,47 @@ async def weekly_stats_checker(
             "Updated all probation members' catch requirements after processing all weekly stats pages.",
             label="Auto Probation Role Assignment",
         )
+        # Log unknown members if any
+        if UNKNOWN_MEMBERS:
+            unknown_members = list(UNKNOWN_MEMBERS)
+            UNKNOWN_MEMBERS.clear()  # Clear after copying
+            if unknown_members:
+                desc_lines = []
+                for username, catches, fishes in unknown_members:
+                    desc_lines.append(
+                        f"- {username} (Catches: {catches}, Fishes: {fishes})"
+                    )
+                desc_text = "\n".join(desc_lines)
+                embed = discord.Embed(
+                    title="⚠️ Unknown Members Detected",
+                    description=(
+                        "The following members were not found in the server. "
+                        "Kindly update their info using `/staff update-member`:\n\n"
+                        f"{desc_text}"
+                    ),
+                    color=discord.Color.yellow(),
+                    timestamp=datetime.now(),
+                )
+                unknown_member_count = len(unknown_members)
+                embed.set_footer(
+                    text=f"Total Unknown Members: {unknown_member_count}",
+                    icon_url=guild.icon.url if guild.icon else None,
+                )
+                if log_channel:
+                    await send_webhook(
+                        bot=bot,
+                        channel=log_channel,
+                        embed=embed,
+                    )
+                    pretty_log(
+                        "info",
+                        f"Logged {unknown_member_count} unknown members to server log channel.",
+                        label="Auto Probation Role Assignment",
+                    )
+                    # Send in the same channel a reminder to staff
+                    await message.channel.send(embed=embed)
+                    pretty_log(
+                        "info",
+                        f"Sent unknown members reminder in channel {message.channel.name}.",
+                        label="Auto Probation Role Assignment",
+                    )

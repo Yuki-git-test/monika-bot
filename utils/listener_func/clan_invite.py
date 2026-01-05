@@ -37,6 +37,7 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
         user_mention_pattern = r"<@(\d+)>"
         debug_log(f"Searching for user mention in message: {message.content}")
         match = re.search(user_mention_pattern, message.content)
+        pokemeow_name = "N/A"
 
         if not match:
             pretty_log("info", "No user mention found in the message")
@@ -191,7 +192,13 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
             debug_log(
                 f"Assigned roles to {user.display_name} and created channel {new_channel.name}"
             )
+            clan_channel_category_id = new_channel.category_id
+            clan_channel_category = guild.get_channel(clan_channel_category_id)
 
+            channel_category_count = 0
+            if clan_channel_category:
+                channel_category_count = len(clan_channel_category.channels)
+            category_str = f"**Category:** {clan_channel_category.name} with {channel_category_count} channels"
             # Log embed
             log_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.server_log)
             debug_log(f"Log channel resolved: {log_channel}")
@@ -199,7 +206,7 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                 log_embed = discord.Embed(
                     title="New Clan Member Joined",
                     url=message.jump_url,
-                    description=f"**Member:** {user.mention}\n**Channel:** {new_channel.mention}",
+                    description=f"**Member:** {user.mention}\n**Pokemeow Name:**{pokemeow_name}\n**Channel:** {new_channel.mention}\n{category_str}",
                     color=0xFF00EE,
                 )
                 log_embed.set_thumbnail(url=user.display_avatar.url)

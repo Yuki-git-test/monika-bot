@@ -127,7 +127,7 @@ async def auto_clan_remove_handler(
                             pretty_log(
                                 f"Moved channel '{member_channel.name}' to former members category '{category.name}'."
                             )
-                            channel_line = f"\n• Moved channel {member_channel.mention} - {member_channel.name} to Former Members category '{category.name}'."
+                            channel_line = f"**Channel:** {member_channel.mention} - {member_channel.name}\n**New Category:** {category.name}"
                             break
                         except Exception as e:
                             pretty_log(
@@ -142,6 +142,15 @@ async def auto_clan_remove_handler(
                 "No suitable 'former members' category found with less than 50 channels."
             )
     # Log the clan leave event
+    channel_category_count = 0
+    channel_category_name = "N/A"
+    channel_category_id = member_channel.category_id if member_channel_id else None
+    if channel_category_id:
+        channel_category = member.guild.get_channel(channel_category_id)
+        if channel_category:
+            channel_category_count = len(channel_category.channels)
+            channel_category_name = channel_category.name
+    footer_text = f"Member ID: {member.id} | Channel Category: {channel_category_name} ({channel_category_count} channels)"
     log_channel = member.guild.get_channel(LOG_CHANNEL_ID)
     message_link = None
     if log_channel:
@@ -164,7 +173,7 @@ async def auto_clan_remove_handler(
         embed.set_thumbnail(url=member.display_avatar.url)
         embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
         embed.set_footer(
-            text=f"Member ID: {member.id}",
+            text=footer_text,
             icon_url=member.guild.icon.url if member.guild.icon else None,
         )
         await send_webhook(
