@@ -18,7 +18,11 @@ from utils.cache.cache_list import (
     probation_list_cache,
     vna_members_cache,
 )
-from utils.db.monthly_req_db import get_expected_catches, reset_expected_catches
+from utils.db.monthly_req_db import (
+    get_expected_catches,
+    increment_expected_catches,
+    reset_expected_catches,
+)
 from utils.db.probation_list_db import (
     update_all_probation_catch_requirements,
     update_probation_catch_requirement,
@@ -376,11 +380,11 @@ async def weekly_stats_checker(
 
     PROCESSED_WEEKLY_STATS_PAGES.add(current_page)
     expected_catches = await get_expected_catches(bot)
-    global EXPECTED_CATCHES
-    EXPECTED_CATCHES = expected_catches
+    global NEW_EXPECTED_CATCHES
+    NEW_EXPECTED_CATCHES = expected_catches
     pretty_log(
         "info",
-        f"Updated monthly expected catches to {EXPECTED_CATCHES} in monthly_requirements.json.",
+        f"Updated monthly expected catches to {NEW_EXPECTED_CATCHES} in monthly_requirements.json.",
         label="Weekly Stats Listener",
     )
 
@@ -493,6 +497,15 @@ async def weekly_stats_checker(
             "Updated all probation members' catch requirements after processing all weekly stats pages.",
             label="Auto Probation Role Assignment",
         )
+
+        # Increment expected catches by 1500 for next week
+        await increment_expected_catches(bot, WEEKLY_REQUIREMENT_CATCHES)
+        pretty_log(
+            "info",
+            f"Incremented expected catches by {WEEKLY_REQUIREMENT_CATCHES} for next week.",
+            label="Auto Probation Role Assignment",
+        )
+        
         # Log unknown members if any
         if UNKNOWN_MEMBERS:
             unknown_members = list(UNKNOWN_MEMBERS)

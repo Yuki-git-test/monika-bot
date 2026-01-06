@@ -151,7 +151,7 @@ async def probation_members_func(
     # Sort by amount of catch requirements required
     sorted_members = sorted(
         probation_members,
-        key=lambda x: x[3],  # 3 is the index for catch_requirement
+        key=lambda x: x[3] if x[3] is not None else 1500,  # Treat None as 0
         reverse=True,
     )
 
