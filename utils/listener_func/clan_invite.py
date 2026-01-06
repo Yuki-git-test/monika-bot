@@ -198,15 +198,20 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
             channel_category_count = 0
             if clan_channel_category:
                 channel_category_count = len(clan_channel_category.channels)
+
             category_str = f"**Category:** {clan_channel_category.name} with {channel_category_count} channels"
+            debug_log(f"Channel category info: {category_str}")
+
             # Log embed
             log_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.server_log)
             debug_log(f"Log channel resolved: {log_channel}")
             if log_channel:
+                log_embed_description = f"**Member:** {user.mention}\n**Pokemeow Name:**{pokemeow_name}\n**Channel:** {new_channel.mention}\n{category_str}"
+                debug_log(f"Log embed description: {log_embed_description}")
                 log_embed = discord.Embed(
                     title="New Clan Member Joined",
                     url=message.jump_url,
-                    description=f"**Member:** {user.mention}\n**Pokemeow Name:**{pokemeow_name}\n**Channel:** {new_channel.mention}\n{category_str}",
+                    description=log_embed_description,
                     color=0xFF00EE,
                 )
                 log_embed.set_thumbnail(url=user.display_avatar.url)
