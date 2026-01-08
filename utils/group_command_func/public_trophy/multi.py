@@ -17,7 +17,6 @@ from utils.db.public_trophy_db import (
     update_public_leaderboard_first_place,
     update_public_trophies,
 )
-
 from utils.essentials.pretty_defer import pretty_defer
 from utils.essentials.role_checks import is_staff_member
 from utils.functions.webhook_func import send_webhook
@@ -92,11 +91,11 @@ async def public_trophy_multi_func(
 
     processed_members = []
     skipped_members = []
+    title = None  # Ensure title is always defined
     # Process each member
     for member in members:
         # Check if member has db row
         if member is None:
-
             continue
         member_info = await fetch_user_public_trophies(bot, member)
         if not member_info:
@@ -115,7 +114,8 @@ async def public_trophy_multi_func(
         current_trophies = member_trophy_map.get(member.id, 0)
         if action == "add":
             new_amount = current_trophies + amount
-            title = f"🏆 Public Trophies Added Summary"
+            if title is None:
+                title = f"🏆 Public Trophies Added Summary"
             await update_public_trophies(bot, member, new_amount)
             desc_line = (
                 f"{member.mention} - {member.display_name} now has 🏆 {new_amount}."
@@ -126,7 +126,8 @@ async def public_trophy_multi_func(
                 f"{user} added {amount} trophies to {member}. New total: {new_amount}",
             )
         elif action == "remove":
-            title = f"🏆 Public Trophies Removed Summary"
+            if title is None:
+                title = f"🏆 Public Trophies Removed Summary"
             if amount > current_trophies:
                 msg = (
                     f"{member.display_name} only has 🏆 {current_trophies}. Skipping removal.",
@@ -144,6 +145,13 @@ async def public_trophy_multi_func(
                 f"{member.mention} - {member.display_name} now has 🏆 {new_amount}."
             )
             processed_members.append(desc_line)
+
+    # If no members were processed and title is still None, set a default title
+    if title is None:
+        if action == "add":
+            title = f"🏆 Public Trophies Added Summary"
+        elif action == "remove":
+            title = f"🏆 Public Trophies Removed Summary"
 
     # Build confirmation embed
     action_str = "Added" if action == "add" else "Removed"
