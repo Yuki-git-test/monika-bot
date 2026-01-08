@@ -90,6 +90,7 @@ class Clan_Members_Paginator(View):
                 name=f"👤 {member_name}",
                 value=(
                     f"> - **Discord Member:** {discord_member.mention}\n"
+                    f"> - **User ID:** `{member_id}`\n"
                     f"> - **Channel:** {channel_mention}\n"
                     f"> - **PokéMeow Name:** {pokemeow_name}\n"
                     f"> - **Perks:** {display_perks}\n"
