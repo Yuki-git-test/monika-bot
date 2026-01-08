@@ -12,10 +12,11 @@ from constants.vn_allstars_constants import (
 )
 from utils.cache.cache_list import vna_members_cache
 from utils.db.vna_members_db_func import fetch_all_members
+from utils.essentials.display_format import format_display_faction, format_display_perks
 from utils.essentials.pretty_defer import pretty_defer
 from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
-from utils.essentials.display_format import format_display_perks, format_display_faction
+
 
 class Clan_Members_Paginator(View):
     def __init__(self, bot, user: discord.Member, members, per_page=10):
@@ -34,27 +35,37 @@ class Clan_Members_Paginator(View):
 
     @discord.ui.button(label="Previous", style=discord.ButtonStyle.primary)
     async def previous_page(self, interaction: discord.Interaction, button: Button):
-        if interaction.user.id != self.user.id:
+        try:
+            if interaction.user.id != self.user.id:
+                await interaction.response.send_message(
+                    "You cannot interact with this paginator.", ephemeral=True
+                )
+                return
+            if self.page > 0:
+                self.page -= 1
+                embed = await self.get_embed()
+                await interaction.response.edit_message(embed=embed, view=self)
+        except Exception as e:
             await interaction.response.send_message(
-                "You cannot interact with this paginator.", ephemeral=True
+                f"An error occurred: {e}", ephemeral=True
             )
-            return
-        if self.page > 0:
-            self.page -= 1
-            embed = await self.get_embed()
-            await interaction.response.edit_message(embed=embed, view=self)
 
     @discord.ui.button(label="Next", style=discord.ButtonStyle.primary)
     async def next_page(self, interaction: discord.Interaction, button: Button):
-        if interaction.user.id != self.user.id:
+        try:
+            if interaction.user.id != self.user.id:
+                await interaction.response.send_message(
+                    "You cannot interact with this paginator.", ephemeral=True
+                )
+                return
+            if self.page < self.max_page:
+                self.page += 1
+                embed = await self.get_embed()
+                await interaction.response.edit_message(embed=embed, view=self)
+        except Exception as e:
             await interaction.response.send_message(
-                "You cannot interact with this paginator.", ephemeral=True
+                f"An error occurred: {e}", ephemeral=True
             )
-            return
-        if self.page < self.max_page:
-            self.page += 1
-            embed = await self.get_embed()
-            await interaction.response.edit_message(embed=embed, view=self)
 
     async def get_embed(self):
         total_members = len(self.members)
