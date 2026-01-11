@@ -22,12 +22,11 @@ async def send_explore_info_embed(
     """
 
     desc = (
-        "Explore different maps and uncover hidden secrets! Use the commands below to navigate through the exploration features:\n\n"
         "**Explore Map Info Commands:**\n"
-        "`!exsg` - Grass Map Secrets\n"
-        "`!exsf` - Fire Map Secrets\n"
-        "`!exsw` - Water Map Secrets\n"
-        "`!exsu` - Underwater Map Secrets\n"
+        "- `!exsg` - Grass Map Secrets\n"
+        "- `!exsf` - Fire Map Secrets\n"
+        "- `!exsw` - Water Map Secrets\n"
+        "- `!exsu` - Underwater Map Secrets\n"
     )
 
     embed = discord.Embed(
