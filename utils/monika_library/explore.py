@@ -11,6 +11,35 @@ from utils.monika_library.library import (
 )
 
 
+async def send_explore_info_embed(
+    message: discord.Message,
+):
+    """
+    🎀 Send an embed with info about the explore commands and maps.
+
+    Parameters:
+    - message: Discord message that triggered this command.
+    """
+
+    desc = (
+        "Explore different maps and uncover hidden secrets! Use the commands below to navigate through the exploration features:\n\n"
+        "**Explore Map Info Commands:**\n"
+        "`!exsg` - Grass Map Secrets\n"
+        "`!exsf` - Fire Map Secrets\n"
+        "`!exsw` - Water Map Secrets\n"
+        "`!exsu` - Underwater Map Secrets\n"
+    )
+
+    embed = discord.Embed(
+        title="🗺️ Monika's Exploration Guide",
+        description=desc,
+        color=get_random_color(),
+    )
+    embed = default_monika_library_embed(user=message.author, embed=embed)
+    await send_report_embed(message)
+    await message.reply(embed=embed, mention_author=False)
+
+
 def map_label(secret_key: str) -> str:
     # Remove all non-numeric suffix, default to 1 if none found
     import re

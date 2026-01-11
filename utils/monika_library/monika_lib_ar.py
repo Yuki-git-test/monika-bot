@@ -6,7 +6,7 @@ from utils.monika_library.battle_mons import (
     send_battle_mon_embed,
     send_battle_mon_embed_with_buttons,
 )
-from utils.monika_library.explore import send_main_explore_embed
+from utils.monika_library.explore import send_main_explore_embed, send_explore_info_embed
 from utils.monika_library.library import (
     send_battle_guide_commands_embed,
     send_beginner_guide_embed,
@@ -181,3 +181,5 @@ async def monika_lib_ar_handler(message: discord.Message):
     # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     elif content in explore_ar_triggers:
         await send_main_explore_embed(message)
+    elif content == "!explore" or content == "!exp":
+        await send_explore_info_embed(message)
