@@ -53,6 +53,11 @@ async def clan_invite_func(
     announcment_role = guild.get_role(VN_ALLSTARS_ROLES.announcments)
     bots_role = guild.get_role(VN_ALLSTARS_ROLES.bots)
 
+    if vna_member_role in user.roles:
+        await interaction.response.send_message(
+            f"{user.mention} is already a VN Allstar member.", ephemeral=True
+        )
+        return
     # Permissions
     pokemeow_bot = guild.get_member(POKEMEOW_APP_ID)
     overwrites = {

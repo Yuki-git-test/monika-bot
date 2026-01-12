@@ -72,7 +72,7 @@ class OnMessageEditCog(commands.Cog):
         # 🍭──────────────────────────────
         await message_edit_log(self.bot, before, after)
 
-        # 🍭──────────────────────────────
+        """# 🍭──────────────────────────────
         #   🎀 Auto Clan Invite Processing
         # 🍭──────────────────────────────
         if (
@@ -85,7 +85,7 @@ class OnMessageEditCog(commands.Cog):
                 tag="info",
                 label="Clan Invite Command",
             )
-            await auto_clan_invite(self.bot, after)
+            await auto_clan_invite(self.bot, after)"""
         # 🍭──────────────────────────────
         #   🎀 Clan Leave Processing
         # 🍭──────────────────────────────

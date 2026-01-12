@@ -10,6 +10,7 @@ from constants.vn_allstars_constants import (
     VNA_SERVER_ID,
 )
 from utils.listener_func.clan_command_listener import clan_command_listener
+from utils.listener_func.clan_invite import auto_clan_invite
 from utils.listener_func.clan_members_listener import clan_members_command_listener
 from utils.listener_func.faction_listener import extract_faction_from_faction_command
 from utils.listener_func.market_snipe_filter import check_market_buy_command
@@ -96,6 +97,20 @@ class MessageCreateListener(commands.Cog):
                 )
                 first_embed_title = first_embed.title if first_embed else ""
 
+                # 🍭──────────────────────────────
+                #   🎀 Auto Clan Invite Processing
+                # 🍭──────────────────────────────
+                if (
+                    ":tada: Welcome," in message.content
+                    and "You have successfully joined" in message.content
+                    and "VN Allstar" in message.content
+                ):
+                    pretty_log(
+                        message=f"Detected clan invite message edit for member '{message.author.display_name}'.",
+                        tag="info",
+                        label="Clan Invite Command",
+                    )
+                    await auto_clan_invite(self.bot, message)
                 # ————————————————————————————————
                 # 🔄 Quick Code Handler
                 # ————————————————————————————————
