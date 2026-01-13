@@ -50,6 +50,7 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
 
         try:
             debug_log(f"Attempting to fetch user with ID: {user_id}")
+
             user = await bot.fetch_user(int(user_id))
             pretty_log(f"User found: {user.display_name} ({user.name})")
             debug_log(f"Fetched user: {user.display_name} ({user.name})")
@@ -68,11 +69,19 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                     )
 
             guild = message.guild
+            member = guild.get_member(user.id)
+            if not member:
+                pretty_log(
+                    "error", f"User {user.display_name} is not a member of the guild."
+                )
+                debug_log(f"User {user.display_name} is not a member of the guild.")
+                return
+
             invoked_message = message.reference.resolved if message.reference else None
             processing_msg = None
             if invoked_message:
                 processing_msg = await invoked_message.reply(
-                    f"{Emojis.orange_loading} Making clan channel for {user.mention}..."
+                    f"{Emojis.orange_loading} Making clan channel for {member.mention}..."
                 )
             debug_log(f"Guild: {guild.name} ({guild.id})")
             # Roles
@@ -91,7 +100,7 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
             # Permission overwrites
             overwrites = {
                 guild.default_role: discord.PermissionOverwrite(view_channel=False),
-                user: discord.PermissionOverwrite(
+                member: discord.PermissionOverwrite(
                     view_channel=True,
                     manage_channels=True,
                     send_messages=True,
@@ -119,7 +128,7 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
             debug_log(f"Permission overwrites set for new channel.")
 
             # Channel creation
-            channel_name = f"《👾》{user.name}"
+            channel_name = f"《👾》{member.name}"
             channel_topic = (
                 "This is your personal channel!! You may use this however you like."
             )
@@ -135,37 +144,39 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                 )
                 pretty_log(
                     "success",
-                    f"Channel '{new_channel.name}' created for user {user.display_name}",
+                    f"Channel '{new_channel.name}' created for user {member.display_name}",
                     label="Auto Clan Invite",
                 )
                 debug_log(
-                    f"Channel '{new_channel.name}' created for user {user.display_name}"
+                    f"Channel '{new_channel.name}' created for user {member.display_name}"
                 )
             except Exception as e:
                 pretty_log(
                     "error",
-                    f"Failed to create channel for user {user.display_name}: {e}",
+                    f"Failed to create channel for user {member.display_name}: {e}",
                     label="Auto Clan Invite",
                 )
-                debug_log(f"Failed to create channel for user {user.display_name}: {e}")
+                debug_log(
+                    f"Failed to create channel for user {member.display_name}: {e}"
+                )
                 if processing_msg:
                     await processing_msg.delete()
                 return
 
             # Upsert member into DB
             debug_log(
-                f"Upserting member into DB: user={user}, channel_id={new_channel.id}, pokemeow_name={pokemeow_name}"
+                f"Upserting member into DB: user={member}, channel_id={new_channel.id}, pokemeow_name={pokemeow_name}"
             )
             await upsert_member(
                 bot=bot,
-                user=user,
+                user=member,
                 channel_id=new_channel.id,
                 pokemeow_name=pokemeow_name,
             )
 
             # Assign roles
-            debug_log(f"Assigning roles to user {user.display_name}")
-            await user.add_roles(
+            debug_log(f"Assigning roles to user {member.display_name}")
+            await member.add_roles(
                 vna_member_role,
                 lottery_role,
                 giveaway_role,
@@ -174,9 +185,11 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
             )
 
             # Success embed
-            desc = f"Successfully assigned {vna_member_role.mention} to {user.mention} and given access to your personal channel {new_channel.mention}!"
+            desc = f"Successfully assigned {vna_member_role.mention} to {member.mention} and given access to your personal channel {new_channel.mention}!"
             embed = discord.Embed(description=desc, color=0xFF00EE)
-            embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
+            embed.set_author(
+                name=member.display_name, icon_url=member.display_avatar.url
+            )
             embed.set_thumbnail(url=guild.icon.url if guild.icon else None)
             embed.set_image(url=image_url)
             debug_log(f"Sending success embed to channel {message.channel}")
@@ -186,11 +199,11 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
 
             pretty_log(
                 "success",
-                f"Assigned roles to {user.display_name} and created channel {new_channel.name}",
+                f"Assigned roles to {member.display_name} and created channel {new_channel.name}",
                 label="Auto Clan Invite",
             )
             debug_log(
-                f"Assigned roles to {user.display_name} and created channel {new_channel.name}"
+                f"Assigned roles to {member.display_name} and created channel {new_channel.name}"
             )
             clan_channel_category_id = new_channel.category_id
             clan_channel_category = guild.get_channel(clan_channel_category_id)
@@ -206,7 +219,7 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
             log_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.server_log)
             debug_log(f"Log channel resolved: {log_channel}")
             if log_channel:
-                log_embed_description = f"**Member:** {user.mention}\n**Pokemeow Name:**{pokemeow_name}\n**Channel:** {new_channel.mention}\n{category_str}"
+                log_embed_description = f"**Member:** {member.mention}\n**Pokemeow Name:**{pokemeow_name}\n**Channel:** {new_channel.mention}\n{category_str}"
                 debug_log(f"Log embed description: {log_embed_description}")
                 log_embed = discord.Embed(
                     title="New Clan Member Joined",
@@ -214,12 +227,12 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                     description=log_embed_description,
                     color=0xFF00EE,
                 )
-                log_embed.set_thumbnail(url=user.display_avatar.url)
+                log_embed.set_thumbnail(url=member.display_avatar.url)
                 log_embed.set_author(
-                    name=user.display_name, icon_url=user.display_avatar.url
+                    name=member.display_name, icon_url=member.display_avatar.url
                 )
                 log_embed.set_footer(
-                    text=f"User ID: {user.id}",
+                    text=f"User ID: {member.id}",
                     icon_url=guild.icon.url if guild.icon else None,
                 )
                 debug_log(f"Sending log embed to webhook in log channel.")
