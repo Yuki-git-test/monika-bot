@@ -514,3 +514,165 @@ async def handle_top_grinder_role_add(
                     channel=log_channel,
                     embed=log_embed,
                 )
+
+
+# 🍭──────────────────────────────
+#   🎀 Handle Shiny Donator
+# 🍭──────────────────────────────
+async def handle_shiny_donator_role_add(
+    bot: discord.Client,
+    member: discord.Member,
+    role: discord.Role = None,
+):
+    """Handle top grinder role addition events."""
+
+    #  Check if the member already has a custom role
+    context = "new custom role"
+    guild = member.guild
+    first_line_str = ""
+    role = None
+    reference_role = guild.get_role(REFERENCE_ROLE_ID)
+    custom_role_id = await fetch_custom_role_id(bot, member)
+    if custom_role_id:
+        # Check if custom role exists in guild
+        custom_role = guild.get_role(custom_role_id)
+        if custom_role:
+            # Check if member has their custom role
+            if custom_role not in member.roles:
+                try:
+                    # Restore Custom Role Branch
+                    await member.add_roles(
+                        custom_role,
+                        reason="Restoring custom role after top grinder role add.",
+                    )
+                    pretty_log(
+                        message=f"Restored custom role '{custom_role.name}' to member '{member.display_name}' after shiny donator role add.",
+                        tag="success",
+                        label="Top Grinder Role Add",
+                    )
+                    context = "restored custom role"
+                    first_line_str = f"Your custom role {custom_role.mention} has been reassigned to you.\n"
+                    log_embed_title = "🎉 Custom Role Reassigned"
+                    role = custom_role
+
+                except Exception as e:
+                    pretty_log(
+                        message=f"Failed to restore custom role '{custom_role.name}' to member '{member.display_name}': {e}",
+                        tag="error",
+                    )
+            # If member already has the role branch
+            elif custom_role in member.roles:
+                pretty_log(
+                    message=f"Member '{member.display_name}' already has their custom role '{custom_role.name}' after shiny donator role add.",
+                    tag="info",
+                    label="Shiny Donator Role Add",
+                )
+                return
+
+        else:
+            # If the custom role does not exist, remove it from the database and create a new one
+            await remove_role(bot, member)
+            # Log removal of stale custom role
+            pretty_log(
+                message=f"Removed stale custom role record for member '{member.display_name}' as the role no longer exists.",
+                tag="info",
+                label="Shiny Donator Role Add",
+            )
+            context = "new custom role"
+
+    # Create a new custom role
+    if context == "new custom role":
+        role_name = member.name
+
+        try:
+            new_role = await guild.create_role(
+                name=role_name,
+                reason="Creating custom role after shiny donator.",
+                mentionable=False,
+            )
+            await asyncio.sleep(
+                1
+            )  # Small delay to ensure role is created before positioning
+            await member.add_roles(
+                new_role, reason="Assigning custom role after getting shiny donator."
+            )
+            try:
+                # Use safe helper here
+                await new_role.edit(position=PERSONAL_ROLE_POSITION)
+                pretty_log(
+                    message=f"Set position of new custom role '{new_role.name}' to {PERSONAL_ROLE_POSITION}.",
+                    tag="success",
+                )
+            except Exception as e:
+                pretty_log(
+                    message=f"Failed to set position of new custom role '{new_role.name}': {e}",
+                    tag="error",
+                )
+
+            # Save to DB
+            await upsert_role(bot=bot, user=member, role_id=new_role.id)
+            pretty_log(
+                message=f"Created and assigned new custom role '{new_role.name}' to member '{member.display_name}' after top grinder role add.",
+                tag="success",
+                label="Shiny Donator Role Add",
+            )
+            first_line_str = f"As a token of our appreciation, we've created a custom role for you: {new_role.mention}.\n"
+            log_embed_title = "🎉 Custom Role Created"
+            log_embed_description = (
+                f"**Member:** {member.mention}\n" f"**Role:** {new_role.mention}\n"
+            )
+            role = new_role
+            description = (
+                f"{first_line_str}"
+                f"Feel free to customize it, using `/custom-role edit` and `/custom-role edit-icon`\n"
+            )
+        except Exception as e:
+            pretty_log(
+                message=f"Failed to create or assign custom role for member '{member.display_name}': {e}",
+                tag="error",
+            )
+            return
+
+    # Build embed
+    content = f"{member.mention} You are awarded a personal role for having 250m in total donations! 🎉"
+    color = get_random_monika_color()
+    if context == "restored custom role":
+        color = role.color
+
+    embed = discord.Embed(
+        description=description,
+        color=color,
+        timestamp=datetime.now(),
+    )
+    thumbnail_url = MEDAL_ICON_URL
+    embed.set_thumbnail(url=thumbnail_url)
+    embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+    embed.set_footer(text=guild.name, icon_url=guild.icon.url if guild.icon else None)
+
+    # Send message in clan donation channel
+    general_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.clan_donations)
+    if general_channel:
+        await general_channel.send(content=content, embed=embed)
+
+        if context != "existing custom role":
+            # Log in Server Log Channel
+            log_channel = guild.get_channel(LOG_CHANNEL_ID)
+            if log_channel:
+                log_embed = discord.Embed(
+                    title=log_embed_title,
+                    description=log_embed_description,
+                    color=color,
+                    timestamp=datetime.now(),
+                )
+                log_embed.set_author(
+                    name=member.display_name, icon_url=member.display_avatar.url
+                )
+                log_embed.set_footer(
+                    text=guild.name,
+                    icon_url=guild.icon.url if guild.icon else None,
+                )
+                await send_webhook(
+                    bot=bot,
+                    channel=log_channel,
+                    embed=log_embed,
+                )

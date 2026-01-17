@@ -31,6 +31,7 @@ from utils.monika_library.monika_lib_ar import monika_lib_ar_handler
 from utils.quick_codes.cleanup import clean_graveyard_channels_func
 from utils.quick_codes.quick_codes_handler import quick_codes_handler
 from utils.quick_codes.sync_members import sync_members_func
+from utils.sticky_msg.clan_break import clan_break_sticky_msg
 
 dot_role_id = 1375712535512354898
 
@@ -96,6 +97,11 @@ class MessageCreateListener(commands.Cog):
                     else ""
                 )
                 first_embed_title = first_embed.title if first_embed else ""
+                # 🍭──────────────────────────────
+                #   🛡️ Clan Break Sticky Message Handler
+                # 🍭──────────────────────────────
+                if message.channel.id == VN_ALLSTARS_TEXT_CHANNELS.clan_break:
+                    await clan_break_sticky_msg(message)
 
                 # 🍭──────────────────────────────
                 #   🎀 Auto Clan Invite Processing
