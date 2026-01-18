@@ -83,8 +83,66 @@ class CreateSolidRoleModal(discord.ui.Modal, title="🎨 Create Solid Custom Rol
             # Parse color
             hex_value = self.color_input.value.strip().lstrip("#")
             role_color = discord.Color(int(hex_value, 16))
-            CUSTOM_ROLE_POSITION = (
-                interaction.guild.get_role(REFERENCE_ROLE_ID).position - 1
+            # Create role first
+            new_role = await interaction.guild.create_role(
+                name=self.name,
+                color=role_color,
+                mentionable=False,
+                reason=f"Created via /create-custom-role for {self.member.display_name} 💖",
+            )
+            # Fetch updated reference role position after creation
+            reference_role = interaction.guild.get_role(REFERENCE_ROLE_ID)
+            if reference_role is not None:
+                custom_role_position = reference_role.position - 1
+                await new_role.edit(position=custom_role_position)
+            await self.member.add_roles(new_role)
+
+            # Save to DB
+            await upsert_role(bot=self.bot, user=self.member, role_id=new_role.id)
+
+            # Build success embed
+            embed = discord.Embed(
+                title="🎀 Custom Role Created! 💖",
+                description=(
+                    f"**Member:** {self.member.mention}\n"
+                    f"**Role:** {new_role.mention}\n"
+                    f"**Role Color:** `#{hex_value.upper()}`"
+                ),
+                color=role_color,
+            )
+            embed.set_author(
+                name=self.member.display_name, icon_url=self.member.display_avatar.url
+            )
+            embed.set_thumbnail(url=self.member.display_avatar.url)
+
+            # Send followup
+            await interaction.followup.send(embed=embed)
+
+            # Log to server log channel
+            log = interaction.guild.get_channel(LOG_CHANNEL_ID)
+            if log:
+                embed.set_footer(text=f"User ID: {self.member.id}")
+                embed.timestamp = datetime.now()
+                await log.send(embed=embed)
+
+            pretty_log(
+                "success",
+                f"✅ Custom solid role '{new_role.name}' created for {self.member} by {interaction.user}",
+            )
+
+        except ValueError:
+            pretty_log(
+                "warn",
+                f"❌ Invalid hex color input by {interaction.user} for {self.member}",
+            )
+            await interaction.followup.send("❌ Invalid hex color!", ephemeral=True)
+        except Exception as e:
+            pretty_log(
+                "error",
+                f"❌ Failed to create solid role '{self.name}' for {self.member}: {e}",
+            )
+            await interaction.followup.send(
+                "⚠️ Failed to create the role.", ephemeral=True
             )
             # Create role
             new_role = await interaction.guild.create_role(
@@ -93,7 +151,11 @@ class CreateSolidRoleModal(discord.ui.Modal, title="🎨 Create Solid Custom Rol
                 mentionable=False,
                 reason=f"Created via /create-custom-role for {self.member.display_name} 💖",
             )
-            await new_role.edit(position=CUSTOM_ROLE_POSITION)
+            # Fetch updated reference role position after creation
+            reference_role = interaction.guild.get_role(REFERENCE_ROLE_ID)
+            if reference_role is not None:
+                custom_role_position = reference_role.position - 1
+                await new_role.edit(position=custom_role_position)
             await self.member.add_roles(new_role)
 
             # Save to DB
@@ -175,10 +237,12 @@ class CreateGradientRoleModal(discord.ui.Modal, title="🌈 Create Gradient Cust
                 mentionable=False,
                 reason=f"Created via /create-custom-role (gradient) for {self.member.display_name} 💖",
             )
-            CUSTOM_ROLE_POSITION = (
-                interaction.guild.get_role(REFERENCE_ROLE_ID).position - 1
-            )
-            await new_role.edit(position=CUSTOM_ROLE_POSITION)
+
+            # Fetch updated reference role position after creation
+            reference_role = interaction.guild.get_role(REFERENCE_ROLE_ID)
+            if reference_role is not None:
+                custom_role_position = reference_role.position - 1
+                await new_role.edit(position=custom_role_position)
             await self.member.add_roles(new_role)
 
             # 2. Save to DB
