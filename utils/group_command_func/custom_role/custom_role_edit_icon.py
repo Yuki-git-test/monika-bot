@@ -145,7 +145,7 @@ class UploadRoleIconView(discord.ui.View):
 
             if attachment.size > MAX_FILE_SIZE:
                 pretty_log(
-                    "error",
+                    "info",
                     f"⚠️ File too large: {attachment.size} bytes",
                 )
                 return await interaction.followup.send(

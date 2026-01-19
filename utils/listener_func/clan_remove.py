@@ -11,7 +11,7 @@ from constants.vn_allstars_constants import (
     VNA_SERVER_ID,
 )
 from utils.cache.cache_list import vna_members_cache
-from utils.db.vna_members_db_func import remove_member
+from utils.db.vna_members_db_func import remove_member, remove_member_via_user_id
 from utils.essentials.pokemeow_member_reply import get_pokemeow_reply_member
 from utils.functions.webhook_func import send_webhook
 from utils.logs.debug_log import debug_log, enable_debug
@@ -214,13 +214,17 @@ async def handle_clan_kick_command(bot: discord.Client, message: discord.Message
 
     user_id = int(match.group(1))
     guild = message.guild
-
+    replied_message = message.reference.resolved
+    
     member = guild.get_member(user_id)
     if not member:
-        pretty_log("error", f"Member with ID {user_id} not found in the guild.")
+        pretty_log("info", f"Member with ID {user_id} not found in the guild.")
+        # Remove via user ID from DB and cache
+        await remove_member_via_user_id(bot, user_id)
+        if replied_message:
+            await replied_message.add_reaction(Emojis.orange_check)
         return
 
-    replied_message = message.reference.resolved
     if replied_message:
         await replied_message.add_reaction(Emojis.orange_check)
         await auto_clan_remove_handler(

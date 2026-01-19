@@ -392,7 +392,26 @@ async def remove_member(bot, user: discord.Member):
         from utils.cache.vna_members_cache import remove_vna_member_from_cache
 
         remove_vna_member_from_cache(user_id)
+async def remove_member_via_user_id(bot, user_id: int):
+    """
+    Remove a vna_members row for a user by user_id.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            DELETE FROM vna_members
+            WHERE user_id = $1;
+            """,
+            user_id,
+        )
+        pretty_log(
+            "info",
+            f"Removed user ID {user_id} from vna_members.",
+        )
+        # Remove from cache as well
+        from utils.cache.vna_members_cache import remove_vna_member_from_cache
 
+        remove_vna_member_from_cache(user_id)
 
 # Reset members (clear table)
 async def reset_members(bot):
