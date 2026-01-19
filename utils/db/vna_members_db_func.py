@@ -392,6 +392,8 @@ async def remove_member(bot, user: discord.Member):
         from utils.cache.vna_members_cache import remove_vna_member_from_cache
 
         remove_vna_member_from_cache(user_id)
+
+
 async def remove_member_via_user_id(bot, user_id: int):
     """
     Remove a vna_members row for a user by user_id.
@@ -412,6 +414,7 @@ async def remove_member_via_user_id(bot, user_id: int):
         from utils.cache.vna_members_cache import remove_vna_member_from_cache
 
         remove_vna_member_from_cache(user_id)
+
 
 # Reset members (clear table)
 async def reset_members(bot):
@@ -440,3 +443,22 @@ async def get_member_by_channel(bot, channel_id: int):
             """,
             channel_id,
         )
+
+
+# Get member's channel_id by user_id
+async def get_personal_channel_id_by_user_id(bot, user_id: int):
+    """
+    Get the channel_id for a user by user_id.
+    Returns None if not found.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            SELECT channel_id FROM vna_members
+            WHERE user_id = $1;
+            """,
+            user_id,
+        )
+        if row:
+            return row["channel_id"]
+        return None

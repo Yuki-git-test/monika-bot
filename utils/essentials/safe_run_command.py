@@ -45,7 +45,7 @@ async def run_command_safe(
 
         pretty_log(
             "success",
-            f"✅ /{slash_cmd_name} completed{target}",
+            f"✅ {slash_cmd_name} completed{target}",
         )
     #
     except Exception as e:
