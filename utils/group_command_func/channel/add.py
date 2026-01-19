@@ -98,7 +98,7 @@ async def channel_add_func(
     log_embed.set_footer(
         text=f"Channel ID: {personal_channel.id}", icon_url=guild.icon.url
     )
-    log_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.server_logs)
+    log_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.server_log)
     await send_webhook(
         bot=bot,
         channel=log_channel,
