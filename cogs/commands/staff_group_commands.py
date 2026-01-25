@@ -23,6 +23,7 @@ class StaffGroupCommand(commands.Cog):
         name="message", description="Staff message commands"
     )
     staff_group.add_command(message_group)
+
     # 🎀───────────────────────────────────────────
     #          🌸 /staff list-top-grinders 🌸
     # 🎀───────────────────────────────────────────
@@ -44,6 +45,7 @@ class StaffGroupCommand(commands.Cog):
             command_func=assign_top_grinder_roles,
             message_link=message_link,
         )
+
     list_top_grinders.extras = {"category": "Staff"}
 
     # 🎀───────────────────────────────────────────
@@ -410,6 +412,36 @@ class StaffGroupCommand(commands.Cog):
         )
 
     weekly_stats_checker.extras = {"category": "Staff"}
+
+    # 🎀───────────────────────────────────────────
+    #          🌸 /staff edit-requirement 🌸
+    # 🎀───────────────────────────────────────────
+    @staff_group.command(
+        name="edit-requirement",
+        description="Edit the catch requirement for a probation member",
+    )
+    @app_commands.describe(
+        member="The probation member to edit",
+        new_catch_requirement="The new catch requirement",
+    )
+    async def edit_requirement(
+        self,
+        interaction: discord.Interaction,
+        member: discord.Member,
+        new_catch_requirement: int,
+    ):
+        slash_cmd_name = "staff edit-requirement"
+
+        await run_command_safe(
+            bot=self.bot,
+            interaction=interaction,
+            slash_cmd_name=slash_cmd_name,
+            command_func=edit_catch_requirement_func,
+            member=member,
+            new_catch_requirement=new_catch_requirement,
+        )
+
+    edit_requirement.extras = {"category": "Staff"}
 
 
 # 🎀────────────────────────────────────────────
