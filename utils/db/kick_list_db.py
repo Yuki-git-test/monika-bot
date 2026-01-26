@@ -35,7 +35,27 @@ async def upsert_kick_list_member(bot, user: discord.Member, pokemeow_name: str)
         from utils.cache.kick_list_cache import upsert_kick_list_cache
 
         upsert_kick_list_cache(user, pokemeow_name)
+async def remove_kick_list_member_by_user_id(bot, user_id: int):
+    """
+    Remove a kick_list row for a user by user_id.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            DELETE FROM kick_list
+            WHERE user_id = $1;
+            """,
+            user_id,
+        )
+        pretty_log(
+            "info",
+            f"Removed kick list member by user_id: {user_id}",
+            label="Kick List DB",
+        )
+        # Remove from cache as well
+        from utils.cache.kick_list_cache import remove_kick_list_cache_by_user_id
 
+        remove_kick_list_cache_by_user_id(user_id)
 
 async def remove_kick_list_member(bot, user: discord.Member):
     """

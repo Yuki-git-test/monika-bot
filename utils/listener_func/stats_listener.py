@@ -4,6 +4,7 @@ import discord
 
 from constants.vn_allstars_constants import VN_ALLSTARS_ROLES, VNA_SERVER_ID
 from utils.cache.cache_list import vna_members_cache
+from utils.db.db_cleanup import db_cleanup_handler
 from utils.db.vna_members_db_func import remove_member, update_member_faction
 from utils.listener_func.faction_listener import (
     extract_faction_emoji,
@@ -64,9 +65,7 @@ async def stats_command_handler(
     embed_description = embed.description
 
     clan_name = extract_clan_name(embed_description)
-    pretty_log(
-        "info", f"Extracted clan name '{clan_name}'"
-    )
+    pretty_log("info", f"Extracted clan name '{clan_name}'")
     # Get member info
     from utils.cache.vna_members_cache import (
         fetch_vna_member_id_by_username_or_pokemeow_name,
@@ -84,8 +83,6 @@ async def stats_command_handler(
     # Get member
     guild = bot.get_guild(VNA_SERVER_ID)
     member = guild.get_member(user_id)
-    if not member:
-        return
 
     # Check if their clan is still VN Allstar
     clan_name = extract_clan_name(embed_description)
@@ -94,31 +91,46 @@ async def stats_command_handler(
     )
     if member_info and clan_name != "VN Allstar":
         # check if member has vna member role
-        vna_member_role = guild.get_role(VN_ALLSTARS_ROLES.vna_member)
-        if vna_member_role in member.roles:
-            # Remove VNA Member role
-            await member.remove_roles(vna_member_role, reason="Left VN Allstar clan")
-            pretty_log(
-                message=(
-                    f"Removed VNA Member role from '{member.display_name}' "
-                    f"as they left the VN Allstars clan."
-                ),
-                tag="info",
-                label="Stats Listener",
-            )
-            return
-        elif vna_member_role not in member.roles:
+        if member:
+            vna_member_role = guild.get_role(VN_ALLSTARS_ROLES.vna_member)
+            if vna_member_role in member.roles:
+                # Remove VNA Member role
+                await member.remove_roles(
+                    vna_member_role, reason="Left VN Allstar clan"
+                )
+                pretty_log(
+                    message=(
+                        f"Removed VNA Member role from '{member.display_name}' "
+                        f"as they left the VN Allstars clan."
+                    ),
+                    tag="info",
+                    label="Stats Listener",
+                )
+                return
+            elif vna_member_role not in member.roles:
+                # Remove from database
+                await remove_member(bot=bot, member=member)
+                await db_cleanup_handler(bot=bot, user_id=user_id)
+                pretty_log(
+                    message=(
+                        f"Removed '{member.display_name}' from the database "
+                        f"as they left the VN Allstars clan."
+                    ),
+                    tag="info",
+                    label="Stats Listener",
+                )
+                return
+        else:
             # Remove from database
-            await remove_member(bot=bot, member=member)
+            await db_cleanup_handler(bot=bot, user_id=user_id)
             pretty_log(
                 message=(
-                    f"Removed '{member.display_name}' from the database "
+                    f"Removed user_id '{user_id}' from the database "
                     f"as they left the VN Allstars clan."
                 ),
                 tag="info",
                 label="Stats Listener",
             )
-            return
 
     # Update faction
     member_faction = member_info.get("faction")

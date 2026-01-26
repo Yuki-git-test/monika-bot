@@ -125,3 +125,14 @@ def remove_probation_list_cache(user: discord.Member):
             f"Removed probation list cache member: {user} ({user.id})",
             label="Probation List Cache",
         )
+def remove_probation_list_cache_by_user_id(user_id: int):
+    """
+    Remove a user from the probation_list_cache by user_id.
+    """
+    if user_id in probation_list_cache:
+        del probation_list_cache[user_id]
+        pretty_log(
+            "info",
+            f"Removed probation list cache member by user_id: ({user_id})",
+            label="Probation List Cache",
+        )

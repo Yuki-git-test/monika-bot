@@ -1,8 +1,9 @@
 import discord
 
-from utils.logs.pretty_log import pretty_log
 from utils.cache.cache_list import kick_list_cache
 from utils.db.kick_list_db import fetch_all_kick_list_members
+from utils.logs.pretty_log import pretty_log
+
 
 async def load_kick_list_cache(bot):
     """
@@ -33,6 +34,7 @@ async def load_kick_list_cache(bot):
             label="Kick List Cache",
         )
 
+
 def upsert_kick_list_cache(user: discord.Member):
     """
     Upsert a user into the kick_list_cache.
@@ -44,6 +46,20 @@ def upsert_kick_list_cache(user: discord.Member):
         f"Upserted kick list cache member: {user_name} ({user.id})",
         label="Kick List Cache",
     )
+
+
+def remove_kick_list_cache_by_user_id(user_id: int):
+    """
+    Remove a user from the kick_list_cache by user_id.
+    """
+    if user_id in kick_list_cache:
+        del kick_list_cache[user_id]
+        pretty_log(
+            "info",
+            f"Removed kick list cache member by user_id: ({user_id})",
+            label="Kick List Cache",
+        )
+
 
 def remove_kick_list_cache(user: discord.Member):
     """

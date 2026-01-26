@@ -3,10 +3,12 @@
     user_name VARCHAR(100) NOT NULL,
 );"""
 
+import time
+
 import discord
 
 from utils.logs.pretty_log import pretty_log
-import time
+
 
 async def upsert_probation_member(
     bot, user: discord.Member, pokemeow_name: str, catch_requirement: int
@@ -52,7 +54,6 @@ async def update_all_probation_catch_requirements(bot):
     """
     Update the catch requirement for all probation_list members.
     """
-
 
     one_day_ago = int(time.time()) - 86400
     async with bot.pg_pool.acquire() as conn:
@@ -107,6 +108,31 @@ async def update_probation_catch_requirement(
         )
 
         update_probation_catch_requirement_cache(user, catch_requirement)
+
+
+async def remove_probation_member_by_user_id(bot, user_id: int):
+    """
+    Remove a probation_list row for a user by user_id.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            DELETE FROM probation_list
+            WHERE user_id = $1;
+            """,
+            user_id,
+        )
+        pretty_log(
+            "info",
+            f"Removed probation member:  ({user_id})",
+            label="Probation List DB",
+        )
+        # Remove from cache as well
+        from utils.cache.probation_list_cache import (
+            remove_probation_list_cache_by_user_id,
+        )
+
+        remove_probation_list_cache_by_user_id(user_id)
 
 
 async def remove_probation_member(bot, user: discord.Member):
