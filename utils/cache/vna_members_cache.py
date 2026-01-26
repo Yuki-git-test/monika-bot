@@ -23,6 +23,7 @@ async def load_vna_members_cache(bot):
                     "perks": member["perks"],
                     "faction": member["faction"],
                     "clan_joined_date": member.get("clan_joined_date"),
+                    "last_month_catches": member.get("last_month_catches", 0),
                 }
             pretty_log(
                 "cache", f"Loaded {len(vna_members_cache)} vna_members into cache."
@@ -44,6 +45,7 @@ def upsert_vna_member_cache(
     perks: str,
     faction: str,
     clan_joined_date: int = None,
+    last_month_catches: int = 0,
 ):
     """
     Upsert a vna_member into the cache.
@@ -55,6 +57,7 @@ def upsert_vna_member_cache(
         "perks": perks,
         "faction": faction,
         "clan_joined_date": clan_joined_date,
+        "last_month_catches": last_month_catches,
     }
     pretty_log("cache", f"Upserted vna_member {user_name} ({user_id}) into cache.")
 
@@ -67,6 +70,7 @@ def update_vna_member_multiple_fields_cache(
     perks: str = None,
     faction: str = None,
     clan_joined_date: int = None,
+    last_month_catches: int = None,
 ):
     """
     Update multiple fields for a vna_member in the cache.
@@ -84,9 +88,23 @@ def update_vna_member_multiple_fields_cache(
             vna_members_cache[user_id]["faction"] = faction
         if clan_joined_date is not None:
             vna_members_cache[user_id]["clan_joined_date"] = clan_joined_date
+        if last_month_catches is not None:
+            vna_members_cache[user_id]["last_month_catches"] = last_month_catches
         pretty_log(
             "cache",
             f"Updated multiple fields for vna_member ({user_id}) in cache.",
+        )
+
+# Update last_month_catches for a vna_member in the cache
+def update_vna_member_last_month_catches_cache(user_id: int, last_month_catches: int):
+    """
+    Update the last_month_catches of a vna_member in the cache.
+    """
+    if user_id in vna_members_cache:
+        vna_members_cache[user_id]["last_month_catches"] = last_month_catches
+        pretty_log(
+            "cache",
+            f"Updated last_month_catches for vna_member ({user_id}) to {last_month_catches} in cache."
         )
 
 def update_vna_member_clan_joined_date_cache(user_id: int, clan_joined_date: int):

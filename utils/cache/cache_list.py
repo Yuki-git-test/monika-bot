@@ -6,6 +6,8 @@ vna_members_cache: dict[int, dict] = {}
 # "channel_id": int,
 # "perks": str,
 # "faction": str,
+# "clan_joined_date": int,
+# "last_month_catches": int,
 # }
 top_monthly_grinders_cache: dict[int, dict] = {}
 # Structure:
@@ -33,6 +35,7 @@ probation_list_cache: dict[int, dict] = {}
 # "pokemeow_name": str,
 # "catch_requirement": int,
 # "assigned_on": int,
+# "stacking_requirements": int,
 # }
 
 kick_list_cache: dict[int, dict] = {}

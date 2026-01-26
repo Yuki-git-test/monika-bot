@@ -1,6 +1,11 @@
 """CREATE TABLE probation_list (
     user_id   BIGINT PRIMARY KEY,
     user_name VARCHAR(100) NOT NULL,
+    pokemeow_name VARCHAR(100),
+    catch_requirement INT,
+    assigned_on BIGINT,
+    catch_req_updated_on BIGINT,
+    stacking_requirements INT DEFAULT 0
 );"""
 
 import time
@@ -11,7 +16,11 @@ from utils.logs.pretty_log import pretty_log
 
 
 async def upsert_probation_member(
-    bot, user: discord.Member, pokemeow_name: str, catch_requirement: int
+    bot,
+    user: discord.Member,
+    pokemeow_name: str,
+    catch_requirement: int,
+    stacking_requirements: int = 0,
 ):
     """
     Insert or update a probation_list row for a user.
@@ -24,19 +33,21 @@ async def upsert_probation_member(
     async with bot.pg_pool.acquire() as conn:
         await conn.execute(
             """
-            INSERT INTO probation_list (user_id, user_name, pokemeow_name, catch_requirement, assigned_on)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO probation_list (user_id, user_name, pokemeow_name, catch_requirement, assigned_on, stacking_requirements)
+            VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (user_id) DO UPDATE
             SET user_name = EXCLUDED.user_name,
                 pokemeow_name = EXCLUDED.pokemeow_name,
                 catch_requirement = EXCLUDED.catch_requirement,
-                assigned_on = EXCLUDED.assigned_on;
+                assigned_on = EXCLUDED.assigned_on,
+                stacking_requirements = EXCLUDED.stacking_requirements;
             """,
             user_id,
             user_name,
             pokemeow_name,
             catch_requirement,
             assigned_on,
+            stacking_requirements,
         )
         pretty_log(
             "info",
@@ -46,7 +57,36 @@ async def upsert_probation_member(
         # Update cache as well
         from utils.cache.probation_list_cache import upsert_probation_list_cache
 
-        upsert_probation_list_cache(user, pokemeow_name, catch_requirement, assigned_on)
+        upsert_probation_list_cache(
+            user, pokemeow_name, catch_requirement, assigned_on, stacking_requirements
+        )
+
+
+async def update_stacking_requirements(bot, user_id: int, stacking_requirements: int):
+    """
+    Update the stacking_requirements for a probation_list member.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE probation_list
+            SET stacking_requirements = $1
+            WHERE user_id = $2;
+            """,
+            stacking_requirements,
+            user_id,
+        )
+        pretty_log(
+            "info",
+            f"Updated stacking_requirements for probation member ID: ({user_id}) to {stacking_requirements}",
+            label="Probation List DB",
+        )
+        # Update cache as well
+        from utils.cache.probation_list_cache import (
+            update_stacking_requirements_by_id_cache,
+        )
+
+        update_stacking_requirements_by_id_cache(user_id, stacking_requirements)
 
 
 # Update All required catches for all probation members
@@ -110,6 +150,35 @@ async def update_probation_catch_requirement(
         update_probation_catch_requirement_cache(user, catch_requirement)
 
 
+async def update_probation_catch_requirement_by_id(
+    bot, user_id: int, catch_requirement: int
+):
+    """
+    Update the catch requirement for a probation_list member by user_id.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE probation_list
+            SET catch_requirement = $1
+            WHERE user_id = $2;
+            """,
+            catch_requirement,
+            user_id,
+        )
+        pretty_log(
+            "info",
+            f"Updated catch requirement for probation member ID: ({user_id}) to {catch_requirement}",
+            label="Probation List DB",
+        )
+        # Update cache as well
+        from utils.cache.probation_list_cache import (
+            update_catch_requirement_by_id_cache,
+        )
+
+        update_catch_requirement_by_id_cache(user_id, catch_requirement)
+
+
 async def remove_probation_member_by_user_id(bot, user_id: int):
     """
     Remove a probation_list row for a user by user_id.
@@ -166,7 +235,7 @@ async def fetch_all_probation_members(bot):
     async with bot.pg_pool.acquire() as conn:
         rows = await conn.fetch(
             """
-            SELECT user_id, user_name, pokemeow_name, catch_requirement, assigned_on, catch_req_updated_on FROM probation_list;
+            SELECT user_id, user_name, pokemeow_name, catch_requirement, assigned_on, catch_req_updated_on, stacking_requirements FROM probation_list;
             """
         )
         probation_members = [
@@ -177,6 +246,7 @@ async def fetch_all_probation_members(bot):
                 row["catch_requirement"],
                 row["assigned_on"],
                 row["catch_req_updated_on"],
+                row["stacking_requirements"],
             )
             for row in rows
         ]

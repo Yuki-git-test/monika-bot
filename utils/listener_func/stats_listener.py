@@ -83,12 +83,15 @@ async def stats_command_handler(
     # Get member
     guild = bot.get_guild(VNA_SERVER_ID)
     member = guild.get_member(user_id)
+    user = None
+    if not member:
+        user = await bot.fetch_user(user_id)
 
+    else:
+        user = member
     # Check if their clan is still VN Allstar
     clan_name = extract_clan_name(embed_description)
-    pretty_log(
-        "info", f"Extracted clan name '{clan_name}' for member '{member.display_name}'"
-    )
+    pretty_log("info", f"Extracted clan name '{clan_name}' for member '{user.name}'")
     if member_info and clan_name != "VN Allstar":
         # check if member has vna member role
         if member:
@@ -131,7 +134,7 @@ async def stats_command_handler(
                 tag="info",
                 label="Stats Listener",
             )
-
+    
     # Update faction
     member_faction = member_info.get("faction")
     faction_emoji = extract_faction_emoji(embed_description)
