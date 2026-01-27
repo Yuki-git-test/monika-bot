@@ -24,7 +24,7 @@ from utils.listener_func.perks_listener import (
 from utils.listener_func.weekly_stats_listener import weekly_stats_checker
 from utils.logs.pretty_log import pretty_log
 from utils.listener_func.clan_members_listener import clan_members_command_listener
-
+from utils.listener_func.new_monthly_stats_listener import new_monthly_stats_checker
 TRIGGERS = {
     "pro_embed": "to view badge information",
     "clan_leave": "You left **VN Allstar**.",
@@ -125,7 +125,7 @@ class OnMessageEditCog(commands.Cog):
                     self.bot,
                     after,
                 )
-        # ————————————————————————————————
+        """# ————————————————————————————————
         # 🗓️ Weekly Stats Checker Listener
         # ————————————————————————————————
         if first_embed:
@@ -138,7 +138,7 @@ class OnMessageEditCog(commands.Cog):
                     tag="info",
                     label="Weekly Stats Checker",
                 )
-                await weekly_stats_checker(self.bot, before, after)
+                await weekly_stats_checker(self.bot, before, after)"""
         # ————————————————————————————————
         # 🗓️ Monthly Stats Checker Listener
         # ————————————————————————————————
@@ -152,7 +152,7 @@ class OnMessageEditCog(commands.Cog):
                     tag="info",
                     label="Monthly Stats Checker",
                 )
-                await monthly_stats_checker(self.bot, before, after)
+                await new_monthly_stats_checker(self.bot, before, after)
 
         # ————————————————————————————————
         # 📂 Clan Members Command Listener

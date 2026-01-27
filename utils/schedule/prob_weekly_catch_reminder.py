@@ -53,3 +53,44 @@ or you may contact a staff member if you need assistance. <:vna_Cute_cap:1380599
             "error",
             f"PROB Weekly Catch Reminder: Failed to send message. Error: {e}",
         )
+
+
+# 🍭──────────────────────────────
+#   🎀 Weekly PROB Catch Reminder
+# 🍭──────────────────────────────
+async def new_prob_catch_reminder(bot):
+    """Send a reminder in annoucement channel for probation members to catch their required catches."""
+    guild = bot.get_guild(VNA_SERVER_ID)
+    if not guild:
+        pretty_log(
+            "error",
+            "PROB Weekly Catch Reminder: VNA server not found.",
+        )
+        return
+    announcement_channel = guild.get_channel(
+        VN_ALLSTARS_TEXT_CHANNELS.clan_announcement
+    )
+    if not announcement_channel:
+        pretty_log(
+            "error",
+            "PROB Weekly Catch Reminder: Announcement channel not found.",
+        )
+        return
+    reminder_message = """<@&1426299800386539521> <@&1445374287098937418> <a:Ppdinkdonk:1388792655147700304>
+A gentle reminder to please meet your catch requirement.
+You can view your specific requirement anytime using `/catch-requirement`.
+
+Once you’ve met your required catches, you can automatically remove your Probation role(s) by running `;clan stats m`,
+or you may contact a staff member if you need assistance. <:vna_Cute_cap:1380599067217887235>"""
+
+    try:
+        await announcement_channel.send(reminder_message)
+        pretty_log(
+            "info",
+            "PROB Weekly Catch Reminder sent successfully.",
+        )
+    except Exception as e:
+        pretty_log(
+            "error",
+            f"PROB Weekly Catch Reminder: Failed to send message. Error: {e}",
+        )

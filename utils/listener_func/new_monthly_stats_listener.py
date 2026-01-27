@@ -43,7 +43,7 @@ EXEMPTED_FROM_PROBATION_ROLE_IDS = [
     VN_ALLSTARS_ROLES.owner,
 ]
 PROBATION_ASSIGNMENT_DAYS = [7, 14, 21, 28]
-PROCESSED_WEEKLY_STATS_PAGES = set()
+PROCESSED_MONTHLY_STATS_PAGES = set()
 PROCESSED_WEEKLY_STATS_END_TIMESTAMPS = set()
 UNKNOWN_MEMBERS = set()
 
@@ -419,7 +419,7 @@ async def probation_assignment_removal_handler(
             )
 
 
-async def auto_probation_handler(
+async def new_monthly_stats_checker(
     bot: discord.Client,
     before_message: discord.Message,
     after_message: discord.Message,
@@ -483,13 +483,6 @@ async def auto_probation_handler(
         return
 
     reset_timestamp = int(match.group(1))
-    if reset_timestamp not in PROCESSED_WEEKLY_STATS_END_TIMESTAMPS:
-        # Clear processed pages for new reset
-        PROCESSED_WEEKLY_STATS_PAGES.clear()
-        # Clear processed timestamps
-        PROCESSED_WEEKLY_STATS_END_TIMESTAMPS.clear()
-
-        PROCESSED_WEEKLY_STATS_END_TIMESTAMPS.add(reset_timestamp)
 
     # Get current page number from footer
     footer_text = (
@@ -501,15 +494,15 @@ async def auto_probation_handler(
     current_page = int(page_match.group(1))
     total_pages = int(page_match.group(2))
 
-    if current_page in PROCESSED_WEEKLY_STATS_PAGES:
+    if current_page in PROCESSED_MONTHLY_STATS_PAGES:
         pretty_log(
             "info",
-            f"Weekly stats page {current_page} has already been processed. Skipping.",
-            label="Weekly Stats Listener",
+            f"Monthly stats page {current_page} has already been processed. Skipping.",
+            label="Monthly Stats Listener",
         )
         return
 
-    PROCESSED_WEEKLY_STATS_PAGES.add(current_page)
+    PROCESSED_MONTHLY_STATS_PAGES.add(current_page)
 
     # Parse clan stats message
     clan_members_stats = parse_clan_stats_message(embed_description)
@@ -616,6 +609,9 @@ async def auto_probation_handler(
             )
     # After processing all pages, send probation report for unknown members
     if current_page == total_pages:
+        # Clear processed pages for next month
+        PROCESSED_MONTHLY_STATS_PAGES.clear()
+
         # Log unknown members if any
         if UNKNOWN_MEMBERS:
             unknown_members = list(UNKNOWN_MEMBERS)

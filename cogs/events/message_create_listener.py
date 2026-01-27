@@ -32,6 +32,7 @@ from utils.quick_codes.cleanup import clean_graveyard_channels_func
 from utils.quick_codes.quick_codes_handler import quick_codes_handler
 from utils.quick_codes.sync_members import sync_members_func
 from utils.sticky_msg.clan_break import clan_break_sticky_msg
+from utils.listener_func.new_monthly_stats_listener import new_monthly_stats_checker
 
 dot_role_id = 1375712535512354898
 
@@ -176,7 +177,7 @@ class MessageCreateListener(commands.Cog):
                         await check_market_buy_command(
                             message,
                         )
-                # ————————————————————————————————
+                """# ————————————————————————————————
                 # 🗓️ Weekly Stats Checker Listener
                 # ————————————————————————————————
                 if first_embed:
@@ -188,7 +189,7 @@ class MessageCreateListener(commands.Cog):
                             "info",
                             "Detected Clan Weekly Stats embed, processing weekly stats...",
                         )
-                        await weekly_stats_checker(self.bot, message, message)
+                        await weekly_stats_checker(self.bot, message, message)"""
                 # ————————————————————————————————
                 # 🗓️ Monthly Stats Checker Listener
                 # ————————————————————————————————
@@ -201,7 +202,7 @@ class MessageCreateListener(commands.Cog):
                             "info",
                             "Detected Clan Monthly Stats embed, processing monthly stats...",
                         )
-                        await monthly_stats_checker(self.bot, message, message)
+                        await new_monthly_stats_checker(self.bot, message, message)
                 # ————————————————————————————————
                 # 🏆 Top Grinder Roles Assignment Listener
                 # ————————————————————————————————
