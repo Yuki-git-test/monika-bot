@@ -195,7 +195,7 @@ async def handle_server_booster_role_add(
     guild = member.guild
     first_line_str = ""
     role = None
-    reference_role = guild.get_role(REFERENCE_ROLE_ID)
+
     custom_role_id = await fetch_custom_role_id(bot, member)
     if custom_role_id:
         # Check if custom role exists in guild
@@ -261,9 +261,12 @@ async def handle_server_booster_role_add(
             await member.add_roles(
                 new_role, reason="Assigning custom role after server boost."
             )
+            reference_role = await guild.fetch_role(REFERENCE_ROLE_ID)
+            reference_role_position = reference_role.position
+            new_role_position = reference_role_position - 1
             try:
                 # Use safe helper here
-                await new_role.edit(position=PERSONAL_ROLE_POSITION)
+                await new_role.edit(position=new_role_position)
                 pretty_log(
                     message=f"Set position of new custom role '{new_role.name}' to {PERSONAL_ROLE_POSITION}.",
                     tag="success",
@@ -363,7 +366,7 @@ async def handle_top_grinder_role_add(
     guild = member.guild
     first_line_str = ""
     role = None
-    reference_role = guild.get_role(REFERENCE_ROLE_ID)
+    reference_role = await guild.fetch_role(REFERENCE_ROLE_ID)
     custom_role_id = await fetch_custom_role_id(bot, member)
     if custom_role_id:
         # Check if custom role exists in guild
@@ -428,9 +431,12 @@ async def handle_top_grinder_role_add(
             await member.add_roles(
                 new_role, reason="Assigning custom role after getting top grinder."
             )
+            reference_role = await guild.fetch_role(REFERENCE_ROLE_ID)
+            reference_role_position = reference_role.position
+            new_role_position = reference_role_position - 1
             try:
                 # Use safe helper here
-                await new_role.edit(position=PERSONAL_ROLE_POSITION)
+                await new_role.edit(position=new_role_position)
                 pretty_log(
                     message=f"Set position of new custom role '{new_role.name}' to {PERSONAL_ROLE_POSITION}.",
                     tag="success",
@@ -531,7 +537,7 @@ async def handle_shiny_donator_role_add(
     guild = member.guild
     first_line_str = ""
     role = None
-    reference_role = guild.get_role(REFERENCE_ROLE_ID)
+    reference_role = await guild.fetch_role(REFERENCE_ROLE_ID)
     custom_role_id = await fetch_custom_role_id(bot, member)
     if custom_role_id:
         # Check if custom role exists in guild
