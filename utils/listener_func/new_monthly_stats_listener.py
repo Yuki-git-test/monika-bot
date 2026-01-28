@@ -54,19 +54,25 @@ def is_exempted_from_probation(member: discord.Member) -> bool:
     """
     for role_id in EXEMPTED_FROM_PROBATION_ROLE_IDS:
         if discord.utils.get(member.roles, id=role_id):
+            debug_log(
+                f"Member {member.display_name} is exempted from probation due to role ID {role_id}."
+            )
             return True
+    debug_log(f"Member {member.display_name} is NOT exempted from probation.")
     return False
 
 
 def get_est_day_number():
     est = pytz.timezone("US/Eastern")
     now_est = datetime.now(est)
+    debug_log(f"Current EST day number: {now_est.day}")
     return now_est.day  # Returns the day of the month as int
 
 
 def get_est_hour():
     est = pytz.timezone("US/Eastern")
     now_est = datetime.now(est)
+    debug_log(f"Current EST hour: {now_est.hour}")
     return now_est.hour  # Returns the hour (0-23) in EST
 
 
@@ -83,6 +89,7 @@ def get_last_day_of_month_est(dt: Optional[datetime] = None) -> datetime:
     # Move to the first day of the next month, then subtract one day
     next_month = dt.replace(day=1) + timedelta(days=32)
     last_day = next_month.replace(day=1) - timedelta(days=1)
+    debug_log(f"Last day of month in EST: {last_day}")
     return last_day
 
 
@@ -99,7 +106,9 @@ async def send_probation_report(
     fishes: int = None,
     last_month_catches: int = None,
 ):
-
+    debug_log(
+        f"Preparing to send probation report for {member.display_name} (ID: {member.id}), title: {title}, catches: {catches}, fishes: {fishes}, total_catches: {total_catches}, required_catches: {required_catches}, context: {context}, last_month_catches: {last_month_catches}"
+    )
     log_channel = guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.server_log)
     if log_channel:
         description_w_fish = (
@@ -153,6 +162,9 @@ async def send_probation_report(
             channel=log_channel,
             embed=embed,
         )
+        debug_log(
+            f"Sent probation report embed for {member.display_name} to log channel {log_channel.name if hasattr(log_channel, 'name') else log_channel.id}"
+        )
 
 
 async def probation_assignment_removal_handler(
@@ -185,9 +197,15 @@ async def probation_assignment_removal_handler(
             f"Updated last month catches for member {member.display_name} ({member.id}) to {catches}.",
             label="Monthly Stats Listener",
         )
+        debug_log(
+            f"Updated last month catches for {member.display_name} to {catches} (last day of month logic)"
+        )
     if is_exempted_from_probation(member):
         msg = (
             f"Member {member.display_name} is exempted from probation role assignment."
+        )
+        debug_log(
+            f"Probation assignment skipped for {member.display_name}: exempted from probation."
         )
         return False, msg
 
@@ -200,6 +218,9 @@ async def probation_assignment_removal_handler(
             label="Auto Probation Role Assignment",
         )
         msg = f"Member {member.display_name} not found in VNA members cache."
+        debug_log(
+            f"Probation assignment skipped for {member.display_name}: not found in VNA members cache."
+        )
         return False, msg
 
     joined_date = member_info.get("clan_joined_date")
@@ -209,6 +230,9 @@ async def probation_assignment_removal_handler(
 
     # Global catch requirement logic
     global_catch_requirement = current_day * 200
+    debug_log(
+        f"Global catch requirement for {member.display_name}: {global_catch_requirement}"
+    )
 
     # Determine if member is new this month
     eastern = pytz.timezone("US/Eastern")
@@ -230,6 +254,9 @@ async def probation_assignment_removal_handler(
         debug_log(
             f"Member {member.name} is a new member. Days in clan this month: {days_in_clan}. Required catches: {member_required_catches}",
         )
+        debug_log(
+            f"New member logic for {member.display_name}: days_in_clan={days_in_clan}, required_catches={member_required_catches}"
+        )
     else:
         member_required_catches = global_catch_requirement
         # Double Probation Logic
@@ -241,8 +268,14 @@ async def probation_assignment_removal_handler(
                 )
                 catch_requirement = stacking_requirements + global_catch_requirement
                 member_required_catches = catch_requirement
+                debug_log(
+                    f"Double probation logic for {member.display_name}: stacking_requirements={stacking_requirements}, catch_requirement={catch_requirement}"
+                )
             else:
                 member_required_catches = global_catch_requirement
+                debug_log(
+                    f"Double probation logic for {member.display_name}: no stacking_requirements found, using global_catch_requirement={global_catch_requirement}"
+                )
 
     # Probation Removal
     if catches >= member_required_catches or total_catches >= member_required_catches:
@@ -275,11 +308,17 @@ async def probation_assignment_removal_handler(
                 f"Probation role removed from member {member.display_name} "
                 f"for meeting catch requirements."
             )
+            debug_log(
+                f"Removed probation (and possibly double probation) role(s) from {member.display_name} for meeting requirements. Roles removed: {[r.name for r in roles_to_remove if hasattr(r, 'name')]}"
+            )
             return True, msg
         else:
             msg = (
                 f"Member {member.display_name} has met catch requirements but "
                 f"does not have probation role."
+            )
+            debug_log(
+                f"{member.display_name} met catch requirements but did not have probation role."
             )
             return False, msg
 
@@ -325,6 +364,9 @@ async def probation_assignment_removal_handler(
                 msg = (
                     f"Double Probation role assigned to member {member.display_name} "
                     f"for not meeting catch requirements."
+                )
+                debug_log(
+                    f"Assigned double probation role to {member.display_name}. stacking_requirements={stacking_requirements}, last_month_catches={last_month_catches}, member_required_catches={member_required_catches}"
                 )
                 return True, msg
             elif double_probation_role in member.roles:
@@ -374,6 +416,9 @@ async def probation_assignment_removal_handler(
                     f"Updated catch requirement for double probation member "
                     f"{member.display_name}."
                 )
+                debug_log(
+                    f"Updated double probation catch requirement for {member.display_name}. old_stacking_requirements={old_stacking_requirements}, new_stacking_requirements={new_stacking_requirements}, total_stacking_requirements={total_stacking_requirements}, new_catch_requirement={new_catch_requirement}"
+                )
                 return True, msg
         elif (
             probation_role not in member.roles
@@ -410,12 +455,18 @@ async def probation_assignment_removal_handler(
                 f"Probation role assigned to member {member.display_name} "
                 f"for not meeting catch requirements."
             )
+            debug_log(
+                f"Assigned probation role to {member.display_name}. member_required_catches={member_required_catches}, catches={catches}, fishes={fishes}"
+            )
             return True, msg
         else:
             # Did not meet requirements but its not probation assignment day
             msg = (
                 f"Member {member.display_name} has not met catch requirements. "
                 f"No action taken as it is not a probation assignment day."
+            )
+            debug_log(
+                f"No probation action for {member.display_name}: not a probation assignment day or requirements not met."
             )
 
 
@@ -425,11 +476,15 @@ async def new_monthly_stats_checker(
     after_message: discord.Message,
     replied_member_id: int = None,
 ):
+    debug_log("Starting new_monthly_stats_checker")
     guild = bot.get_guild(VNA_SERVER_ID)
     command_user = None
     # Get member first
     if not replied_member_id:
         command_user = await get_pokemeow_reply_member(before_message)
+        debug_log(
+            f"get_pokemeow_reply_member returned: {command_user.display_name if command_user else 'None'}"
+        )
         if not command_user:
             # Fallback: try to get the user from the slash command interaction
             interaction = getattr(before_message, "interaction", None)
@@ -439,6 +494,9 @@ async def new_monthly_stats_checker(
                 and isinstance(interaction.user, discord.Member)
             ):
                 command_user = interaction.user
+                debug_log(
+                    f"Found command_user from interaction: {command_user.display_name}"
+                )
             else:
                 # Try to get from raw_data if available (for REST fetches)
                 if (
@@ -450,11 +508,21 @@ async def new_monthly_stats_checker(
                         guild = before_message.guild
                         if guild:
                             command_user = guild.get_member(int(user_data["id"]))
+                            debug_log(
+                                f"Found command_user from raw_data: {command_user.display_name if command_user else 'None'}"
+                            )
             if not command_user:
+                debug_log("No command_user found, aborting new_monthly_stats_checker.")
                 return
     else:
         command_user = guild.get_member(replied_member_id)
+        debug_log(
+            f"Found command_user from replied_member_id: {command_user.display_name if command_user else 'None'}"
+        )
         if not command_user:
+            debug_log(
+                "No command_user found for replied_member_id, aborting new_monthly_stats_checker."
+            )
             return
     # Get probation role
     guild = bot.get_guild(VNA_SERVER_ID)
@@ -462,6 +530,9 @@ async def new_monthly_stats_checker(
 
     # Check if member has clan member role
     if clan_role not in command_user.roles:
+        debug_log(
+            f"Command user {command_user.display_name} does not have clan member role, aborting."
+        )
         return
 
     # Return if date is 1st to 7th EST
@@ -471,15 +542,18 @@ async def new_monthly_stats_checker(
     #  Check catches from message embed
     embed = after_message.embeds[0] if after_message.embeds else None
     if not embed:
+        debug_log("No embed found in after_message, aborting.")
         return
     embed_description = embed.description
     if not embed_description:
+        debug_log("No embed description found, aborting.")
         return
 
     # Get reset timestamp from embed description
     reset_timestamp = None
     match = re.search(r"<t:(\d+):f>", embed_description)
     if not match:
+        debug_log("No reset timestamp found in embed description, aborting.")
         return
 
     reset_timestamp = int(match.group(1))
@@ -490,6 +564,7 @@ async def new_monthly_stats_checker(
     )  # This will give you "Page 1/5 • Stat categories: ;clan stats daily/weekly/monthly/yearly"
     page_match = re.search(r"Page\s+(\d+)/(\d+)", footer_text)
     if not page_match:
+        debug_log("No page number found in embed footer, aborting.")
         return
     current_page = int(page_match.group(1))
     total_pages = int(page_match.group(2))
@@ -500,6 +575,7 @@ async def new_monthly_stats_checker(
             f"Monthly stats page {current_page} has already been processed. Skipping.",
             label="Monthly Stats Listener",
         )
+        debug_log(f"Monthly stats page {current_page} already processed, skipping.")
         return
 
     PROCESSED_MONTHLY_STATS_PAGES.add(current_page)
@@ -507,6 +583,10 @@ async def new_monthly_stats_checker(
     # Parse clan stats message
     clan_members_stats = parse_clan_stats_message(embed_description)
     if not clan_members_stats:
+        debug_log(
+            "No clan members stats found in the monthly stats message.",
+        )
+        debug_log("No clan_members_stats parsed from embed description, aborting.")
         return
 
     # Split known and unknown members
@@ -526,6 +606,8 @@ async def new_monthly_stats_checker(
         pretty_log(
             f"Command user catches parsed from embed: {command_user_catches}",
         )
+    else:
+        debug_log("Could not parse command user catches from embed description.")
     # Check command user first
     command_user_id = command_user.id
     command_user = guild.get_member(command_user_id)
@@ -547,11 +629,17 @@ async def new_monthly_stats_checker(
                 f"Auto probation handler processed command user {command_user.display_name}: {msg}",
                 label="Weekly Stats Listener",
             )
+            debug_log(
+                f"Probation handler processed command user {command_user.display_name}: {msg}"
+            )
         else:
             pretty_log(
                 "info",
                 f"Auto probation handler for command user {command_user.display_name}: {msg}",
                 label="Weekly Stats Listener",
+            )
+            debug_log(
+                f"Probation handler for command user {command_user.display_name}: {msg}"
             )
 
     # Now process all other members
@@ -571,6 +659,9 @@ async def new_monthly_stats_checker(
 
             # Add to global unknown members set
             UNKNOWN_MEMBERS.add((username, catches, fishes))
+            debug_log(
+                f"Added unknown member: {username}, catches: {catches}, fishes: {fishes}"
+            )
 
     for member, username, catches, fishes in known_members:
         member_id = member.id
@@ -584,6 +675,9 @@ async def new_monthly_stats_checker(
                 label="Auto Probation Role Assignment",
             )
             continue
+        debug_log(
+            f"Processing known member: {member.display_name}, catches: {catches}, fishes: {fishes}, total_catches: {total_catches}"
+        )
         success, msg = await probation_assignment_removal_handler(
             bot=bot,
             guild=guild,
@@ -601,21 +695,30 @@ async def new_monthly_stats_checker(
                 f"Auto probation handler processed member {member.display_name}: {msg}",
                 label="Weekly Stats Listener",
             )
+            debug_log(
+                f"Probation handler processed member {member.display_name}: {msg}"
+            )
         else:
             pretty_log(
                 "info",
                 f"Auto probation handler for member {member.display_name}: {msg}",
                 label="Weekly Stats Listener",
             )
+            debug_log(f"Probation handler for member {member.display_name}: {msg}")
     # After processing all pages, send probation report for unknown members
     if current_page == total_pages:
         # Clear processed pages for next month
         PROCESSED_MONTHLY_STATS_PAGES.clear()
 
+        debug_log("Cleared PROCESSED_MONTHLY_STATS_PAGES for next month.")
+
         # Log unknown members if any
         if UNKNOWN_MEMBERS:
             unknown_members = list(UNKNOWN_MEMBERS)
             UNKNOWN_MEMBERS.clear()  # Clear after copying
+            debug_log(
+                f"Logging {len(unknown_members)} unknown members to server log channel."
+            )
             if unknown_members:
                 desc_lines = []
                 for username, catches, fishes in unknown_members:
@@ -655,4 +758,7 @@ async def new_monthly_stats_checker(
                         "info",
                         f"Sent unknown members reminder in channel {after_message.channel.name}.",
                         label="Auto Probation Role Assignment",
+                    )
+                    debug_log(
+                        f"Sent unknown members embed to log channel and after_message.channel: {after_message.channel.name}"
                     )

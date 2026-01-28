@@ -34,7 +34,7 @@ class CatchRequirements(commands.Cog):
 
         seafoam_role = interaction.guild.get_role(VN_ALLSTARS_ROLES.seafoam)
         if (
-            not is_clan_member(interaction)
+            not await is_clan_member(interaction)
             and seafoam_role not in interaction.user.roles
         ):
             await loader.error("You must be a clan member to use this command.")
@@ -88,6 +88,7 @@ class CatchRequirements(commands.Cog):
         await loader.success(embed=embed, content="")
 
     catch_requirements.extras = {"category": "Public"}
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(CatchRequirements(bot))
