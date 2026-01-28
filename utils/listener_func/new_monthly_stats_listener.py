@@ -1,5 +1,6 @@
 import asyncio
 import re
+import time
 import zoneinfo
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
@@ -9,14 +10,14 @@ import pytz
 from discord.ext import commands
 
 from constants.vn_allstars_constants import (
+    DAILY_CATCH_REQUIREMENT,
     HARMLESS_USER_ID,
     MONIKA_EMBED_COLOR,
+    MONTHLY_CATCH_REQUIREMENT,
     PROBATION_EXEMPTED_USER_IDS,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
-    DAILY_CATCH_REQUIREMENT,
-    MONTHLY_CATCH_REQUIREMENT
 )
 from utils.cache.cache_list import probation_list_cache, vna_members_cache
 from utils.db.probation_list_db import (
@@ -49,6 +50,19 @@ PROBATION_ASSIGNMENT_DAYS = [7, 14, 21, 28]
 PROCESSED_MONTHLY_STATS_PAGES = set()
 PROCESSED_WEEKLY_STATS_END_TIMESTAMPS = set()
 UNKNOWN_MEMBERS = set()
+
+
+def is_stacking_req_updated_recently(
+    stacking_req_updated_on: int, window_seconds: int = 86400
+) -> bool:
+    """
+    Returns True if stacking_req_updated_on is within the last `window_seconds` (default: 24 hours).
+    Accepts a unix timestamp (seconds).
+    """
+    if stacking_req_updated_on is None:
+        return False
+    now = int(time.time())
+    return (now - stacking_req_updated_on) < window_seconds
 
 
 def is_exempted_from_probation(member: discord.Member) -> bool:
@@ -328,7 +342,24 @@ async def probation_assignment_removal_handler(
     # Member did not meet requirements
     elif catches < member_required_catches and total_catches < member_required_catches:
         if probation_role in member.roles and current_day == 7 and current_hour >= 23:
-            if double_probation_role not in member.roles and last_month_catches < MONTHLY_CATCH_REQUIREMENT:
+            probation_member_info = probation_list_cache.get(member.id)
+            stacking_requirements_last_updated_on = probation_member_info.get(
+                "stacking_req_updated_on"
+            )
+            if (
+                double_probation_role not in member.roles
+                and last_month_catches < MONTHLY_CATCH_REQUIREMENT
+            ):
+
+                if is_stacking_req_updated_recently(
+                    stacking_requirements_last_updated_on
+                ):
+                    msg = f"Member {member.display_name}'s stacking requirements were updated recently. Skipping double probation assignment."
+                    debug_log(
+                        f"Skipping double probation assignment for {member.display_name}: stacking requirements updated recently."
+                    )
+                    return False, msg
+
                 stacking_requirements = MONTHLY_CATCH_REQUIREMENT - last_month_catches
                 await update_stacking_requirements(
                     bot=bot,
@@ -344,7 +375,9 @@ async def probation_assignment_removal_handler(
                 # Get last month catches before updating
                 member_info = vna_members_cache.get(member.id)
                 last_month_catches = member_info.get("last_month_catches", 0)
-                member_required_catches = global_catch_requirement + last_month_catches
+                member_required_catches = (
+                    global_catch_requirement + stacking_requirements
+                )
                 await send_probation_report(
                     bot=bot,
                     guild=guild,
@@ -373,13 +406,25 @@ async def probation_assignment_removal_handler(
                 )
                 return True, msg
             elif double_probation_role in member.roles:
+
+                if is_stacking_req_updated_recently(
+                    stacking_requirements_last_updated_on
+                ):
+                    msg = f"Member {member.display_name}'s stacking requirements were updated recently. Skipping catch requirement update."
+                    debug_log(
+                        f"Skipping catch requirement update for {member.display_name}: stacking requirements updated recently."
+                    )
+                    return False, msg
+
                 # Update catch requirement in DB
                 member_info = vna_members_cache.get(member.id)
                 last_month_catches = member_info.get("last_month_catches", 0)
                 old_stacking_requirements = probation_member_info.get(
                     "stacking_requirements", 0
                 )
-                new_stacking_requirements = MONTHLY_CATCH_REQUIREMENT - last_month_catches
+                new_stacking_requirements = (
+                    MONTHLY_CATCH_REQUIREMENT - last_month_catches
+                )
                 total_stacking_requirements = (
                     old_stacking_requirements + new_stacking_requirements
                 )

@@ -35,6 +35,7 @@ probation_list_cache: dict[int, dict] = {}
 # "pokemeow_name": str,
 # "catch_requirement": int,
 # "assigned_on": int,
+# "catch_req_updated_on": int,
 # "stacking_requirements": int,
 # }
 

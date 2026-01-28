@@ -5,8 +5,12 @@
     catch_requirement INT,
     assigned_on BIGINT,
     catch_req_updated_on BIGINT,
-    stacking_requirements INT DEFAULT 0
+    stacking_requirements INT DEFAULT 0,
+    stacking_req_updated_on BIGINT
 );"""
+
+# SQL script to add the new column to an existing table:
+# ALTER TABLE probation_list ADD COLUMN stacking_req_updated_on BIGINT;
 
 import time
 
@@ -64,21 +68,26 @@ async def upsert_probation_member(
 
 async def update_stacking_requirements(bot, user_id: int, stacking_requirements: int):
     """
-    Update the stacking_requirements for a probation_list member.
+    Update the stacking_requirements for a probation_list member and set stacking_req_updated_on to current time.
     """
+    import time
+
+    now = int(time.time())
     async with bot.pg_pool.acquire() as conn:
         await conn.execute(
             """
             UPDATE probation_list
-            SET stacking_requirements = $1
-            WHERE user_id = $2;
+            SET stacking_requirements = $1,
+                stacking_req_updated_on = $2
+            WHERE user_id = $3;
             """,
             stacking_requirements,
+            now,
             user_id,
         )
         pretty_log(
             "info",
-            f"Updated stacking_requirements for probation member ID: ({user_id}) to {stacking_requirements}",
+            f"Updated stacking_requirements for probation member ID: ({user_id}) to {stacking_requirements} and stacking_req_updated_on to {now}",
             label="Probation List DB",
         )
         # Update cache as well
@@ -227,6 +236,7 @@ async def remove_probation_member(bot, user: discord.Member):
 
         remove_probation_list_cache(user)
 
+
 async def update_all_probation_member_catch_requirements(bot, catch_requirement: int):
     """
     Update the catch requirement for all probation_list members to a specific value.
@@ -251,6 +261,7 @@ async def update_all_probation_member_catch_requirements(bot, catch_requirement:
         )
 
         update_all_probation_catch_requirements_to_value_cache(catch_requirement)
+
 
 async def fetch_all_probation_members(bot):
     """

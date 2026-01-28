@@ -30,6 +30,7 @@ async def load_probation_list_cache(bot):
             assigned_on,
             catch_req_updated_on,
             stacking_requirements,
+            stacking_req_updated_on,
         ) in probation_members:
             probation_list_cache[user_id] = {
                 "user_name": user_name,
@@ -38,6 +39,7 @@ async def load_probation_list_cache(bot):
                 "assigned_on": assigned_on,
                 "catch_req_updated_on": catch_req_updated_on,
                 "stacking_requirements": stacking_requirements,
+                "stacking_req_updated_on": stacking_req_updated_on,
             }
         pretty_log(
             "info",
@@ -50,6 +52,8 @@ async def load_probation_list_cache(bot):
             f"Error loading probation list cache: {e}",
             label="Probation List Cache",
         )
+
+
 def update_all_probation_catch_requirements_to_value_cache(catch_requirement: int):
     """
     Update the catch requirement for all probation_list_cache members to a specific value.
@@ -63,6 +67,7 @@ def update_all_probation_catch_requirements_to_value_cache(catch_requirement: in
         label="Probation List Cache",
     )
 
+
 def update_stacking_requirements_by_id_cache(
     user_id: int, new_stacking_requirements: int
 ):
@@ -73,9 +78,10 @@ def update_stacking_requirements_by_id_cache(
         probation_list_cache[user_id][
             "stacking_requirements"
         ] = new_stacking_requirements
+        probation_list_cache[user_id]["stacking_req_updated_on"] = int(time.time())
         pretty_log(
             "info",
-            f"Updated stacking_requirements for probation list cache member by user_id: ({user_id}) to {new_stacking_requirements}",
+            f"Updated stacking_requirements for probation list cache member by user_id: ({user_id}) to {new_stacking_requirements} and stacking_req_updated_on to current time",
             label="Probation List Cache",
         )
 
@@ -129,12 +135,14 @@ def upsert_probation_list_cache(
     stacking_requirements: int = 0,
 ):
     user_name = user.name
+
     probation_list_cache[user.id] = {
         "user_name": user_name,
         "pokemeow_name": pokemeow_name,
         "catch_requirement": catch_requirement,
         "assigned_on": assigned_on,
         "stacking_requirements": stacking_requirements,
+        "stacking_req_updated_on": int(time.time()),
     }
 
     pretty_log(
@@ -153,9 +161,10 @@ def update_probation_stacking_requirements_cache(
     """
     if user.id in probation_list_cache:
         probation_list_cache[user.id]["stacking_requirements"] = stacking_requirements
+        probation_list_cache[user.id]["stacking_req_updated_on"] = int(time.time())
         pretty_log(
             "info",
-            f"Updated stacking_requirements for probation list cache member: {user} ({user.id}) to {stacking_requirements}",
+            f"Updated stacking_requirements for probation list cache member: {user} ({user.id}) to {stacking_requirements} and stacking_req_updated_on to current time",
             label="Probation List Cache",
         )
 
