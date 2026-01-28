@@ -34,17 +34,19 @@ async def upsert_probation_member(
     import time
 
     assigned_on = int(time.time())
+    stacking_req_updated_on = int(time.time())
     async with bot.pg_pool.acquire() as conn:
         await conn.execute(
             """
-            INSERT INTO probation_list (user_id, user_name, pokemeow_name, catch_requirement, assigned_on, stacking_requirements)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO probation_list (user_id, user_name, pokemeow_name, catch_requirement, assigned_on, stacking_requirements, stacking_req_updated_on)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (user_id) DO UPDATE
             SET user_name = EXCLUDED.user_name,
                 pokemeow_name = EXCLUDED.pokemeow_name,
                 catch_requirement = EXCLUDED.catch_requirement,
                 assigned_on = EXCLUDED.assigned_on,
-                stacking_requirements = EXCLUDED.stacking_requirements;
+                stacking_requirements = EXCLUDED.stacking_requirements,
+                stacking_req_updated_on = EXCLUDED.stacking_req_updated_on;
             """,
             user_id,
             user_name,
@@ -52,6 +54,7 @@ async def upsert_probation_member(
             catch_requirement,
             assigned_on,
             stacking_requirements,
+            stacking_req_updated_on,
         )
         pretty_log(
             "info",
@@ -62,7 +65,12 @@ async def upsert_probation_member(
         from utils.cache.probation_list_cache import upsert_probation_list_cache
 
         upsert_probation_list_cache(
-            user, pokemeow_name, catch_requirement, assigned_on, stacking_requirements
+            user,
+            pokemeow_name,
+            catch_requirement,
+            assigned_on,
+            stacking_requirements,
+            stacking_req_updated_on,
         )
 
 
@@ -270,7 +278,7 @@ async def fetch_all_probation_members(bot):
     async with bot.pg_pool.acquire() as conn:
         rows = await conn.fetch(
             """
-            SELECT user_id, user_name, pokemeow_name, catch_requirement, assigned_on, catch_req_updated_on, stacking_requirements FROM probation_list;
+            SELECT user_id, user_name, pokemeow_name, catch_requirement, assigned_on, catch_req_updated_on, stacking_requirements, stacking_req_updated_on FROM probation_list;
             """
         )
         probation_members = [
@@ -282,6 +290,7 @@ async def fetch_all_probation_members(bot):
                 row["assigned_on"],
                 row["catch_req_updated_on"],
                 row["stacking_requirements"],
+                row["stacking_req_updated_on"],
             )
             for row in rows
         ]

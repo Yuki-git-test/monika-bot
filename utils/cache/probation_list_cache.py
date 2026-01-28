@@ -133,6 +133,7 @@ def upsert_probation_list_cache(
     catch_requirement: int,
     assigned_on: int,
     stacking_requirements: int = 0,
+    stacking_req_updated_on: int = 0,
 ):
     user_name = user.name
 
@@ -142,7 +143,7 @@ def upsert_probation_list_cache(
         "catch_requirement": catch_requirement,
         "assigned_on": assigned_on,
         "stacking_requirements": stacking_requirements,
-        "stacking_req_updated_on": int(time.time()),
+        "stacking_req_updated_on": stacking_req_updated_on,
     }
 
     pretty_log(
