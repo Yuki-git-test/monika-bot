@@ -7,6 +7,7 @@ from .extract_joined_date import extract_joined_date_func
 from .list_members import list_vna_members_func
 from .message.edit import message_edit_func
 from .message.send import message_send_func
+from .monthly_stats_checker import monthly_stats_checker_func
 from .probation_members import probation_members_func
 from .role_members import role_members_func
 from .set_channel import set_channel_func
@@ -15,6 +16,7 @@ from .weekly_stats_checker import weekly_stats_checker_func
 from .whois import whois_func
 
 __all__ = [
+    "monthly_stats_checker_func",
     "assign_top_grinder_roles",
     "role_members_func",
     "clan_invite_func",

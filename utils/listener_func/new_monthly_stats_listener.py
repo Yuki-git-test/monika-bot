@@ -15,6 +15,8 @@ from constants.vn_allstars_constants import (
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
+    DAILY_CATCH_REQUIREMENT,
+    MONTHLY_CATCH_REQUIREMENT
 )
 from utils.cache.cache_list import probation_list_cache, vna_members_cache
 from utils.db.probation_list_db import (
@@ -34,6 +36,7 @@ from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 
 enable_debug(f"{__name__}.probation_assignment_removal_handler")
+enable_debug(f"{__name__}.new_monthly_stats_checker")
 EXEMPTED_FROM_PROBATION_ROLE_IDS = [
     VN_ALLSTARS_ROLES.clan_break,
     VN_ALLSTARS_ROLES.coowner,
@@ -229,7 +232,7 @@ async def probation_assignment_removal_handler(
     pokemeow_name = member_info.get("pokemeow_name", "Unknown")
 
     # Global catch requirement logic
-    global_catch_requirement = current_day * 200
+    global_catch_requirement = current_day * DAILY_CATCH_REQUIREMENT
     debug_log(
         f"Global catch requirement for {member.display_name}: {global_catch_requirement}"
     )
@@ -249,7 +252,7 @@ async def probation_assignment_removal_handler(
     # Adjust Requirements for New Members
     if joined_date and month_start <= user_joined_dt <= month_end:
         days_in_clan = (now_est - user_joined_dt).days
-        member_required_catches = days_in_clan * 200
+        member_required_catches = days_in_clan * DAILY_CATCH_REQUIREMENT
         new_member = True
         debug_log(
             f"Member {member.name} is a new member. Days in clan this month: {days_in_clan}. Required catches: {member_required_catches}",
@@ -325,8 +328,8 @@ async def probation_assignment_removal_handler(
     # Member did not meet requirements
     elif catches < member_required_catches and total_catches < member_required_catches:
         if probation_role in member.roles and current_day == 7 and current_hour >= 23:
-            if double_probation_role not in member.roles and last_month_catches < 6000:
-                stacking_requirements = 6000 - last_month_catches
+            if double_probation_role not in member.roles and last_month_catches < MONTHLY_CATCH_REQUIREMENT:
+                stacking_requirements = MONTHLY_CATCH_REQUIREMENT - last_month_catches
                 await update_stacking_requirements(
                     bot=bot,
                     user_id=member.id,
@@ -376,11 +379,11 @@ async def probation_assignment_removal_handler(
                 old_stacking_requirements = probation_member_info.get(
                     "stacking_requirements", 0
                 )
-                new_stacking_requirements = 6000 - last_month_catches
+                new_stacking_requirements = MONTHLY_CATCH_REQUIREMENT - last_month_catches
                 total_stacking_requirements = (
                     old_stacking_requirements + new_stacking_requirements
                 )
-                day_catch_requirement = current_day * 200
+                day_catch_requirement = current_day * DAILY_CATCH_REQUIREMENT
                 new_catch_requirement = (
                     day_catch_requirement + total_stacking_requirements
                 )
@@ -602,6 +605,10 @@ async def new_monthly_stats_checker(
     if command_user_top_line_match:
         command_user_catches = int(
             command_user_top_line_match.group(1).replace(",", "")
+        )
+        debug_log(
+            f"command user_catches parsed from embed: {command_user_catches}",
+            highlight=True,
         )
         pretty_log(
             f"Command user catches parsed from embed: {command_user_catches}",

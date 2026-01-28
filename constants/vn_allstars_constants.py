@@ -18,7 +18,8 @@ PROBATION_EXEMPTED_USER_IDS = [
     BLANK_USER_ID,
     JAEGER_BOMBS_USER_ID,
 ]
-
+DAILY_CATCH_REQUIREMENT = 200
+MONTHLY_CATCH_REQUIREMENT = 6000
 # 💦☁────────────────────────────────────────────💦☁
 #       VN_ALLSTARS_TEXT_CHANNELS
 # 💦☁────────────────────────────────────────────💦☁

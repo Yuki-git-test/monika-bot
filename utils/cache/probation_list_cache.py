@@ -50,7 +50,18 @@ async def load_probation_list_cache(bot):
             f"Error loading probation list cache: {e}",
             label="Probation List Cache",
         )
-
+def update_all_probation_catch_requirements_to_value_cache(catch_requirement: int):
+    """
+    Update the catch requirement for all probation_list_cache members to a specific value.
+    """
+    for user_id in probation_list_cache:
+        probation_list_cache[user_id]["catch_requirement"] = catch_requirement
+        probation_list_cache[user_id]["catch_req_updated_on"] = int(time.time())
+    pretty_log(
+        "info",
+        f"Updated catch requirement for all probation list cache members to {catch_requirement}.",
+        label="Probation List Cache",
+    )
 
 def update_stacking_requirements_by_id_cache(
     user_id: int, new_stacking_requirements: int

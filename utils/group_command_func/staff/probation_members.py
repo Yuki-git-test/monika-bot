@@ -1,21 +1,33 @@
 from datetime import datetime
 
 import discord
+import pytz
 from discord import app_commands
 from discord.ext import commands
 from discord.ui import Button, View
 
 from constants.vn_allstars_constants import (
+    DAILY_CATCH_REQUIREMENT,
     MONIKA_APP_ID,
     MONIKA_EMBED_COLOR,
+    MONTHLY_CATCH_REQUIREMENT,
     VN_ALLSTARS_ROLES,
     VN_ALLSTARS_TEXT_CHANNELS,
     VNA_SERVER_ID,
 )
-from utils.db.probation_list_db import fetch_all_probation_members
+from utils.db.probation_list_db import (
+    fetch_all_probation_members,
+    update_all_probation_member_catch_requirements,
+)
 from utils.essentials.pretty_defer import pretty_defer
 from utils.essentials.role_checks import is_staff_member
 from utils.logs.pretty_log import pretty_log
+
+
+def get_est_day_number():
+    est = pytz.timezone("US/Eastern")
+    now_est = datetime.now(est)
+    return now_est.day  # Returns the day of the month as int
 
 
 class Probation_Members_Paginator(View):
@@ -83,6 +95,11 @@ class Probation_Members_Paginator(View):
             )
             catch_requirement = member_info[3] if len(member_info) > 3 else 0
             assigned_on_timestamp = member_info[4] if len(member_info) > 4 else None
+            stacking_requirements = (
+                int(member_info[6])
+                if len(member_info) > 6 and member_info[6] is not None
+                else 0
+            )
             assigned_on_str = (
                 f"**Assigned On:** <t:{assigned_on_timestamp}:D>"
                 if assigned_on_timestamp
@@ -95,11 +112,22 @@ class Probation_Members_Paginator(View):
                 and double_probation_role in member.roles
                 else ""
             )
+            if stacking_requirements > 0:
+                total_requirement = catch_requirement + stacking_requirements
+                catch_req_str = (
+                    f"> - **Catch Requirement:** {catch_requirement:,} catches\n"
+                    f"> - **Catch Debt:** {stacking_requirements:,} catches\n"
+                    f"> - **Total Requirement:** {total_requirement:,} catches\n"
+                )
+            else:
+                catch_req_str = (
+                    f"> - **Catch Requirement:** {catch_requirement:,} catches\n"
+                )
             embed.add_field(
                 name=f"{idx}. {title_prefix}{member_name}",
                 value=(
                     f"> - **Mention:** {member.mention if member else 'N/A'}\n"
-                    f"> - **Catch Requirement:** {catch_requirement} catches\n"
+                    f"{catch_req_str}"
                     f"> - {assigned_on_str}"
                 ),
                 inline=False,
@@ -139,6 +167,13 @@ async def probation_members_func(
             content="You do not have permission to use this command.",
         )
         return
+
+    # Update all probation member catch requirements first
+    current_day = get_est_day_number()
+    new_catch_requirement = current_day * DAILY_CATCH_REQUIREMENT
+    await update_all_probation_member_catch_requirements(
+        bot=bot, catch_requirement=new_catch_requirement
+    )
 
     # Fetch probation members
     probation_members = await fetch_all_probation_members(bot)

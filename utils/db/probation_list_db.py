@@ -227,6 +227,30 @@ async def remove_probation_member(bot, user: discord.Member):
 
         remove_probation_list_cache(user)
 
+async def update_all_probation_member_catch_requirements(bot, catch_requirement: int):
+    """
+    Update the catch requirement for all probation_list members to a specific value.
+    """
+
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE probation_list
+            SET catch_requirement = $1;
+            """,
+            catch_requirement,
+        )
+        pretty_log(
+            "info",
+            f"Updated catch requirement for all probation members to {catch_requirement}.",
+            label="Probation List DB",
+        )
+        # Update cache as well
+        from utils.cache.probation_list_cache import (
+            update_all_probation_catch_requirements_to_value_cache,
+        )
+
+        update_all_probation_catch_requirements_to_value_cache(catch_requirement)
 
 async def fetch_all_probation_members(bot):
     """

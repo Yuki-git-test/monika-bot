@@ -1,18 +1,27 @@
 from datetime import datetime
 
 import discord
+import pytz
 from discord import app_commands
 from discord.ext import commands
 
 from constants.vn_allstars_constants import (
+    DAILY_CATCH_REQUIREMENT,
     HARMLESS_USER_ID,
     MONIKA_EMBED_COLOR,
     VN_ALLSTARS_ROLES,
 )
 from utils.cache.cache_list import probation_list_cache, vna_members_cache
+from utils.db.probation_list_db import update_all_probation_member_catch_requirements
 from utils.essentials.pretty_defer import pretty_defer
 from utils.essentials.role_checks import is_clan_member
 from utils.logs.pretty_log import pretty_log
+
+
+def get_est_day_number():
+    est = pytz.timezone("US/Eastern")
+    now_est = datetime.now(est)
+    return now_est.day  # Returns the day of the month as int
 
 
 class CatchRequirements(commands.Cog):
@@ -46,6 +55,13 @@ class CatchRequirements(commands.Cog):
             await loader.error("You are not currently on probation.")
             return
 
+        # Update all probation member catch requirements first
+        current_day = get_est_day_number()
+        new_catch_requirement = current_day * DAILY_CATCH_REQUIREMENT
+        await update_all_probation_member_catch_requirements(
+            bot=self.bot, catch_requirement=new_catch_requirement
+        )
+
         # Get member info
         member_info = vna_members_cache.get(interaction.user.id)
         if not member_info:
@@ -67,10 +83,19 @@ class CatchRequirements(commands.Cog):
             )
             return
         catch_requirement = probation_member_info.get("catch_requirement", 1500)
+        stacking_requirements = probation_member_info.get("stacking_requirements", 0)
+        catch_req_str = f"- **Catch Requirement:** {catch_requirement} catches\n\n"
+        if stacking_requirements and stacking_requirements > 0:
+            total_requirement = catch_requirement + stacking_requirements
+            catch_req_str = (
+                f"- **Catch Requirement:** {catch_requirement} catches\n"
+                f"- **Catch Debt:** {stacking_requirements} catches\n"
+                f"- **Total Requirement:** {total_requirement} catches\n\n"
+            )
 
         # Create embed
         desc = (
-            f"**Catch Requirement:** {catch_requirement} catches\n\n"
+            f"{catch_req_str}"
             f"To remove your probation role, you need to meet or exceed the catch requirement then do `;clan stats m` or contact a staff member.\n"
         )
         embed = discord.Embed(
