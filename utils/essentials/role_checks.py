@@ -19,9 +19,11 @@ async def is_staff_member(interaction: discord.Interaction) -> bool:
     user = interaction.user
     staff_role = guild.get_role(VN_ALLSTARS_ROLES.staff)
     dot_role = guild.get_role(VN_ALLSTARS_ROLES.dot_role)
-    if staff_role in user.roles or dot_role in user.roles:
+    seafoam_role = guild.get_role(VN_ALLSTARS_ROLES.seafoam)
+    if staff_role in user.roles or dot_role in user.roles or seafoam_role in user.roles:
         return True
     return False
+
 
 # ╭───────────────────────────────╮
 #   🌊 Check if User is Clan Member
@@ -30,7 +32,7 @@ async def is_clan_member(interaction: discord.Interaction) -> bool:
     """Check if the user is a clan member."""
     guild = interaction.guild
     user = interaction.user
-    clan_member_role = guild.get_role(VN_ALLSTARS_ROLES.clan_member)
+    clan_member_role = guild.get_role(VN_ALLSTARS_ROLES.vna_member)
     if clan_member_role in user.roles:
         return True
     return False
