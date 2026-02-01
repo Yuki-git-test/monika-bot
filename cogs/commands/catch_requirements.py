@@ -85,7 +85,7 @@ class CatchRequirements(commands.Cog):
                     label="Catch Requirements Command",
                 )
                 return
-
+            last_month_catches = member_info.get("last_month_catches", 0)
             probation_member_info = probation_list_cache.get(target_member.id)
             if not probation_member_info:
                 await loader.error("Probation information not found.")
@@ -106,6 +106,7 @@ class CatchRequirements(commands.Cog):
                 total_requirement = catch_requirement + stacking_requirements
                 catch_req_str = (
                     f"- **Catch Requirement:** {catch_requirement:,} catches\n"
+                    f"- **Last Month's Catches:** {last_month_catches:,} catches\n"
                     f"- **Catch Debt:** {stacking_requirements:,} catches\n"
                     f"- **Total Requirement:** {total_requirement:,} catches\n\n"
                 )

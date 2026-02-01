@@ -197,7 +197,7 @@ async def main():
 
     # Setup scheduled tasks
     await setup_schedulers(bot)
-    
+
     token = os.getenv("DISCORD_TOKEN")
     await bot.start(token)
 

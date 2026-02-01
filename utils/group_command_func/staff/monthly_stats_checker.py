@@ -25,6 +25,9 @@ async def monthly_stats_checker_func(
 
     # Pass to the new_monthly_stats_checker function
     await new_monthly_stats_checker(
-        bot=bot, before_message=message, after_message=message
+        bot=bot,
+        before_message=message,
+        after_message=message,
+        command_context="manual_checking",
     )
     await loader.success(content="Weekly stats check completed.")

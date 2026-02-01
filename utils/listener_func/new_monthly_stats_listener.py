@@ -53,7 +53,7 @@ UNKNOWN_MEMBERS = set()
 
 
 def is_stacking_req_updated_recently(
-    stacking_req_updated_on: int, window_seconds: int = 86400
+    stacking_req_updated_on: int, window_seconds: int = 1209600
 ) -> bool:
     """
     Returns True if stacking_req_updated_on is within the last `window_seconds` (default: 24 hours).
@@ -108,6 +108,18 @@ def get_last_day_of_month_est(dt: Optional[datetime] = None) -> datetime:
     last_day = next_month.replace(day=1) - timedelta(days=1)
     debug_log(f"Last day of month in EST: {last_day}")
     return last_day
+
+
+def is_more_than_one_month_ago(unix_timestamp: int) -> bool:
+    """
+    Returns True if the given unix timestamp (in seconds) is more than one month ago from now.
+    """
+    from datetime import datetime, timedelta
+
+    now = datetime.now()
+    timestamp_dt = datetime.fromtimestamp(unix_timestamp)
+    # Consider a month as 30 days for simplicity
+    return (now - timestamp_dt) > timedelta(days=30)
 
 
 async def send_probation_report(
@@ -194,29 +206,142 @@ async def probation_assignment_removal_handler(
     fishes: int,
     total_catches: int,
     context: str = None,
+    command_context: str = None,
 ):
+    debug_log(
+        f"probation_assignment_removal_handler called for member {member.display_name} (ID: {member.id})",
+        highlight=True,
+    )
+    debug_log(
+        f"Args: current_day={current_day}, current_hour={current_hour}, catches={catches}, fishes={fishes}, total_catches={total_catches}, context={context}, command_context={command_context}"
+    )
     # Get roles
     probation_role = guild.get_role(VN_ALLSTARS_ROLES.probation)
     double_probation_role = guild.get_role(VN_ALLSTARS_ROLES.kick_list)
-
+    debug_log(
+        f"probation_role: {probation_role}, double_probation_role: {double_probation_role}"
+    )
     # Determine global requirement
     current_day = get_est_day_number()
     current_hour = get_est_hour()
+    debug_log(
+        f"EST day/hour recalculated: current_day={current_day}, current_hour={current_hour}"
+    )
+    # Get member info
+    member_info = vna_members_cache.get(member.id)
+    if not member_info:
+        pretty_log(
+            "info",
+            f"Member {member.display_name} not found in VNA members cache.",
+            label="Auto Probation Role Assignment",
+        )
+        msg = f"Member {member.display_name} not found in VNA members cache."
+        debug_log(
+            f"Probation assignment skipped for {member.display_name}: not found in VNA members cache."
+        )
+        return False, msg
+
+    joined_date = member_info.get("clan_joined_date")
+    last_month_catches = member_info.get("last_month_catches", 0)
+    probation_member_info = probation_list_cache.get(member.id)
+    pokemeow_name = member_info.get("pokemeow_name", "Unknown")
+
+    # Determine if member is new this month
+    eastern = pytz.timezone("US/Eastern")
+    now_est = datetime.now(eastern)
+    month_start = now_est.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    next_month = (month_start + timedelta(days=32)).replace(day=1)
+    month_end = next_month - timedelta(seconds=1)
+    user_joined_dt = (
+        datetime.fromtimestamp(joined_date, tz=eastern) if joined_date else None
+    )
+    new_member = False
+
+    # Determine if new member
+    if joined_date and month_start <= user_joined_dt <= month_end:
+        new_member = True
+        debug_log(
+            f"Member {member.name} is a new member. Days in clan this month: {days_in_clan}. Required catches: {member_required_catches}",
+        )
+        debug_log(
+            f"New member logic for {member.display_name}: days_in_clan={days_in_clan}, required_catches={member_required_catches}"
+        )
+    else:
+        new_member = False
 
     # just update stats if its last day of the month and 11pm est or later
     last_day_est = get_last_day_of_month_est()
     now_est = datetime.now(pytz.timezone("US/Eastern"))
-    if now_est.day == last_day_est.day and now_est.hour >= 23:
+    if (now_est.day == last_day_est.day and now_est.hour >= 23) or (
+        now_est.day == 1 and command_context == "manual_checking"
+    ):
         # Update last month catches
-        await update_member_last_month_catches(bot, member.id, catches)
+        await update_member_last_month_catches(bot, member.id, total_catches)
         pretty_log(
             "info",
-            f"Updated last month catches for member {member.display_name} ({member.id}) to {catches}.",
+            f"Updated last month catches for member {member.display_name} ({member.id}) to {total_catches}.",
             label="Monthly Stats Listener",
         )
         debug_log(
-            f"Updated last month catches for {member.display_name} to {catches} (last day of month logic)"
+            f"Updated last month catches for {member.display_name} to {total_catches} (last day of month logic)"
         )
+        # Update Stacking requirements
+        if total_catches < MONTHLY_CATCH_REQUIREMENT:
+            debug_log(
+                f"Member {member.display_name} did not meet monthly catch requirements. total_catches={total_catches}, MONTHLY_CATCH_REQUIREMENT={MONTHLY_CATCH_REQUIREMENT}"
+            )
+            if (
+                probation_role not in member.roles
+                and not is_exempted_from_probation(member)
+                and not new_member
+                and is_more_than_one_month_ago(joined_date)
+            ):
+                stacking_requirements = MONTHLY_CATCH_REQUIREMENT - total_catches
+                await update_stacking_requirements(
+                    bot=bot,
+                    user_id=member.id,
+                    stacking_requirements=stacking_requirements,
+                )
+                # Add probation role and double probation role
+                await member.add_roles(
+                    probation_role, reason="Did not meet monthly catch requirements"
+                )
+                await member.add_roles(
+                    double_probation_role,
+                    reason="Did not meet monthly catch requirements",
+                )
+                debug_log(
+                    f"Assigned probation role to {member.display_name} on last day of month for not meeting monthly catch requirements."
+                )
+
+            elif probation_role in member.roles:
+                debug_log(
+                    f"Member {member.display_name} already has probation role. Updating stacking requirements only."
+                )
+                probation_member_info = probation_list_cache.get(member.id)
+                if probation_member_info:
+                    old_stacking_requirements = probation_member_info.get(
+                        "stacking_requirements", 0
+                    )
+                    new_stacking_requirements = (
+                        MONTHLY_CATCH_REQUIREMENT - total_catches
+                    )
+                    total_stacking_requirements = (
+                        old_stacking_requirements + new_stacking_requirements
+                    )
+                    await update_stacking_requirements(
+                        bot=bot,
+                        user_id=member.id,
+                        stacking_requirements=total_stacking_requirements,
+                    )
+                    if double_probation_role not in member.roles:
+                        await member.add_roles(
+                            double_probation_role,
+                            reason="Did not meet monthly catch requirements",
+                        )
+                        debug_log(
+                            f"Assigned double probation role to {member.display_name} on last day of month for not meeting monthly catch requirements."
+                        )
     if is_exempted_from_probation(member):
         msg = (
             f"Member {member.display_name} is exempted from probation role assignment."
@@ -251,30 +376,18 @@ async def probation_assignment_removal_handler(
         f"Global catch requirement for {member.display_name}: {global_catch_requirement}"
     )
 
-    # Determine if member is new this month
-    eastern = pytz.timezone("US/Eastern")
-    now_est = datetime.now(eastern)
-    month_start = now_est.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    next_month = (month_start + timedelta(days=32)).replace(day=1)
-    month_end = next_month - timedelta(seconds=1)
-    user_joined_dt = (
-        datetime.fromtimestamp(joined_date, tz=eastern) if joined_date else None
-    )
-    new_member = False
-
     # Determine per-member requirement
     # Adjust Requirements for New Members
-    if joined_date and month_start <= user_joined_dt <= month_end:
+    if new_member:
         days_in_clan = (now_est - user_joined_dt).days
         member_required_catches = days_in_clan * DAILY_CATCH_REQUIREMENT
-        new_member = True
         debug_log(
             f"Member {member.name} is a new member. Days in clan this month: {days_in_clan}. Required catches: {member_required_catches}",
         )
         debug_log(
             f"New member logic for {member.display_name}: days_in_clan={days_in_clan}, required_catches={member_required_catches}"
         )
-    else:
+    elif not new_member:
         member_required_catches = global_catch_requirement
         # Double Probation Logic
         if double_probation_role in member.roles:
@@ -296,7 +409,7 @@ async def probation_assignment_removal_handler(
 
     # Probation Removal
     if catches >= member_required_catches or total_catches >= member_required_catches:
-        if probation_role in member.roles:
+        if probation_role in member.roles and current_day >= 7:
             roles_to_remove = [probation_role]
             title = f"✅ Probation Role Auto-Removed"
             color = discord.Color.green()
@@ -516,6 +629,8 @@ async def probation_assignment_removal_handler(
             debug_log(
                 f"No probation action for {member.display_name}: not a probation assignment day or requirements not met."
             )
+    # Ensure function always returns a tuple
+    return False, "No action taken in probation_assignment_removal_handler."
 
 
 async def new_monthly_stats_checker(
@@ -523,6 +638,7 @@ async def new_monthly_stats_checker(
     before_message: discord.Message,
     after_message: discord.Message,
     replied_member_id: int = None,
+    command_context: str = None,
 ):
     debug_log("Starting new_monthly_stats_checker")
     guild = bot.get_guild(VNA_SERVER_ID)
@@ -674,6 +790,7 @@ async def new_monthly_stats_checker(
             fishes=0,
             total_catches=command_user_catches,
             context="Command User",
+            command_context=command_context,
         )
         if success:
             pretty_log(
@@ -740,6 +857,7 @@ async def new_monthly_stats_checker(
             fishes=int(fishes),
             total_catches=total_catches,
             context="Member",
+            command_context=command_context,
         )
         if success:
             pretty_log(

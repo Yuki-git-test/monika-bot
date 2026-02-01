@@ -28,6 +28,8 @@ async def upsert_probation_member(
 ):
     """
     Insert or update a probation_list row for a user.
+    If catch_requirement == 0, do not update assigned_on.
+    If stacking_requirements == 0, do not update stacking_req_updated_on.
     """
     user_id = user.id
     user_name = user.name
@@ -36,26 +38,83 @@ async def upsert_probation_member(
     assigned_on = int(time.time())
     stacking_req_updated_on = int(time.time())
     async with bot.pg_pool.acquire() as conn:
-        await conn.execute(
-            """
-            INSERT INTO probation_list (user_id, user_name, pokemeow_name, catch_requirement, assigned_on, stacking_requirements, stacking_req_updated_on)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            ON CONFLICT (user_id) DO UPDATE
-            SET user_name = EXCLUDED.user_name,
-                pokemeow_name = EXCLUDED.pokemeow_name,
-                catch_requirement = EXCLUDED.catch_requirement,
-                assigned_on = EXCLUDED.assigned_on,
-                stacking_requirements = EXCLUDED.stacking_requirements,
-                stacking_req_updated_on = EXCLUDED.stacking_req_updated_on;
-            """,
-            user_id,
-            user_name,
-            pokemeow_name,
-            catch_requirement,
-            assigned_on,
-            stacking_requirements,
-            stacking_req_updated_on,
-        )
+        if catch_requirement == 0 and stacking_requirements == 0:
+            # Do not update assigned_on or stacking_req_updated_on
+            await conn.execute(
+                """
+                INSERT INTO probation_list (user_id, user_name, pokemeow_name, catch_requirement, stacking_requirements)
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (user_id) DO UPDATE
+                SET user_name = EXCLUDED.user_name,
+                    pokemeow_name = EXCLUDED.pokemeow_name,
+                    catch_requirement = EXCLUDED.catch_requirement,
+                    stacking_requirements = EXCLUDED.stacking_requirements;
+                """,
+                user_id,
+                user_name,
+                pokemeow_name,
+                catch_requirement,
+                stacking_requirements,
+            )
+        elif catch_requirement == 0:
+            await conn.execute(
+                """
+                INSERT INTO probation_list (user_id, user_name, pokemeow_name, catch_requirement, stacking_requirements, stacking_req_updated_on)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (user_id) DO UPDATE
+                SET user_name = EXCLUDED.user_name,
+                    pokemeow_name = EXCLUDED.pokemeow_name,
+                    catch_requirement = EXCLUDED.catch_requirement,
+                    stacking_requirements = EXCLUDED.stacking_requirements,
+                    stacking_req_updated_on = EXCLUDED.stacking_req_updated_on;
+                """,
+                user_id,
+                user_name,
+                pokemeow_name,
+                catch_requirement,
+                stacking_requirements,
+                stacking_req_updated_on,
+            )
+        elif stacking_requirements == 0:
+            await conn.execute(
+                """
+                INSERT INTO probation_list (user_id, user_name, pokemeow_name, catch_requirement, assigned_on, stacking_requirements)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (user_id) DO UPDATE
+                SET user_name = EXCLUDED.user_name,
+                    pokemeow_name = EXCLUDED.pokemeow_name,
+                    catch_requirement = EXCLUDED.catch_requirement,
+                    assigned_on = EXCLUDED.assigned_on,
+                    stacking_requirements = EXCLUDED.stacking_requirements;
+                """,
+                user_id,
+                user_name,
+                pokemeow_name,
+                catch_requirement,
+                assigned_on,
+                stacking_requirements,
+            )
+        else:
+            await conn.execute(
+                """
+                INSERT INTO probation_list (user_id, user_name, pokemeow_name, catch_requirement, assigned_on, stacking_requirements, stacking_req_updated_on)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                ON CONFLICT (user_id) DO UPDATE
+                SET user_name = EXCLUDED.user_name,
+                    pokemeow_name = EXCLUDED.pokemeow_name,
+                    catch_requirement = EXCLUDED.catch_requirement,
+                    assigned_on = EXCLUDED.assigned_on,
+                    stacking_requirements = EXCLUDED.stacking_requirements,
+                    stacking_req_updated_on = EXCLUDED.stacking_req_updated_on;
+                """,
+                user_id,
+                user_name,
+                pokemeow_name,
+                catch_requirement,
+                assigned_on,
+                stacking_requirements,
+                stacking_req_updated_on,
+            )
         pretty_log(
             "info",
             f"Upserted probation member: {user_name} ({user_id})",
@@ -74,14 +133,44 @@ async def upsert_probation_member(
         )
 
 
+def is_stacking_req_updated_recently(
+    stacking_req_updated_on: int, window_seconds: int = 1209600
+) -> bool:
+    """
+    Returns True if stacking_req_updated_on is within the last `window_seconds` (default: 24 hours).
+    Accepts a unix timestamp (seconds).
+    """
+    if stacking_req_updated_on is None:
+        return False
+    now = int(time.time())
+    return (now - stacking_req_updated_on) < window_seconds
+
+
 async def update_stacking_requirements(bot, user_id: int, stacking_requirements: int):
     """
     Update the stacking_requirements for a probation_list member and set stacking_req_updated_on to current time.
+    Only update if stacking_req_updated_on is not recent (older than window_seconds).
     """
     import time
 
-    now = int(time.time())
+    # Fetch current stacking_req_updated_on from DB
     async with bot.pg_pool.acquire() as conn:
+        row = await conn.fetchrow(
+            """
+            SELECT stacking_req_updated_on FROM probation_list WHERE user_id = $1;
+            """,
+            user_id,
+        )
+        stacking_req_updated_on = row["stacking_req_updated_on"] if row else None
+        if is_stacking_req_updated_recently(stacking_req_updated_on):
+            pretty_log(
+                "info",
+                f"Skipping update: stacking_requirements for probation member ID: ({user_id}) was updated recently.",
+                label="Probation List DB",
+            )
+            return  # Do not update if recently updated
+
+        now = int(time.time())
         await conn.execute(
             """
             UPDATE probation_list
