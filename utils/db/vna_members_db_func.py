@@ -50,7 +50,7 @@ async def fetch_all_members(bot):
 # Upsert member (insert or update)
 async def upsert_member(
     bot,
-    user: discord.Member,
+    user,
     channel_id: int = None,
     pokemeow_name: str = None,
     perks: str = None,
@@ -149,7 +149,7 @@ async def add_member(
 # Update member multiple fields for a user
 async def update_member_fields(
     bot,
-    user: discord.Member,
+    user,
     user_name: str = None,
     pokemeow_name: str = None,
     channel_id: int = None,

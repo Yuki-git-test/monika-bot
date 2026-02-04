@@ -279,6 +279,7 @@ class StaffGroupCommand(commands.Cog):
     )
     @app_commands.describe(
         member="The VNA member to update",
+        member_id="The ID of the VNA member to update",
         pokemeow_name="The updated PokéMeow username",
         channel="The updated clan channel",
         perks="The updated perks",
@@ -288,7 +289,8 @@ class StaffGroupCommand(commands.Cog):
     async def update_member(
         self,
         interaction: discord.Interaction,
-        member: discord.Member,
+        member: discord.Member = None,
+        member_id: int = None,
         pokemeow_name: str = None,
         channel: discord.TextChannel = None,
         perks: str = None,
@@ -303,6 +305,7 @@ class StaffGroupCommand(commands.Cog):
             slash_cmd_name=slash_cmd_name,
             command_func=update_member_func,
             member=member,
+            member_id=member_id,
             pokemeow_name=pokemeow_name,
             channel=channel,
             perks=perks,

@@ -22,7 +22,8 @@ from utils.logs.pretty_log import pretty_log
 async def update_member_func(
     bot: commands.Bot,
     interaction: discord.Interaction,
-    member: discord.Member,
+    member: discord.Member = None,
+    member_id: int = None,
     pokemeow_name: str = None,
     channel: discord.TextChannel = None,
     perks: str = None,
@@ -30,11 +31,31 @@ async def update_member_func(
     clan_joined_date: str = None,
 ):
     """Update a clan member's information."""
+    if not member and not member_id:
+        await interaction.response.send_message(
+            "Please provide either a member or member ID to update.", ephemeral=True
+        )
+        return
+
+    used_member = True if member else False
+    # Resolve member by ID if necessary
+    if not member and member_id:
+        member = interaction.guild.get_member(member_id)
+        if not member:
+            # Use discord user fetch as fallback
+            try:
+                member = await bot.fetch_user(member_id)
+            except discord.NotFound:
+                await interaction.response.send_message(
+                    f"Could not find a member with ID {member_id}.", ephemeral=True
+                )
+                return
+    vna_member_id = member.id
 
     # Initialize loader
     loader = await pretty_defer(
         interaction=interaction,
-        content=f"Updating {member.display_name} information...",
+        content=f"Updating {member.name} information...",
         ephemeral=False,
     )
 
@@ -52,10 +73,18 @@ async def update_member_func(
 
     guild = interaction.guild
     vna_clan_member_role = guild.get_role(VN_ALLSTARS_ROLES.vna_member)
+    # Get cached record
+    old = vna_members_cache.get(member.id)
 
-    if vna_clan_member_role not in member.roles:
+    if used_member and vna_clan_member_role not in member.roles:
         await loader.error(
             f"{member.display_name} doesn't have the {vna_clan_member_role.name} Role."
+        )
+        return
+
+    if not used_member and not old:
+        await loader.error(
+            f"{member.name} is not in the database. Please provide a valid member with the clan member role."
         )
         return
 
@@ -70,15 +99,12 @@ async def update_member_func(
         timestamp=datetime.now(),
         description=f"**Member:** {member.mention}\n",
     )
-    embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
-    embed.set_thumbnail(url=member.display_avatar.url)
+    embed.set_author(name=member.name, icon_url=member.avatar.url)
+    embed.set_thumbnail(url=member.avatar.url)
     embed.set_footer(
         text=f"User ID: {member.id}",
         icon_url=guild.icon.url if guild.icon else None,
     )
-
-    # Get cached record
-    old = vna_members_cache.get(member.id)
 
     # ╔═══════════════════════════════╗
     #   CASE 1: Member not in cache
@@ -96,7 +122,7 @@ async def update_member_func(
 
         if not success:
             await loader.error(
-                f"Failed to upsert {member.display_name} into the database."
+                f"Failed to upsert {member.name} into the database."
             )
             return
 
