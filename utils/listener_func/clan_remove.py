@@ -40,6 +40,8 @@ async def auto_clan_remove_handler(
     probation_role = guild.get_role(VN_ALLSTARS_ROLES.probation)
     former_member_role = guild.get_role(VN_ALLSTARS_ROLES._former_members)
     double_probation_role = guild.get_role(VN_ALLSTARS_ROLES.kick_list)
+    top_grinder_role = guild.get_role(VN_ALLSTARS_ROLES.top_monthly_grinder)
+    amethyst_role = guild.get_role(VN_ALLSTARS_ROLES.amethyst)
 
     # Check if member has VNA Member role
     vna_member_role = guild.get_role(VN_ALLSTARS_ROLES.vna_member)
@@ -67,6 +69,10 @@ async def auto_clan_remove_handler(
         roles_to_remove.append(vna_member_role)
     if former_member_role and former_member_role not in member.roles:
         await member.add_roles(former_member_role, reason="Member removed from clan")
+    if top_grinder_role and top_grinder_role in member.roles:
+        roles_to_remove.append(top_grinder_role)
+    if amethyst_role and amethyst_role in member.roles:
+        roles_to_remove.append(amethyst_role)
     if roles_to_remove:
         await member.remove_roles(*roles_to_remove, reason="Member removed from clan")
 
@@ -215,7 +221,7 @@ async def handle_clan_kick_command(bot: discord.Client, message: discord.Message
     user_id = int(match.group(1))
     guild = message.guild
     replied_message = message.reference.resolved
-    
+
     member = guild.get_member(user_id)
     if not member:
         pretty_log("info", f"Member with ID {user_id} not found in the guild.")

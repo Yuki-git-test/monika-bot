@@ -504,6 +504,7 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
+    amethyst = 1459195654688735253
     calm_waters = 1456030935941382235
     os_lotto_ping = 1456081515736993792
     daily_ping = 1456081448368083005
