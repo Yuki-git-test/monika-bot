@@ -505,7 +505,7 @@ async def weekly_stats_checker(
             f"Incremented expected catches by {WEEKLY_REQUIREMENT_CATCHES} for next week.",
             label="Auto Probation Role Assignment",
         )
-        
+
         # Log unknown members if any
         if UNKNOWN_MEMBERS:
             unknown_members = list(UNKNOWN_MEMBERS)
@@ -544,7 +544,7 @@ async def weekly_stats_checker(
                         label="Auto Probation Role Assignment",
                     )
                     # Send in the same channel a reminder to staff
-                    await message.channel.send(embed=embed)
+                   # await message.channel.send(embed=embed)
                     pretty_log(
                         "info",
                         f"Sent unknown members reminder in channel {message.channel.name}.",

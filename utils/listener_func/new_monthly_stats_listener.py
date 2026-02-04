@@ -923,7 +923,7 @@ async def new_monthly_stats_checker(
                         label="Auto Probation Role Assignment",
                     )
                     # Send in the same channel a reminder to staff
-                    await after_message.channel.send(embed=embed)
+                    #await after_message.channel.send(embed=embed)
                     pretty_log(
                         "info",
                         f"Sent unknown members reminder in channel {after_message.channel.name}.",
