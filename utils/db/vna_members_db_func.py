@@ -226,6 +226,12 @@ async def update_member_faction(bot, user: discord.Member, faction: str):
     """
     Update the faction for a user in vna_members.
     """
+    if user is None:
+        pretty_log(
+            "error",
+            "update_member_faction called with user=None. Cannot update faction.",
+        )
+        return
     user_id = user.id
     async with bot.pg_pool.acquire() as conn:
         await conn.execute(
@@ -302,9 +308,7 @@ async def update_member_perks(bot, user: discord.Member, perks: str):
         update_vna_member_perks_cache(user_id, perks)
 
 
-async def update_member_last_month_catches(
-    bot, user_id: int, last_month_catches: int
-):
+async def update_member_last_month_catches(bot, user_id: int, last_month_catches: int):
     """
     Update the last_month_catches for a user in vna_members.
     """
@@ -328,6 +332,7 @@ async def update_member_last_month_catches(
         )
 
         update_vna_member_last_month_catches_cache(user_id, last_month_catches)
+
 
 # Update member pokemeow_name for a user
 async def update_member_pokemeow_name(bot, user: discord.Member, pokemeow_name: str):
