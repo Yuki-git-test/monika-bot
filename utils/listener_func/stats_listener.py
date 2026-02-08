@@ -134,7 +134,7 @@ async def stats_command_handler(
                 tag="info",
                 label="Stats Listener",
             )
-    
+
     # Update faction
     member_faction = member_info.get("faction")
     faction_emoji = extract_faction_emoji(embed_description)
@@ -142,6 +142,15 @@ async def stats_command_handler(
         faction = None
         faction = get_faction_by_emoji(faction_emoji)
         if faction and member_faction != faction:
+            if member is None:
+                pretty_log(
+                    message=(
+                        f"[ERROR] Tried to update faction but member is None for user_id '{user_id}'. Cannot update faction.",
+                    ),
+                    tag="info",
+                    label="Stats Listener",
+                )
+                return
             await update_member_faction(bot, member, faction)
             pretty_log(
                 message=(
