@@ -169,12 +169,13 @@ async def send_probation_report(
             f"**Catch Requirements:** {required_catches:,}\n"
         )
         desc = description_w_fish
-        if context == "Command User":
+        if context == "Command User" or "Retained" in title:
             desc = description_wo_fish
-            title = title + " (Command User)"
+            title = title + " (Command User)" if "Command User" in context else title
             if "Double" in title:
                 desc = description_for_double_probation_wo_fish
-        if context == "Member Loop" and "Double" in title:
+
+        if context == "Member Loop" and "Double" in title and "Retained" not in title:
             desc = description_for_double_probation_w_fish
 
         embed = discord.Embed(
@@ -260,12 +261,6 @@ async def probation_assignment_removal_handler(
     # Determine if new member
     if joined_date and month_start <= user_joined_dt <= month_end:
         new_member = True
-        debug_log(
-            f"Member {member.name} is a new member. Days in clan this month: {days_in_clan}. Required catches: {member_required_catches}",
-        )
-        debug_log(
-            f"New member logic for {member.display_name}: days_in_clan={days_in_clan}, required_catches={member_required_catches}"
-        )
     else:
         new_member = False
 
@@ -581,11 +576,10 @@ async def probation_assignment_removal_handler(
                     f"Updated double probation catch requirement for {member.display_name}. old_stacking_requirements={old_stacking_requirements}, new_stacking_requirements={new_stacking_requirements}, total_stacking_requirements={total_stacking_requirements}, new_catch_requirement={new_catch_requirement}"
                 )
                 return True, msg
-        elif (
-            probation_role not in member.roles
-            and current_day in PROBATION_ASSIGNMENT_DAYS
-            and current_hour >= 23
-        ):
+        elif probation_role not in member.roles and (
+            (current_day in PROBATION_ASSIGNMENT_DAYS and current_hour >= 23)
+            or (command_context == "manual_checking")
+        ):  # assign here
             await member.add_roles(
                 probation_role, reason="Did not meet catch requirements"
             )
@@ -620,6 +614,28 @@ async def probation_assignment_removal_handler(
                 f"Assigned probation role to {member.display_name}. member_required_catches={member_required_catches}, catches={catches}, fishes={fishes}"
             )
             return True, msg
+        elif probation_role in member.roles and (
+            (current_day in PROBATION_ASSIGNMENT_DAYS and current_hour >= 23)
+            or (command_context == "manual_checking")
+        ):
+            # Still didnt meet requirements but already has probation role, send report
+            title = f"⚠️ Probation Role Retained"
+            if double_probation_role in member.roles:
+                title = f"⚠️ Probation and Double Probation Roles Retained"
+            color = discord.Color.orange()
+            await send_probation_report(
+                bot=bot,
+                guild=guild,
+                member=member,
+                title=title,
+                color=color,
+                catches=catches,
+                total_catches=total_catches,
+                required_catches=member_required_catches,
+                context=context,
+                fishes=fishes,
+                last_month_catches=last_month_catches,
+            )
         else:
             # Did not meet requirements but its not probation assignment day
             msg = (
@@ -741,9 +757,7 @@ async def new_monthly_stats_checker(
         )
         debug_log(f"Monthly stats page {current_page} already processed, skipping.")
         return
-
-    PROCESSED_MONTHLY_STATS_PAGES.add(current_page)
-
+    # Only add after successful processing
     # Parse clan stats message
     clan_members_stats = parse_clan_stats_message(embed_description)
     if not clan_members_stats:
@@ -875,6 +889,9 @@ async def new_monthly_stats_checker(
                 label="Weekly Stats Listener",
             )
             debug_log(f"Probation handler for member {member.display_name}: {msg}")
+
+    # Only add after successful processing
+    PROCESSED_MONTHLY_STATS_PAGES.add(current_page)
     # After processing all pages, send probation report for unknown members
     if current_page == total_pages:
         # Clear processed pages for next month
@@ -923,7 +940,7 @@ async def new_monthly_stats_checker(
                         label="Auto Probation Role Assignment",
                     )
                     # Send in the same channel a reminder to staff
-                    #await after_message.channel.send(embed=embed)
+                    # await after_message.channel.send(embed=embed)
                     pretty_log(
                         "info",
                         f"Sent unknown members reminder in channel {after_message.channel.name}.",
