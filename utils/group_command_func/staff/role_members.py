@@ -144,9 +144,11 @@ class RoleMembersView(discord.ui.View):
             try:
                 self.parent.page += 1
                 self.parent.update_buttons()
-                await self.parent.message.edit(
+                # Re-send the updated view and update the message reference
+                msg = await self.parent.message.edit(
                     embed=self.parent.format_page(), view=self.parent
                 )
+                self.parent.message = msg
                 await interaction.response.defer()
             except Exception as e:
                 pretty_log(

@@ -2,6 +2,7 @@ import asyncio
 import calendar
 import zoneinfo
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import discord
 from discord.ext import commands
@@ -29,10 +30,24 @@ NYC = zoneinfo.ZoneInfo("America/New_York")  # auto-handles EST/EDT
 scheduler_manager = SchedulerManager(timezone_str="Asia/Manila")
 
 
+def format_next_run_manila(next_run_time):
+    """
+    Converts a timezone-aware datetime to Asia/Manila time and returns a readable string.
+    """
+    if next_run_time is None:
+        return "No scheduled run time."
+    # Convert to Manila timezone
+    manila_tz = ZoneInfo("Asia/Manila")
+    manila_time = next_run_time.astimezone(manila_tz)
+    # Format as: 03/01/26 - 01:00 PM (Asia/Manila)
+    return manila_time.strftime("%m/%d/%y - %I:%M %p (Asia/Manila)")
+
+
 async def setup_schedulers(bot):
     # Start the scheduler
     scheduler_manager.start()
     pretty_log("scheduler", "Scheduler started.")
+    schedules = []
 
     # Monthly Stats Check Reminder Every 7th, 14th, 21st, and 28th at 11:50 PM EST
     try:
@@ -45,18 +60,16 @@ async def setup_schedulers(bot):
             timezone=NYC,
             args=[bot],
         )
-        pretty_log(
-            "scheduler",
-            message=(
-                f"Scheduled: Monthly Stats Check Reminder every 7th, 14th, 21st, and 28th day at 11:50 PM EST\n"
-                f"Next Scheduled Run: {job.next_run_time}"
-            ),
+        readable_run = format_next_run_manila(job.next_run_time)
+        schedules.append(
+            f"Monthly Stats Check Reminder every 7th, 14th, 21st, and 28th day at 11:50 PM EST (Next Run: {readable_run})"
         )
     except Exception as e:
         pretty_log(
             "error",
             message=(f"Failed to schedule Monthly Stats Check Reminder. Error: {e}"),
         )
+
     # Schedule new probation reminder every 7th, 14th, 21st, and 28th at 11:50 PM Eastern Time
     try:
         job = scheduler_manager.add_cron_job(
@@ -68,12 +81,9 @@ async def setup_schedulers(bot):
             timezone=NYC,
             args=[bot],
         )
-        pretty_log(
-            "scheduler",
-            message=(
-                f"Scheduled: New Probation Catch Reminder every 7th, 14th, 21st, and 28th day at 11:50 PM EST\n"
-                f"Next Scheduled Run: {job.next_run_time}"
-            ),
+        readable_run = format_next_run_manila(job.next_run_time)
+        schedules.append(
+            f"New Probation Catch Reminder every 7th, 14th, 21st, and 28th day at 11:50 PM EST (Next Run: {readable_run})"
         )
     except Exception as e:
         pretty_log(
@@ -164,12 +174,9 @@ async def setup_schedulers(bot):
             timezone=MANILA,
             args=[bot],
         )
-        pretty_log(
-            "scheduler",
-            message=(
-                f"Scheduled: Custom Role Checker every 2nd of the month at 12:00 PM Manila Time\n"
-                f"Next Scheduled Run: {job.next_run_time}"
-            ),
+        readable_run = format_next_run_manila(job.next_run_time)
+        schedules.append(
+            f"Custom Role Checker every 2nd of the month at 12:00 PM Manila Time (Next Run: {readable_run})"
         )
     except Exception as e:
         pretty_log(
@@ -179,3 +186,13 @@ async def setup_schedulers(bot):
 
     # Attach the scheduler manager to the bot for later access
     bot.scheduler_manager = scheduler_manager
+
+
+# 🟣────────────────────────────────────────────
+#         ⚡ Startup Checklist ⚡
+# 🟣────────────────────────────────────────────
+def schedule_checklist(schedules):
+    print("\n── · 𖨠 · ───────────────────────────────────────────────── · 𖨠 · ──")
+    for schedule in schedules:
+        print(f"✅ {schedule}")
+    print("── · 𖨠 · ───────────────────────────────────────────────── · 𖨠 · ──\n")

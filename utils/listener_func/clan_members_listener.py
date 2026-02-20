@@ -18,8 +18,11 @@ from utils.functions.webhook_func import send_webhook
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 
-enable_debug(f"{__name__}.move_to_members_category")
-enable_debug(f"{__name__}.clan_members_command_listener")
+# enable_debug(f"{__name__}.move_to_members_category")
+# enable_debug(f"{__name__}.clan_members_command_listener")
+
+extracted_members_list = []
+pages_seen = set()  # To track seen pages and avoid duplicates
 
 PRO_MEMBERS_CATEGORY_ID = 1381773427362234488
 STAFF_ROLE_IDS = [VN_ALLSTARS_ROLES.staff, VN_ALLSTARS_ROLES.senior_mod]
@@ -35,6 +38,17 @@ CATCH_CATEGORY_MAP = {
     },
     "Clan Members 2": {"category_id": CLAN_MEMBER_CATEGORY_TWO_ID, "min_catches": 0},
 }
+
+import re
+
+
+def extract_page_numbers(text):
+    match = re.search(r"Page\s*(\d+)\s*/\s*(\d+)", text)
+    if match:
+        current_page = int(match.group(1))
+        total_pages = int(match.group(2))
+        return current_page, total_pages
+    return None, None
 
 
 async def move_to_members_category(
@@ -267,10 +281,20 @@ async def clan_members_command_listener(
         fetch_vna_member_id_by_username_or_pokemeow_name,
     )
 
+    # Exctract page numbers to avoid processing duplicates when reactions are added
+    current_page, total_pages = extract_page_numbers(embed.footer.text)
+    pretty_log(
+        "info",
+        f"Processing clan members command for page {current_page} of {total_pages}.",
+    )
     for user_line, contrib_line in zip(user_lines, contribution_line):
         debug_log(f"Processing user_line: {user_line}, contrib_line: {contrib_line}")
         user_name = user_line.split(" ", 1)[-1].replace("**", "").strip()
         member = get_member_from_line(vna_guild, user_line)
+
+        # Put to extracted members list for future reference
+        if user_id not in extracted_members_list:
+            extracted_members_list.append(user_id)
 
         if not member:
             debug_log(f"Member for user line '{user_line}' not found in VNA guild.")
@@ -296,6 +320,7 @@ async def clan_members_command_listener(
                 f"Member info for user ID {user_id} not found in VNA members cache.",
             )
             continue
+
         channel_id = member_info.get("channel_id")
         if not channel_id:
             debug_log(f"Channel ID for user ID {user_id} not found in cache.")
@@ -333,6 +358,38 @@ async def clan_members_command_listener(
         "info",
         "Clan members command listener processing completed.",
     )
+    if current_page is not None and total_pages is not None:
+        if current_page == total_pages:
+            # Members not in clan
+            non_clan_members = []
+            for user_id in extracted_members_list:
+                if user_id not in vna_members_cache:
+
+                    # Get user object for better logging
+                    user = bot.get_user(user_id) or await bot.fetch_user(user_id)
+                    non_clan_member_line = f"{user.name} (ID: {user_id})"
+                    non_clan_members.append(non_clan_member_line)
+                    pretty_log(
+                        "info",
+                        f"User {user.name} (ID: {user_id}) listed in clan members embed but not found in VNA members cache.",
+                    )
+
+            if non_clan_members:
+                embed = discord.Embed(
+                    title="Non-Clan Members Detected",
+                    description=(
+                        "The following members were listed in the clan members embed but were not found in the VNA members cache. This likely means they are not actually in the clan or there is a mismatch in usernames.\n\n"
+                        + "\n".join(non_clan_members)
+                    ),
+                    color=MONIKA_EMBED_COLOR,
+                    timestamp=datetime.now(),
+                )
+                await message.channel.send(embed=embed)
+                pretty_log(
+                    "info",
+                    f"Non-clan members detected: {', '.join(non_clan_members)}",
+                )
+
     if processsing_msg:
         # Get category channel number
         pro_members_category = vna_guild.get_channel(PRO_MEMBERS_CATEGORY_ID)

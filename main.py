@@ -12,6 +12,7 @@ from utils.logs.pretty_log import pretty_log, set_monika_bot
 from utils.cache.central_cache_loader import load_all_caches
 from utils.schedule.scheduler import setup_schedulers
 ALLOWED_GUILD_IDS = [VNA_SERVER_ID, 1220718310455250996]
+
 # 🍑────────────────────────────────────────────
 #          ⚡ Bot Initialization ⚡
 # 🍑────────────────────────────────────────────
@@ -22,6 +23,32 @@ intents.members = True
 load_dotenv()
 bot = commands.Bot(command_prefix="!", intents=discord.Intents.all(), help_command=None)
 set_monika_bot(bot=bot)
+
+
+# ❀───────────────────────────────❀
+#      💖  Startup Checklist 💖
+# ❀───────────────────────────────❀
+async def startup_checklist(bot: commands.Bot):
+    from utils.cache.cache_list import (
+        vna_members_cache,
+        top_monthly_grinders_cache,
+        probation_list_cache,
+        webhook_url_cache,
+    )
+
+    top_monthly_grinders = len(top_monthly_grinders_cache)
+    # ❀ This divider stays untouched ❀
+    print("\n── · 𖨠 · ───────────────────────────────────────────────── · 𖨠 · ──")
+    print(f"✅ {len(bot.cogs)} 💌 Cogs Loaded")
+    print(f"✅ {len(vna_members_cache)} 🎀 VNA Members")
+    print(f"✅ {top_monthly_grinders} 💎 Top Monthly Grinders")
+    print(f"✅ {len(probation_list_cache)} 🍎 Probation Members")
+    print(f"✅ {len(webhook_url_cache)} 📒 Webhook Urls")
+    pg_status = "Ready" if hasattr(bot, "pg_pool") else "Not Ready"
+    print(f"✅ {pg_status} 📖  PostgreSQL Pool")
+    total_slash_commands = sum(1 for _ in bot.tree.walk_commands())
+    print(f"✅ {total_slash_commands} 🖊️ Slash Commands Synced")
+    print("── · 𖨠 · ───────────────────────────────────────────────── · 𖨠 · ──\n")
 
 
 # 🍑────────────────────────────────────────────
@@ -178,6 +205,9 @@ async def on_ready():
     if not refresh_all_caches.is_running():
         refresh_all_caches.start()
         pretty_log(message="✅ Started hourly cache refresh task", tag="ready")
+
+    # ❀ Run startup checklist ❀
+    await startup_checklist(bot)
 
 # 🍑────────────────────────────────────────────
 #               ⚡ Main Entry Point ⚡

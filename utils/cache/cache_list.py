@@ -54,3 +54,8 @@ channel_placement_cache: dict[int, dict] = {}
 #   "user_name": str,
 #   "catches": int,
 # }
+
+
+# Variables
+
+processed_clan_members_msg_ids = set()  # To track processed messages and avoid reprocessing
