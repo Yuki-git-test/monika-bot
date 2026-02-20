@@ -292,10 +292,6 @@ async def clan_members_command_listener(
         user_name = user_line.split(" ", 1)[-1].replace("**", "").strip()
         member = get_member_from_line(vna_guild, user_line)
 
-        # Put to extracted members list for future reference
-        if user_id not in extracted_members_list:
-            extracted_members_list.append(user_id)
-
         if not member:
             debug_log(f"Member for user line '{user_line}' not found in VNA guild.")
             pretty_log(
@@ -303,6 +299,11 @@ async def clan_members_command_listener(
                 f"Member for user line '{user_line}' not found in VNA guild.",
             )
             continue
+
+        user_id = member.id
+        # Put to extracted members list for future reference
+        if user_id not in extracted_members_list:
+            extracted_members_list.append(user_id)
 
         # Extract catches from contribution line
         contrib_match = re.search(r"> ?\*?\*?([\d,]+)", contrib_line)
