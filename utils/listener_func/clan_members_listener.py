@@ -14,12 +14,13 @@ from constants.vn_allstars_constants import (
     VNA_SERVER_ID,
 )
 from utils.cache.cache_list import vna_members_cache
+from utils.db.vna_members_db_func import upsert_member
 from utils.functions.webhook_func import send_webhook
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 
-# enable_debug(f"{__name__}.move_to_members_category")
-# enable_debug(f"{__name__}.clan_members_command_listener")
+enable_debug(f"{__name__}.move_to_members_category")
+enable_debug(f"{__name__}.clan_members_command_listener")
 
 extracted_members_list = []
 pages_seen = set()  # To track seen pages and avoid duplicates
@@ -40,6 +41,8 @@ CATCH_CATEGORY_MAP = {
 }
 
 import re
+
+TESTING_CHECK_MEMBERS = True
 
 
 def extract_page_numbers(text):
@@ -200,9 +203,9 @@ def get_member_from_line(guild: discord.Guild, user_line):
         user_id = int(match.group("uid2"))
         member = guild.get_member(user_id)
         if member:
-            return member
+            return member, user_id
         else:
-            return None
+            return None, user_id
 
     # Try to match just <@id> - id (without leading number)
     match2 = re.match(r"<@(?P<uid1>\d+)>\s*-\s*(?P<uid2>\d+)}?", cleaned)
@@ -250,6 +253,16 @@ async def clan_members_command_listener(
             processsing_msg = await replied_message.reply(
                 f"{Emojis.orange_loading} Sorting channels...", mention_author=False
             )
+    elif msg_context and msg_context == "check_members":
+        debug_log("Message context is reply, fetching replied message.")
+        replied_message = message.reference.resolved
+        if replied_message:
+            debug_log("Replied message found.")
+            message = replied_message
+            processsing_msg = await replied_message.reply(
+                f"{Emojis.orange_loading} Checking members...", mention_author=False
+            )
+
         else:
             debug_log("No replied message found.")
             return
@@ -281,6 +294,7 @@ async def clan_members_command_listener(
         fetch_vna_member_id_by_username_or_pokemeow_name,
     )
 
+    vna_member_cache_ids = set(vna_members_cache.keys())
     # Exctract page numbers to avoid processing duplicates when reactions are added
     current_page, total_pages = extract_page_numbers(embed.footer.text)
     pretty_log(
@@ -290,7 +304,39 @@ async def clan_members_command_listener(
     for user_line, contrib_line in zip(user_lines, contribution_line):
         debug_log(f"Processing user_line: {user_line}, contrib_line: {contrib_line}")
         user_name = user_line.split(" ", 1)[-1].replace("**", "").strip()
-        member = get_member_from_line(vna_guild, user_line)
+        member, user_id = get_member_from_line(vna_guild, user_line)
+
+        # Put to extracted members list for future reference
+        if user_id not in extracted_members_list:
+            debug_log(f"Adding user ID {user_id} to extracted members list.")
+            extracted_members_list.append(user_id)
+
+        if user_id not in vna_member_cache_ids:
+            debug_log(
+                f"User ID {user_id} extracted from embed but not found in VNA members cache."
+            )
+            pretty_log(
+                "info",
+                f"User ID {user_id} extracted from embed but not found in VNA members cache.",
+            )
+            if not member:
+                # Fetch user for better logging
+                user = bot.get_user(user_id) or await bot.fetch_user(user_id)
+                # Upsert with minimal info to avoid missing members in future checks
+                try:
+                    await upsert_member(bot, user)
+                    await message.channel.send(
+                        f"User {user.name} (ID: {user_id}) was listed in the clan members embed but not found in the VNA members cache. They have now been added to the database for future reference."
+                    )
+                except Exception as e:
+                    debug_log(f"Error upserting member with user ID {user_id}: {e}")
+                    pretty_log(
+                        "error",
+                        f"Error upserting member with user ID {user_id}: {e}",
+                    )
+                    await message.channel.send(
+                        f"Error upserting member with user ID {user_id}: {e}"
+                    )
 
         if not member:
             debug_log(f"Member for user line '{user_line}' not found in VNA guild.")
@@ -299,99 +345,142 @@ async def clan_members_command_listener(
                 f"Member for user line '{user_line}' not found in VNA guild.",
             )
             continue
+        if not TESTING_CHECK_MEMBERS:
+            debug_log("TESTING_CHECK_MEMBERS is False, skipping channel sort process.")
 
-        user_id = member.id
-        # Put to extracted members list for future reference
-        if user_id not in extracted_members_list:
-            extracted_members_list.append(user_id)
-
-        # Extract catches from contribution line
-        contrib_match = re.search(r"> ?\*?\*?([\d,]+)", contrib_line)
-        catches = (
-            int(contrib_match.group(1).replace(",", "")) if contrib_match else None
-        )
-
-        # Get info
-        user_id = member.id
-        member_info = vna_members_cache.get(user_id)
-        if not member_info:
-            debug_log(f"Member info for user ID {user_id} not found in cache.")
-            pretty_log(
-                "info",
-                f"Member info for user ID {user_id} not found in VNA members cache.",
-            )
-            continue
-
-        channel_id = member_info.get("channel_id")
-        if not channel_id:
-            debug_log(f"Channel ID for user ID {user_id} not found in cache.")
-            pretty_log(
-                "info",
-                f"Channel ID for user ID {user_id} not found in VNA members cache.",
-            )
-            continue
-        channel = vna_guild.get_channel(channel_id)
-        if not channel:
-            debug_log(f"Channel with ID {channel_id} not found in VNA guild.")
-            pretty_log(
-                "info",
-                f"Channel with ID {channel_id} not found in VNA guild.",
-            )
-            continue
-        # Move to Pro Members category if catches >= 100000
-        debug_log(f"Member {member.name} has {catches} catches.")
-        if catches is not None and catches >= 100000:
-            await move_to_members_category(bot, member, channel, context="Pro Members")
-        elif catches is not None and 50000 <= catches < 100000:
-            await move_to_members_category(
-                bot, member, channel, context="Clan Members 1"
-            )
-        elif catches is not None and catches < 50000:
-            await move_to_members_category(
-                bot, member, channel, context="Clan Members 2"
+            # Extract catches from contribution line
+            contrib_match = re.search(r"> ?\*?\*?([\d,]+)", contrib_line)
+            catches = (
+                int(contrib_match.group(1).replace(",", "")) if contrib_match else None
             )
 
-        # Sleep for 3 seconds between moves to avoid rate limits
-        await asyncio.sleep(3)
+            # Get info
+            user_id = member.id
+            member_info = vna_members_cache.get(user_id)
+            if not member_info:
+                debug_log(f"Member info for user ID {user_id} not found in cache.")
+                pretty_log(
+                    "info",
+                    f"Member info for user ID {user_id} not found in VNA members cache.",
+                )
+                continue
+
+            channel_id = member_info.get("channel_id")
+            if not channel_id:
+                debug_log(f"Channel ID for user ID {user_id} not found in cache.")
+                pretty_log(
+                    "info",
+                    f"Channel ID for user ID {user_id} not found in VNA members cache.",
+                )
+                continue
+            channel = vna_guild.get_channel(channel_id)
+            if not channel:
+                debug_log(f"Channel with ID {channel_id} not found in VNA guild.")
+                pretty_log(
+                    "info",
+                    f"Channel with ID {channel_id} not found in VNA guild.",
+                )
+                continue
+            # Move to Pro Members category if catches >= 100000
+            debug_log(f"Member {member.name} has {catches} catches.")
+            if catches is not None and catches >= 100000:
+                await move_to_members_category(
+                    bot, member, channel, context="Pro Members"
+                )
+            elif catches is not None and 50000 <= catches < 100000:
+                await move_to_members_category(
+                    bot, member, channel, context="Clan Members 1"
+                )
+            elif catches is not None and catches < 50000:
+                await move_to_members_category(
+                    bot, member, channel, context="Clan Members 2"
+                )
+
+            # Sleep for 3 seconds between moves to avoid rate limits
+            await asyncio.sleep(3)
 
     debug_log("Processing completed.")
     pretty_log(
         "info",
         "Clan members command listener processing completed.",
     )
+    if current_page in pages_seen:
+        debug_log(
+            f"Page {current_page} already processed, skipping duplicate processing."
+        )
+        return
+
+    pages_seen.add(current_page)  # Mark this page as seen to avoid duplicate processing
+    debug_log(f"Added page {current_page} to seen pages: {pages_seen}")
     if current_page is not None and total_pages is not None:
-        if current_page == total_pages:
+        if (current_page == total_pages and processsing_msg is None) or (
+            processsing_msg
+            and msg_context == "check_members"
+            and len(pages_seen) == total_pages
+        ):
+            debug_log("Last page processed, sending completion message.")
             # Members not in clan
             non_clan_members = []
-            for user_id in extracted_members_list:
-                if user_id not in vna_members_cache:
+            debug_log(f"Checking extracted_members_list: {extracted_members_list}")
+            cache_keys_sample = list(vna_members_cache.keys())[:4]
+            debug_log(
+                f"vna_members_cache keys sample: {cache_keys_sample} (showing 4 of {len(vna_members_cache)})"
+            )
 
+            for user_id in vna_member_cache_ids:
+                debug_log(f"Checking user_id: {user_id}")
+                if user_id not in extracted_members_list:
+                    debug_log(f"User ID {user_id} NOT found in vna_members_cache.")
                     # Get user object for better logging
                     user = bot.get_user(user_id) or await bot.fetch_user(user_id)
                     non_clan_member_line = f"{user.name} (ID: {user_id})"
                     non_clan_members.append(non_clan_member_line)
-                    pretty_log(
-                        "info",
-                        f"User {user.name} (ID: {user_id}) listed in clan members embed but not found in VNA members cache.",
-                    )
+                    # pretty_log(
+                    #     "info",
+                    #     f"User {user.name} (ID: {user_id}) listed in clan members embed but not found in VNA members cache.",
+                    # )
+                else:
+                    debug_log(f"User ID {user_id} found in vna_members_cache.")
 
             if non_clan_members:
                 embed = discord.Embed(
                     title="Non-Clan Members Detected",
                     description=(
-                        "The following members were listed in the clan members embed but were not found in the VNA members cache. This likely means they are not actually in the clan or there is a mismatch in usernames.\n\n"
+                        "The following members were listed in the clan members embed but were not found in the VNA members cache. This likely means they are not actually in the clan or there is a mismatch in usernames.\n\nKindly do the command `;stats <user_id>` to verify\n\n"
                         + "\n".join(non_clan_members)
                     ),
                     color=MONIKA_EMBED_COLOR,
                     timestamp=datetime.now(),
                 )
-                await message.channel.send(embed=embed)
-                pretty_log(
-                    "info",
-                    f"Non-clan members detected: {', '.join(non_clan_members)}",
-                )
 
-    if processsing_msg:
+                if processsing_msg:
+                    await processsing_msg.edit(
+                        content=f"{Emojis.orange_check} Member check completed with discrepancies found.",
+                        embed=embed,
+                    )
+                else:
+                    await message.channel.send(embed=embed)
+                debug_log(f"Non-clan members detected: {', '.join(non_clan_members)}")
+                # pretty_log(
+                #     "info",
+                #     f"Non-clan members detected: {', '.join(non_clan_members)}",
+                # )
+            else:
+                if processsing_msg:
+                    await processsing_msg.edit(
+                        content=f"{Emojis.orange_check} Member check completed! No discrepancies found.",
+                    )
+                debug_log("Member check completed with no discrepancies found.")
+                # pretty_log(
+                #     "info",
+                #     "Member check completed with no discrepancies found.",
+                # )
+            # pages_seen.clear()  # Clear seen pages for next time
+    if processsing_msg and msg_context == "check_members":
+        await processsing_msg.edit(
+            content=f"{Emojis.orange_check} Member check completed! Processed {len(pages_seen)} pages."
+        )
+    if processsing_msg and msg_context == "reply":
         # Get category channel number
         pro_members_category = vna_guild.get_channel(PRO_MEMBERS_CATEGORY_ID)
         clan_member_one_category = vna_guild.get_channel(CLAN_MEMBER_CATEGORY_ONE_ID)

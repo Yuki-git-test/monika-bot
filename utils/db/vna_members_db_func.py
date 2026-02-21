@@ -57,6 +57,7 @@ async def upsert_member(
     faction: str = None,
     clan_joined_date: int = None,
     last_month_catches: int = 0,
+    context: str ="via_invite",
 ):
     """
     Insert or update a vna_members row for a user.
@@ -72,7 +73,7 @@ async def upsert_member(
     import time
 
     clan_joined_date = None
-    if clan_joined_date is None:
+    if clan_joined_date is None and context == "via_invite":
         clan_joined_date = int(time.time())
 
     try:

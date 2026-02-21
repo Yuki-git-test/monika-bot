@@ -36,10 +36,10 @@ class CentralLoop(commands.Cog):
         )
         while not self.bot.is_closed():
             try:
-                pretty_log(
+                """pretty_log(
                     "background_task",
                     "🔄 Running background checks.."
-                )
+                )"""
                 # Check for due clan break members
                 await clan_break_checker(self.bot)
 

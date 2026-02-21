@@ -53,3 +53,17 @@ async def quick_codes_handler(bot, message: discord.Message):
         )
         await clan_members_command_listener(bot, message, msg_context="reply")
         return
+
+    # ————————————————————————————————
+    # 🏰 Clan Members Command Quick Code Handler
+    # ————————————————————————————————
+    if (
+        message.content.lower().startswith("!check_members")
+        and message.author.id == KHY_USER_ID
+    ):
+        pretty_log(
+            "info",
+            "Clan members command listener triggered via quick code.",
+        )
+        await clan_members_command_listener(bot, message, msg_context="check_members")
+        return
