@@ -213,9 +213,9 @@ def get_member_from_line(guild: discord.Guild, user_line):
         user_id = int(match2.group("uid2"))
         member = guild.get_member(user_id)
         if member:
-            return member
+            return member, user_id
         else:
-            return None
+            return None, user_id
 
     # Fallback: try to extract last word as user id if it's all digits
     parts = cleaned.split()
@@ -232,9 +232,9 @@ def get_member_from_line(guild: discord.Guild, user_line):
     user_id = fetch_vna_member_id_by_username_or_pokemeow_name(user_name)
     if user_id:
         member = guild.get_member(user_id)
-        return member
+        return member, user_id
     else:
-        return None
+        return None, user_id
 
 
 async def clan_members_command_listener(
