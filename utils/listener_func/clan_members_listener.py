@@ -320,22 +320,29 @@ async def clan_members_command_listener(
                 f"User ID {user_id} extracted from embed but not found in VNA members cache.",
             )
             if not member:
-                # Fetch user for better logging
-                user = bot.get_user(user_id) or await bot.fetch_user(user_id)
-                # Upsert with minimal info to avoid missing members in future checks
-                try:
-                    await upsert_member(bot, user)
-                    await message.channel.send(
-                        f"User {user.name} (ID: {user_id}) was listed in the clan members embed but not found in the VNA members cache. They have now been added to the database for future reference."
-                    )
-                except Exception as e:
-                    debug_log(f"Error upserting member with user ID {user_id}: {e}")
+                # Only fetch user if user_id is valid
+                if user_id is not None:
+                    user = bot.get_user(user_id) or await bot.fetch_user(user_id)
+                    # Upsert with minimal info to avoid missing members in future checks
+                    try:
+                        await upsert_member(bot, user)
+                        await message.channel.send(
+                            f"User {user.name} (ID: {user_id}) was listed in the clan members embed but not found in the VNA members cache. They have now been added to the database for future reference."
+                        )
+                    except Exception as e:
+                        debug_log(f"Error upserting member with user ID {user_id}: {e}")
+                        pretty_log(
+                            "error",
+                            f"Error upserting member with user ID {user_id}: {e}",
+                        )
+                        await message.channel.send(
+                            f"Error upserting member with user ID {user_id}: {e}"
+                        )
+                else:
+                    debug_log("user_id is None, skipping user fetch and upsert.")
                     pretty_log(
-                        "error",
-                        f"Error upserting member with user ID {user_id}: {e}",
-                    )
-                    await message.channel.send(
-                        f"Error upserting member with user ID {user_id}: {e}"
+                        "warning",
+                        "user_id is None, cannot fetch user or upsert member.",
                     )
 
         if not member:
