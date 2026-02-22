@@ -42,7 +42,7 @@ CATCH_CATEGORY_MAP = {
 
 import re
 
-TESTING_CHECK_MEMBERS = True
+TESTING_CHECK_MEMBERS = False
 
 
 def extract_page_numbers(text):
