@@ -65,7 +65,7 @@ class OnMemberLeaveCog(commands.Cog):
 
         # Log member leave
         log_channel = member.guild.get_channel(LOG_CHANNEL_ID)
-        title_str = "👋 Member Left Server"
+        title_str = "👋 Guest Left Server"
         # Check if its a clan member
         member_info = vna_members_cache.get(member.id)
         personal_channel = None
