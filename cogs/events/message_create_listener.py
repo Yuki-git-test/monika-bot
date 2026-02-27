@@ -265,7 +265,7 @@ class MessageCreateListener(commands.Cog):
                             self.bot,
                             message,
                         )
-                # ————————————————————————————————
+                """# ————————————————————————————————
                 # 📖 Monika Library AR Handler
                 # ————————————————————————————————
                 # Roles
@@ -292,7 +292,7 @@ class MessageCreateListener(commands.Cog):
                             or dot_role in message.author.roles
                         ):
                             await monika_lib_ar_handler(message)
-
+"""
         except Exception as e:
             # 🛑────────────────────────────────────────────
             #        Unhandled on_message Error Handler
