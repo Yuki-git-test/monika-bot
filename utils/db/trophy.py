@@ -60,22 +60,24 @@ async def update_first_place_in_db(
         async with bot.pg_pool.acquire() as conn:
             await conn.execute(
                 """
-                UPDATE current_trophy_leaderboard
-                SET message_id = $1,
-                    first_place_id = $2,
-                    first_place_name = $3,
-                    first_place_trophy = $4
-                WHERE channel_id = $5;
-                """,
+                    INSERT INTO current_trophy_leaderboard (
+                        message_id, channel_id, first_place_id, first_place_name, first_place_trophy
+                    ) VALUES ($1, $2, $3, $4, $5)
+                    ON CONFLICT (message_id) DO UPDATE SET
+                        channel_id = EXCLUDED.channel_id,
+                        first_place_id = EXCLUDED.first_place_id,
+                        first_place_name = EXCLUDED.first_place_name,
+                        first_place_trophy = EXCLUDED.first_place_trophy;
+                    """,
                 message_id,
+                LEADERBOARD_CHANNEL_ID,
                 first_place_id,
                 first_place_name,
                 first_place_trophy,
-                LEADERBOARD_CHANNEL_ID,
             )
             pretty_log(
                 "info",
-                f"Updated current_trophy_leaderboard with message_id {message_id} , first place name {first_place_name} with {first_place_trophy} trophies.",
+                f"Upserted current_trophy_leaderboard with message_id {message_id}, first place name {first_place_name} with {first_place_trophy} trophies.",
             )
     except Exception as e:
         pretty_log(
@@ -128,6 +130,7 @@ async def fetch_user_place_and_trophies(bot, user: discord.Member):
                 return row
         return None
 
+
 async def remove_trophy_info_user(bot, user_id: int):
     """
     Remove the trophy entry for a specific user.
@@ -146,7 +149,8 @@ async def remove_trophy_info_user(bot, user_id: int):
             f"Removed trophy entry for user ID {user_id}.",
             label="Trophy DB",
         )
-        
+
+
 # Fetch all trophies
 async def fetch_all_trophies(bot):
     """
@@ -181,7 +185,7 @@ async def update_trophies(bot, user: discord.Member, amount: int):
             user_name,
             amount,
         )
-        if user_id == first_place_user_id:
+        """if user_id == first_place_user_id:
             await update_first_place_in_db(
                 bot=bot,
                 message_id=current_msg_id,
@@ -193,7 +197,7 @@ async def update_trophies(bot, user: discord.Member, amount: int):
                 "info",
                 f"Updated trophies for first place {user.name} to {amount}.",
             )
-
+"""
 
 # Upsert trophy (insert or update)
 async def upsert_trophies(bot, user: discord.Member, amount: int):
@@ -336,8 +340,6 @@ async def fetch_leaderboard_message_id(bot):
         if row:
             return row["message_id"]
         return None
-
-
 
 
 async def update_leaderboard_first_place(bot):

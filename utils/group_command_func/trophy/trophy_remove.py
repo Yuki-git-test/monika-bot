@@ -116,7 +116,7 @@ async def trophy_remove_func(
             embed=log_embed,
         )
 
-    # Check if there is a new first place
+    """"# Check if there is a new first place
     old_first_place_info = await fetch_current_leaderboard_info(bot)
     old_first_place_id = (
         old_first_place_info.get("first_place_id") if old_first_place_info else None
@@ -131,4 +131,4 @@ async def trophy_remove_func(
                 guild=guild,
                 member=guild.get_member(current_first_place_id),
                 trophy_amount=current_first_place_trophy,
-            )
+            )"""
