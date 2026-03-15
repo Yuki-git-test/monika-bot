@@ -111,6 +111,7 @@ async def stats_command_handler(
     debug_log(
         f"fetched user_id='{user_id}' for username='{username}'"
     )
+    debug_log(f"{username} is in vna_members_cache: {user_id in vna_members_cache}")
     if not user_id:
         debug_log("user_id not found , Resortin to fallback method of extracting user_id from command")
         # Fallback: try to get user ID from replied message content

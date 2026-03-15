@@ -125,11 +125,14 @@ async def move_to_members_category(
         debug_log(
             f"Moving channel {channel.name} to category {target_members_category.name}."
         )
+
         await channel.edit(category=target_members_category)
         pretty_log(
             "info",
             f"Channel {channel.name} moved to {target_members_category.name} Category in guild {channel.guild.name}.",
         )
+        # Sleep for 3 seconds after a successful move to avoid rate limits
+        await asyncio.sleep(3)
         log_channel = channel.guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.server_log)
         if log_channel:
             min_catches = CATCH_CATEGORY_MAP[context]["min_catches"]
@@ -403,8 +406,7 @@ async def clan_members_command_listener(
                     bot, member, channel, context="Clan Members 2"
                 )
 
-            # Sleep for 3 seconds between moves to avoid rate limits
-            await asyncio.sleep(3)
+            # ...existing code...
 
     debug_log("Processing completed.")
     pretty_log(
