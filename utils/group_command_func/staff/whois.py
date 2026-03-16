@@ -21,7 +21,7 @@ async def whois_func(
     bot: commands.Bot,
     interaction: discord.Interaction,
     member: discord.Member = None,
-    member_id: int = None,
+    member_id: str = None,
 ):
     """Fetch and display detailed information about a server member."""
     # Defer
@@ -46,6 +46,7 @@ async def whois_func(
     guild = bot.get_guild(VNA_SERVER_ID)
 
     if member_id and not member:
+        member_id = int(member_id)
         try:
             member = await guild.fetch_member(member_id)
         except discord.NotFound:

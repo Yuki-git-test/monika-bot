@@ -352,7 +352,7 @@ class StaffGroupCommand(commands.Cog):
         self,
         interaction: discord.Interaction,
         member: discord.Member = None,
-        member_id: int = None,
+        member_id: str = None,
     ):
         slash_cmd_name = "staff whois"
 
