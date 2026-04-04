@@ -36,8 +36,9 @@ async def auto_clan_remove_handler(
         f"Auto removing member {member.display_name} ({member.id})", highlight=True
     )
     pretty_log(
-        f"Auto removing member {member.display_name} ({member.id}) via context: {context}",
-        highlight=True,
+        tag="info",
+        message=f"Auto removing member {member.display_name} ({member.id}) via context: {context}",
+
     )
     # Get Roles
     guild = bot.get_guild(VNA_SERVER_ID)
