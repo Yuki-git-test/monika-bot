@@ -35,6 +35,10 @@ async def auto_clan_remove_handler(
     debug_log(
         f"Auto removing member {member.display_name} ({member.id})", highlight=True
     )
+    pretty_log(
+        f"Auto removing member {member.display_name} ({member.id}) via context: {context}",
+        highlight=True,
+    )
     # Get Roles
     guild = bot.get_guild(VNA_SERVER_ID)
     probation_role = guild.get_role(VN_ALLSTARS_ROLES.probation)
@@ -53,6 +57,7 @@ async def auto_clan_remove_handler(
         return
 
     member_channel_id = member_info["channel_id"] if member_info else None
+    member_channel = None  # Ensure member_channel is always defined
     pretty_log(
         "info",
         f"Member {member.display_name} ({member.id}) channel ID: {member_channel_id}",
@@ -150,7 +155,7 @@ async def auto_clan_remove_handler(
     # Log the clan leave event
     channel_category_count = 0
     channel_category_name = "N/A"
-    channel_category_id = member_channel.category_id if member_channel_id else None
+    channel_category_id = member_channel.category_id if member_channel else None
     if channel_category_id:
         channel_category = member.guild.get_channel(channel_category_id)
         if channel_category:
