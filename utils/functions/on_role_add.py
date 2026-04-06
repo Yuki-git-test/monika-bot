@@ -15,7 +15,7 @@ from utils.cache.cache_list import (
 )
 from utils.db.probation_list_db import upsert_probation_member
 from utils.db.top_monthly_grinders_db import upsert_top_monthly_grinder
-from utils.db.vna_members_db_func import upsert_member
+from utils.db.vna_members_db_func import upsert_member, update_house_role_id
 from utils.functions.clan_break_role_handler import handle_clan_break_add_role
 from utils.functions.monthly_requirements_utils import (
     get_member_weeks_in_clan,
@@ -33,7 +33,7 @@ from utils.logs.pretty_log import pretty_log
 
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
 
-
+from utils.AR.house_join import HOUSE_ROLE_LIST, HOUSE_MAP
 # 🍭──────────────────────────────
 #   🎀 Event: On Role Add
 # 🍭──────────────────────────────
@@ -100,6 +100,14 @@ async def handle_role_add(
     if role_id == VN_ALLSTARS_ROLES.probation:
         await probation_role_add(bot, member)
 
+    # ————————————————————————————————
+    # 🩵 VNA House Role Add
+    # ————————————————————————————————
+    if role_id in HOUSE_ROLE_LIST:
+        # Update house_role_id in the database and cache
+        house_name = HOUSE_MAP.get(role_id, {}).get("name", "Unknown House")
+        await update_house_role_id(bot, member.id, house_name=house_name, house_role_id=role_id)
+        
     # ————————————————————————————————
     # 🩵 VNA Role Logs
     # ————————————————————————————————

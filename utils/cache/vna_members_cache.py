@@ -24,6 +24,8 @@ async def load_vna_members_cache(bot):
                     "faction": member["faction"],
                     "clan_joined_date": member.get("clan_joined_date"),
                     "last_month_catches": member.get("last_month_catches", 0),
+                    "house_name": member.get("house_name", ""),
+                    "house_role_id": member.get("house_role_id"),
                 }
             pretty_log(
                 "cache", f"Loaded {len(vna_members_cache)} vna_members into cache."
@@ -36,6 +38,35 @@ async def load_vna_members_cache(bot):
 
     return vna_members_cache
 
+def get_house_role_id_by_user_id(user_id: int) -> int | None:
+    """
+    Get the house_role_id of a vna_member by their user_id from the cache.
+    """
+    if user_id in vna_members_cache:
+        return vna_members_cache[user_id].get("house_role_id")
+    return None
+
+def get_members_from_house_role_id(house_role_id: int) -> list[int]:
+    """
+    Get a list of user_ids of vna_members in a house by the house_role_id from the cache.
+    """
+    members = []
+    for user_id, data in vna_members_cache.items():
+        if data.get("house_role_id") == house_role_id:
+            members.append(user_id)
+    return members
+
+def update_house_role_id_cache(user_id: int, house_name: str, house_role_id: int):
+    """
+    Update the house_role_id and house_name of a vna_member in the cache.
+    """
+    if user_id in vna_members_cache:
+        vna_members_cache[user_id]["house_role_id"] = house_role_id
+        vna_members_cache[user_id]["house_name"] = house_name
+        pretty_log(
+            "cache",
+            f"Updated house_role_id and house_name for vna_member ({user_id}) to {house_role_id} and {house_name} in cache.",
+        )
 
 def upsert_vna_member_cache(
     user_id: int,

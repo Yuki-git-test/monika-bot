@@ -11,7 +11,7 @@ from constants.vn_allstars_constants import (
 from utils.cache.cache_list import top_monthly_grinders_cache, vna_members_cache
 from utils.db.probation_list_db import remove_probation_member
 from utils.db.top_monthly_grinders_db import delete_top_monthly_grinder
-from utils.db.vna_members_db_func import remove_member
+from utils.db.vna_members_db_func import remove_member, update_house_role_id
 from utils.functions.clan_break_role_handler import handle_clan_break_remove_role
 from utils.functions.server_booster_handler import handle_server_booster_role_remove
 from utils.logs.pretty_log import pretty_log
@@ -19,6 +19,7 @@ from utils.logs.pretty_log import pretty_log
 LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.member_logs
 from utils.functions.webhook_func import send_webhook
 
+from utils.AR.house_join import HOUSE_ROLE_LIST, HOUSE_MAP
 
 # 🍭──────────────────────────────
 #   🎀 Event: On Role Remove
@@ -76,6 +77,18 @@ async def handle_role_remove(
         if cached_probation:
             # Remove from probation db
             await remove_probation_member(bot, member)
+    # ————————————————————————————————
+    # 🩵 VNA House Role Remove
+    # ————————————————————————————————
+    if role_id in HOUSE_ROLE_LIST:
+        from utils.cache.vna_members_cache import get_house_role_id_by_user_id
+        # Check if same house role is in cache for the user, if yes update the database and cache to None
+        cached_house_role_id = get_house_role_id_by_user_id(member.id)
+        if cached_house_role_id == role_id:
+            # Update house_role_id in the database and cache to None
+            await update_house_role_id(bot, member.id, house_name=None, house_role_id=None)
+
+
     # ————————————————————————————————
     # 🩵 VNA Clan Break Role Remove
     # ————————————————————————————————

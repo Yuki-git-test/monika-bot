@@ -8,6 +8,8 @@ vna_members_cache: dict[int, dict] = {}
 # "faction": str,
 # "clan_joined_date": int,
 # "last_month_catches": int,
+# "house_name": str,
+# "house_role_id": int,
 # }
 top_monthly_grinders_cache: dict[int, dict] = {}
 # Structure:

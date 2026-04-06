@@ -33,7 +33,30 @@ async def fetch_user_member(bot, user: discord.Member):
             user_id,
         )
 
+async def update_house_role_id(bot, user_id: int, house_name: str, house_role_id: int):
+    """
+    Update the house_role_id and house_name for a user in vna_members.
+    """
+    async with bot.pg_pool.acquire() as conn:
+        await conn.execute(
+            """
+            UPDATE vna_members
+            SET house_role_id = $1, house_name = $2
+            WHERE user_id = $3;
+            """,
+            house_role_id,
+            house_name,
+            user_id,
+        )
+        pretty_log(
+            "info",
+            f"Updated house_role_id for user ID {user_id} to {house_role_id} ({house_name}) in vna_members.",
+        )
+        # Update cache as well
+        from utils.cache.vna_members_cache import update_house_role_id_cache
 
+        update_house_role_id_cache(user_id, house_name, house_role_id)
+        
 # Fetch all members
 async def fetch_all_members(bot):
     """

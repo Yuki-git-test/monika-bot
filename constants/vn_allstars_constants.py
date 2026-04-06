@@ -504,6 +504,10 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
+    world_government = 1490491680309121134
+    heavenly_demon_sect = 1490491754066215063
+    gojo_clan = 1490491792972451963
+    fatty_house_racoon_cult = 1490491871288492175
     amethyst = 1459195654688735253
     calm_waters = 1456030935941382235
     os_lotto_ping = 1456081515736993792
@@ -645,7 +649,7 @@ class VN_ALLSTARS_ROLES:
     jockie_music = 1230557341619847221
     incense_ping = 1238178277399593010
     meow_promo = 1240925928763429007
-    tournament = 1277802310575063133
+    team_war = 1277802310575063133
     meowhelper = 1295805305955024898
     application_bot = 1329462359063924748
     stickybot = 1340898452330250352

@@ -33,7 +33,7 @@ from utils.quick_codes.quick_codes_handler import quick_codes_handler
 from utils.quick_codes.sync_members import sync_members_func
 from utils.sticky_msg.clan_break import clan_break_sticky_msg
 from utils.listener_func.new_monthly_stats_listener import new_monthly_stats_checker
-
+from utils.AR.house_join import join_house
 dot_role_id = 1375712535512354898
 
 FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
@@ -98,6 +98,12 @@ class MessageCreateListener(commands.Cog):
                     else ""
                 )
                 first_embed_title = first_embed.title if first_embed else ""
+                # 🍭──────────────────────────────
+                #   🛡️ House Join Message Handler
+                # 🍭──────────────────────────────
+                if message.content.lower() == "!join":
+                    await join_house(self.bot, message)
+                    
                 # 🍭──────────────────────────────
                 #   🛡️ Clan Break Sticky Message Handler
                 # 🍭──────────────────────────────

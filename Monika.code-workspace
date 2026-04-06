@@ -6,6 +6,8 @@
   ],
   "settings": {
     "workbench.colorCustomizations": {
+      "scrollbarSlider.background": "#FF808080",
+      "scrollbarSlider.activeBackground": "#FF8080A0",
       "sideBarSectionHeader.background": "#FF7F7F",
       "tab.activeBorderTop": "#FF9999",
       "tab.activeBackground": "#000000",
