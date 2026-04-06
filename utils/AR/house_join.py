@@ -103,7 +103,12 @@ async def join_house(bot: discord.Client, message: discord.Message):
     processing_house_join = True
 
     # Always start with all houses available
-    available_houses = HOUSE_ROLE_LIST.copy()
+    # Only include houses that are not full
+    available_houses = [
+        house
+        for house in HOUSE_ROLE_LIST
+        if len(get_members_from_house_role_id(house)) < LIMIT_PER_HOUSE
+    ]
 
     # Check if user id is one of the mewtwo ids, if yes dont assign them in the same house
     if member_id in [MEWTWO_USER_ID_ONE, MEWTWO_USER_ID_TWO]:
@@ -122,21 +127,15 @@ async def join_house(bot: discord.Client, message: discord.Message):
                 if house != other_mewtwo_house_role_id
             ]
 
-    # Choose a random house for the user
-    chosen_house_role_id = random.choice(available_houses)
+    if not available_houses:
+        await message.channel.send(
+            f"{Emojis.error} All houses are currently full. Please try again later."
+        )
+        processing_house_join = False
+        return
 
-    # Check if the chosen house is full
-    house_member_count = len(get_members_from_house_role_id(chosen_house_role_id))
-    if house_member_count >= LIMIT_PER_HOUSE:
-        # Choose another house if the chosen one is full
-        available_houses.remove(chosen_house_role_id)
-        if not available_houses:
-            await message.channel.send(
-                f"{Emojis.error} All houses are currently full. Please try again later."
-            )
-            processing_house_join = False
-            return
-        chosen_house_role_id = random.choice(available_houses)
+    # Choose a random house for the user from available (not full) houses
+    chosen_house_role_id = random.choice(available_houses)
 
     # Assign the house role to the user
     house_role = guild.get_role(chosen_house_role_id)
@@ -152,7 +151,9 @@ async def join_house(bot: discord.Client, message: discord.Message):
         team_war_role = guild.get_role(VN_ALLSTARS_ROLES.team_war)
         await member.add_roles(house_role, reason="Joined a house")
         if team_war_role and team_war_role not in member.roles:
-            await member.add_roles(team_war_role, reason="Joined a house - team war role")
+            await member.add_roles(
+                team_war_role, reason="Joined a house - team war role"
+            )
 
         await update_house_role_id(
             bot=bot,
