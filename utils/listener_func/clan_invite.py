@@ -20,6 +20,45 @@ image_url = "https://media.discordapp.net/attachments/.../image.png"
 CLAN_MEMBER_CATEGORY_ONE_ID = 909881910505898044
 CLAN_MEMBER_CATEGORY_TWO_ID = 1456263954526371861
 
+CATEGORY_CHANNEL_LIMIT = 50
+
+
+# 🟣────────────────────────────────────────────
+#      🗂️ Category Overflow Helper
+# 🟣────────────────────────────────────────────
+async def get_or_create_available_category(
+    guild: discord.Guild,
+    base_category_id: int,
+) -> discord.CategoryChannel | None:
+    """
+    Returns a category that has room for a new channel (< 50).
+    If the base category is full, searches for another category with
+    the same name that has space. If none found, creates a new one
+    with the same name and permission overwrites as the base category.
+    """
+    base_category = guild.get_channel(base_category_id)
+    if not base_category:
+        return None
+
+    if len(base_category.channels) < CATEGORY_CHANNEL_LIMIT:
+        return base_category
+
+    # Base is full — look for a same-named category with room
+    for category in guild.categories:
+        if (
+            category.name == base_category.name
+            and len(category.channels) < CATEGORY_CHANNEL_LIMIT
+        ):
+            return category
+
+    # All matching categories are full — create a new overflow category
+    new_category = await guild.create_category(
+        name=base_category.name,
+        overwrites=dict(base_category.overwrites),
+        reason="Clan member category overflow — previous category is full",
+    )
+    return new_category
+
 
 # 🟣────────────────────────────────────────────
 #          ⚡ Auto Clan Invite ⚡
@@ -136,10 +175,17 @@ async def auto_clan_invite(bot: discord.Client, message: discord.Message):
                 f"Creating text channel: {channel_name} in category {CLAN_MEMBER_CATEGORY_TWO_ID}"
             )
             try:
+                target_category = await get_or_create_available_category(
+                    guild=guild,
+                    base_category_id=CLAN_MEMBER_CATEGORY_TWO_ID,
+                )
+                debug_log(
+                    f"Target category resolved: {target_category.name if target_category else 'None'} ({target_category.id if target_category else 'N/A'})"
+                )
                 new_channel = await guild.create_text_channel(
                     name=channel_name,
                     topic=channel_topic,
-                    category=guild.get_channel(CLAN_MEMBER_CATEGORY_TWO_ID),
+                    category=target_category,
                     overwrites=overwrites,
                 )
                 pretty_log(
