@@ -43,6 +43,42 @@ CATCH_CATEGORY_MAP = {
 import re
 
 TESTING_CHECK_MEMBERS = False
+MAX_CATEGORY_CHANNELS = 50
+
+
+async def get_available_category(
+    guild: discord.Guild,
+    base_category: discord.CategoryChannel,
+) -> discord.CategoryChannel:
+    """
+    Returns a category with room for more channels.
+    If base_category is full, finds or creates a numbered overflow
+    (e.g. 'Pro Members 2') with the same permissions placed just below
+    the last known overflow category.
+    """
+    if len(base_category.channels) < MAX_CATEGORY_CHANNELS:
+        return base_category
+
+    base_name = base_category.name
+    suffix = 2
+    last_known = base_category
+
+    while True:
+        overflow_name = f"{base_name} {suffix}"
+        overflow_cat = discord.utils.get(guild.categories, name=overflow_name)
+        if overflow_cat:
+            last_known = overflow_cat
+            if len(overflow_cat.channels) < MAX_CATEGORY_CHANNELS:
+                return overflow_cat
+            suffix += 1
+            continue
+        # Create the overflow category with the same permission overwrites
+        new_cat = await guild.create_category(
+            name=overflow_name,
+            overwrites=base_category.overwrites,
+            position=last_known.position + 1,
+        )
+        return new_cat
 
 
 def extract_page_numbers(text):
@@ -73,10 +109,15 @@ async def move_to_members_category(
             f"Invalid context '{context}' provided for moving channel {channel.name}.",
         )
         return
-    # Check if its already in target category
-    if channel.category and channel.category.id == target_category_id:
+    # Check if its already in target category (including overflow categories like "Pro Members 2")
+    base_cat_check = channel.guild.get_channel(target_category_id)
+    base_name_check = base_cat_check.name if base_cat_check else ""
+    if channel.category and (
+        channel.category.id == target_category_id
+        or (base_name_check and channel.category.name.startswith(base_name_check + " "))
+    ):
         debug_log(
-            f"Channel {channel.name} already in target category {target_category_id}."
+            f"Channel {channel.name} already in target category group '{base_name_check}'."
         )
         pretty_log(
             "info",
@@ -122,6 +163,10 @@ async def move_to_members_category(
                 f" Members category with ID {target_category_id} not found in guild {channel.guild.name}.",
             )
             return
+        # Use an overflow category if the base category is full
+        target_members_category = await get_available_category(
+            channel.guild, target_members_category
+        )
         debug_log(
             f"Moving channel {channel.name} to category {target_members_category.name}."
         )
