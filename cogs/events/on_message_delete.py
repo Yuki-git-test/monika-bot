@@ -14,6 +14,7 @@ LOG_CHANNEL_ID = VN_ALLSTARS_TEXT_CHANNELS.message_logs
 DELETED_IMAGE_THREAD_ID = 1442024624803287180
 from utils.functions.webhook_func import send_webhook
 
+
 # 🍭──────────────────────────────
 #   🎀 Event: On Message Delete
 # 🍭──────────────────────────────
@@ -37,7 +38,6 @@ class OnMessageDeleteCog(commands.Cog):
             "info",
             f"Message deleted in {guild.name} by {message.author} in #{message.channel}: {message.content}",
         )
-
 
         # Get media attachments
         media_attachments = [
@@ -121,7 +121,10 @@ class OnMessageDeleteCog(commands.Cog):
                     f"Sending deleted attachment to thread ID {DELETED_IMAGE_THREAD_ID}.",
                 )
                 try:
-                    media_file = await attachment.to_file()
+                    try:
+                        media_file = await attachment.to_file()
+                    except discord.NotFound:
+                        media_file = await attachment.to_file(use_cached=True)
                     media_msg = await thread.send(file=media_file)
                 except Exception as e:
                     pretty_log(
@@ -188,13 +191,16 @@ class OnMessageDeleteCog(commands.Cog):
             files = []
             for a in media_attachments:
                 try:
-                    files.append(await a.to_file())
+                    try:
+                        files.append(await a.to_file())
+                    except discord.NotFound:
+                        files.append(await a.to_file(use_cached=True))
                 except Exception as e:
                     pretty_log(
                         "error",
                         f"Failed to convert attachment to file: {e}",
                     )
-                    pass  # Continue with other attachments
+                    # Continue with other attachments
             types = set(
                 a.content_type.split("/")[0]
                 for a in media_attachments
