@@ -14,10 +14,10 @@ from constants.vn_allstars_constants import (
 )
 from utils.db.team_trophies_db import (
     fetch_all_team_trophies,
-    fetch_team_trophy,
-    upsert_team_trophy,
     fetch_current_leaderboard_info,
-    upsert_leaderboard_msg_id
+    fetch_team_trophy,
+    upsert_leaderboard_msg_id,
+    upsert_team_trophy,
 )
 from utils.essentials.pretty_defer import pretty_defer
 from utils.functions.webhook_func import send_webhook
@@ -47,7 +47,7 @@ async def create_leaderboard_embed(
         return embed
     # Convert dict to list of dicts for sorting
     all_trophies = [
-        {"role_id": role_id, "clan_name": data["clan_name"], "amount": data["amount"]}
+        {"role_id": role_id, "role_name": data["role_name"], "amount": data["amount"]}
         for role_id, data in trophies_dict.items()
     ]
     # Sort trophies by amount in descending order
