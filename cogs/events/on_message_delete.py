@@ -124,7 +124,10 @@ class OnMessageDeleteCog(commands.Cog):
                     try:
                         media_file = await attachment.to_file()
                     except discord.NotFound:
-                        media_file = await attachment.to_file(use_cached=True)
+                        try:
+                            media_file = await attachment.to_file(use_cached=True)
+                        except discord.NotFound:
+                            return
                     media_msg = await thread.send(file=media_file)
                 except Exception as e:
                     pretty_log(
@@ -194,7 +197,10 @@ class OnMessageDeleteCog(commands.Cog):
                     try:
                         files.append(await a.to_file())
                     except discord.NotFound:
-                        files.append(await a.to_file(use_cached=True))
+                        try:
+                            files.append(await a.to_file(use_cached=True))
+                        except discord.NotFound:
+                            continue
                 except Exception as e:
                     pretty_log(
                         "error",
