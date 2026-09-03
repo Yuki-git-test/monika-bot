@@ -100,27 +100,11 @@ def trim_header(message: str) -> str:
     Returns the trimmed message starting from the first detected user entry line.
     """
     lines = message.splitlines()
-    start_idx = 0
-
     for i, line in enumerate(lines):
-        line = line.strip()
-        # Detect rank line e.g. **1** username
-        if re.match(r"\*\*\d+\*\*\s+.+", line):
-            start_idx = i
-            break
-        # Or detect a non-empty line not starting with known emojis or rank header
-        if (
-            line
-            and not line.startswith(":dexcaught:")
-            and not line.startswith("<:dexcaught:")
-            and "You're Rank" not in line
-            and not line.startswith(":calendar:")
-            and not line.startswith(":bar_chart:")
-        ):
-            start_idx = i
-            break  # <-- Added break here to stop after first valid line found
+        if re.match(r"^\s*\*\*\d+\*\*\s+.+", line):
+            return "\n".join(lines[i:])
 
-    return "\n".join(lines[start_idx:])
+    return ""
 
 
 def should_parse(embed_title: Optional[str]) -> bool:
@@ -137,8 +121,12 @@ def should_parse(embed_title: Optional[str]) -> bool:
 
 
 def clean_username(username: str) -> str:
-    # Strip any leading/trailing ** from username cleanly
-    return re.sub(r"^\*+|\*+$", "", username).strip()
+    """Remove Discord formatting from a clan-stats member name."""
+    username = username.replace("\u200b", "")
+    username = re.sub(r"^\*+|\*+$", "", username).strip()
+    username = re.sub(r"^(?:<a?:\w+:\d+>\s*)+", "", username)
+    username = re.sub(r"\\([\\`*_{}\[\]()#+.!|>~\-])", r"\1", username)
+    return username.strip("* ")
 
 
 def parse_clan_stats_message(message: str) -> Optional[List[Tuple[str, int, int]]]:
@@ -157,17 +145,12 @@ def parse_clan_stats_message(message: str) -> Optional[List[Tuple[str, int, int]
             continue
 
         rank_match = re.match(r"\*\*(\d+)\*\*\s+(.+)", line)
-        if rank_match:
-            rank_number = int(rank_match.group(1))
-            username = clean_username(rank_match.group(2))
-            # You can now use rank_number as needed, e.g. store it with the member tuple
-            i += 1
-        elif not line.startswith(":dexcaught:") and not line.startswith("<:dexcaught:"):
-            username = clean_username(line)
-            i += 1
-        else:
+        if not rank_match:
             i += 1
             continue
+
+        username = clean_username(rank_match.group(2))
+        i += 1
 
         if i < len(lines):
             stats_line = lines[i].strip()
@@ -229,17 +212,13 @@ def parse_clan_stats_message_with_rank_number(
             continue
 
         rank_match = re.match(r"\*\*(\d+)\*\*\s+(.+)", line)
-        if rank_match:
-            rank_number = int(rank_match.group(1))
-            username = clean_username(rank_match.group(2))
-            # You can now use rank_number as needed, e.g. store it with the member tuple
-            i += 1
-        elif not line.startswith(":dexcaught:") and not line.startswith("<:dexcaught:"):
-            username = clean_username(line)
-            i += 1
-        else:
+        if not rank_match:
             i += 1
             continue
+
+        rank_number = int(rank_match.group(1))
+        username = clean_username(rank_match.group(2))
+        i += 1
 
         if i < len(lines):
             stats_line = lines[i].strip()
@@ -298,9 +277,8 @@ async def split_known_and_unknown_members(
             known.append((match, username, catches, fishes))
         else:
             # try to match the pokemeow name from cache
-            from utils.cache.vna_members_cache import (
-                fetch_vna_member_id_by_pokemeow_name,
-            )
+            from utils.cache.vna_members_cache import \
+                fetch_vna_member_id_by_pokemeow_name
 
             user_id = fetch_vna_member_id_by_pokemeow_name(username)
             if user_id:

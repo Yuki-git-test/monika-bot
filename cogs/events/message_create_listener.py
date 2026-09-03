@@ -4,27 +4,29 @@ import discord
 from discord.ext import commands
 
 from constants.settings import POKEMEOW_APPLICATION_ID
-from constants.vn_allstars_constants import (
-    VN_ALLSTARS_ROLES,
-    VN_ALLSTARS_TEXT_CHANNELS,
-    VNA_SERVER_ID,
-)
+from constants.vn_allstars_constants import (VN_ALLSTARS_ROLES,
+                                             VN_ALLSTARS_TEXT_CHANNELS,
+                                             VNA_SERVER_ID)
+from utils.AR.house_join import join_house
 from utils.listener_func.clan_command_listener import clan_command_listener
 from utils.listener_func.clan_invite import auto_clan_invite
-from utils.listener_func.clan_members_listener import clan_members_command_listener
-from utils.listener_func.faction_listener import extract_faction_from_faction_command
+from utils.listener_func.clan_members_listener import \
+    clan_members_command_listener
+from utils.listener_func.drops_ping import handle_drop_role_autoping
+from utils.listener_func.faction_listener import \
+    extract_faction_from_faction_command
 from utils.listener_func.market_snipe_filter import check_market_buy_command
 from utils.listener_func.monthly_stats_listener import monthly_stats_checker
+from utils.listener_func.new_monthly_stats_listener import \
+    new_monthly_stats_checker
 from utils.listener_func.perks_listener import (
-    extract_perks_from_perk_message,
-    extract_perks_from_profile_message,
-    update_perks_via_perks_purchase,
-)
-from utils.listener_func.pokemeow_username_listener import (
-    update_pokemeow_username_by_command,
-)
+    extract_perks_from_perk_message, extract_perks_from_profile_message,
+    update_perks_via_perks_purchase)
+from utils.listener_func.pokemeow_username_listener import \
+    update_pokemeow_username_by_command
 from utils.listener_func.stats_listener import stats_command_handler
-from utils.listener_func.top_grinder_listener import assign_top_grinder_roles_listener
+from utils.listener_func.top_grinder_listener import \
+    assign_top_grinder_roles_listener
 from utils.listener_func.weekly_stats_listener import weekly_stats_checker
 from utils.logs.pretty_log import pretty_log
 from utils.monika_library.monika_lib_ar import monika_lib_ar_handler
@@ -32,8 +34,7 @@ from utils.quick_codes.cleanup import clean_graveyard_channels_func
 from utils.quick_codes.quick_codes_handler import quick_codes_handler
 from utils.quick_codes.sync_members import sync_members_func
 from utils.sticky_msg.clan_break import clan_break_sticky_msg
-from utils.listener_func.new_monthly_stats_listener import new_monthly_stats_checker
-from utils.AR.house_join import join_house
+
 dot_role_id = 1375712535512354898
 
 FACTIONS = ["aqua", "flare", "galactic", "magma", "plasma", "rocket", "skull", "yell"]
@@ -49,6 +50,7 @@ TRIGGERS = {
     "weekly_stats_checker": "**Clan Weekly Stats — VN Allstar**",
     "clan_stats": "Welcome to **VN Allstar**!",
     "clan_member": "Clan Member Information - VN Allstar",
+    "drop_role_autoping": "a drop has been initiated by"
 }
 
 
@@ -103,7 +105,7 @@ class MessageCreateListener(commands.Cog):
                 # 🍭──────────────────────────────
                 if message.content.lower() == "!join":
                     await join_house(self.bot, message)
-                    
+
                 # 🍭──────────────────────────────
                 #   🛡️ Clan Break Sticky Message Handler
                 # 🍭──────────────────────────────
@@ -114,7 +116,7 @@ class MessageCreateListener(commands.Cog):
                 #   🎀 Auto Clan Invite Processing
                 # 🍭──────────────────────────────
                 if (
-                    ":tada: Welcome," in message.content
+                    "Welcome," in message.content
                     and "You have successfully joined" in message.content
                     and "VN Allstar" in message.content
                 ):
@@ -271,6 +273,15 @@ class MessageCreateListener(commands.Cog):
                             self.bot,
                             message,
                         )
+                # ————————————————————————————————
+                # 👥 Drops Ping Command Listener
+                # ————————————————————————————————
+                if content and TRIGGERS["drop_role_autoping"] in content:
+                    await handle_drop_role_autoping(
+                        self.bot,
+                        message,
+                    )
+
                 """# ————————————————————————————————
                 # 📖 Monika Library AR Handler
                 # ————————————————————————————————

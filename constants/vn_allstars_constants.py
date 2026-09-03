@@ -504,6 +504,7 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
+
     world_government = 1490491680309121134
     heavenly_demon_sect = 1490491754066215063
     gojo_clan = 1490491792972451963
