@@ -276,7 +276,7 @@ class MessageCreateListener(commands.Cog):
                 # ————————————————————————————————
                 # 👥 Drops Ping Command Listener
                 # ————————————————————————————————
-                if content and TRIGGERS["drop_role_autoping"] in content:
+                if content and TRIGGERS["drop_role_autoping"] in content.lower():
                     await handle_drop_role_autoping(
                         self.bot,
                         message,
