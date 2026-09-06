@@ -4,32 +4,29 @@ import discord
 from discord.ext import commands
 
 from constants.settings import POKEMEOW_APPLICATION_ID
-from constants.vn_allstars_constants import (
-    VN_ALLSTARS_ROLES,
-    VN_ALLSTARS_TEXT_CHANNELS,
-    VNA_SERVER_ID,
-)
+from constants.vn_allstars_constants import (VN_ALLSTARS_ROLES,
+                                             VN_ALLSTARS_TEXT_CHANNELS,
+                                             VNA_SERVER_ID)
 from utils.functions.message_edit_log import message_edit_log
 from utils.listener_func.clan_invite import auto_clan_invite
-from utils.listener_func.clan_remove import (
-    handle_clan_kick_command,
-    handle_clan_leave_command,
-)
+from utils.listener_func.clan_members_listener import \
+    clan_members_command_listener
+from utils.listener_func.clan_remove import (handle_clan_kick_command,
+                                             handle_clan_leave_command)
 from utils.listener_func.monthly_stats_listener import monthly_stats_checker
+from utils.listener_func.new_monthly_stats_listener import \
+    new_monthly_stats_checker
 from utils.listener_func.perks_listener import (
-    extract_perks_from_perk_message,
-    extract_perks_from_profile_message,
-    update_perks_via_perks_purchase,
-)
+    extract_perks_from_perk_message, extract_perks_from_profile_message,
+    update_perks_via_perks_purchase)
 from utils.listener_func.weekly_stats_listener import weekly_stats_checker
 from utils.logs.pretty_log import pretty_log
-from utils.listener_func.clan_members_listener import clan_members_command_listener
-from utils.listener_func.new_monthly_stats_listener import new_monthly_stats_checker
+
 TRIGGERS = {
     "pro_embed": "to view badge information",
     "clan_leave": "You left **VN Allstar**.",
     "clan_kick": re.compile(
-        r"you spent <:pokecoin:\d+>\s+\*\*100,000\*\*\s+to kick\s+.+?\s+from vn allstar\.",
+        r"you spent <:pokecoin:\d+>\s+\**100,000\**\s+to kick\s+.+?\s+from vn allstar\.",
         re.IGNORECASE,
     ),
     "weekly_stats_checker": "**Clan Weekly Stats — VN Allstar**",
