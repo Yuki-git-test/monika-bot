@@ -1,11 +1,9 @@
 import discord
 from discord.ui import Button, View
 
-from constants.vn_allstars_constants import (
-    VN_ALLSTARS_EMOJIS,
-    VN_ALLSTARS_ROLES,
-    VN_ALLSTARS_TEXT_CHANNELS,
-)
+from constants.vn_allstars_constants import (VN_ALLSTARS_EMOJIS,
+                                             VN_ALLSTARS_ROLES,
+                                             VN_ALLSTARS_TEXT_CHANNELS)
 from utils.logs.pretty_log import pretty_log
 from utils.visuals.colors import get_random_monika_color
 
@@ -161,6 +159,7 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
         calm_waters = guild.get_role(VN_ALLSTARS_ROLES.calm_waters)
         shiny_bonus = guild.get_role(VN_ALLSTARS_ROLES.shiny_bonus)
         os_lotto_ping = guild.get_role(VN_ALLSTARS_ROLES.os_lotto_ping)
+        hunt_role = guild.get_role(VN_ALLSTARS_ROLES.hunt)
 
         games = guild.get_role(VN_ALLSTARS_ROLES.games)
 
@@ -218,6 +217,16 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
                 )
             )
             roles.append(("🎟️", lottery_role))
+
+        if hunt_role:
+            view.add_item(
+                ToggleRoleButton(
+                    role=hunt_role,
+                    label="Hunt",
+                    emoji="🔍",
+                )
+            )
+            roles.append(("🔍", hunt_role))
         if os_lotto_ping:
             view.add_item(
                 ToggleRoleButton(
