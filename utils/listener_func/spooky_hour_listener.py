@@ -95,7 +95,7 @@ async def handle_spooky_hour_hw_embed(bot: discord.Client, message: discord.Mess
     embed = message.embeds[0]
     if not embed.description:
         return
-    event_tracker_channel = message.guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.bumps_)
+    event_tracker_channel = message.guild.get_channel(VN_ALLSTARS_TEXT_CHANNELS.bumps_channel)
     spooky_hour_role = message.guild.get_role(VN_ALLSTARS_ROLES.spooky_hour)
     if "[INACTIVE]" not in embed.description:
         ends_on = extract_spooky_hour_ts(embed.description)
