@@ -34,6 +34,7 @@ from utils.quick_codes.cleanup import clean_graveyard_channels_func
 from utils.quick_codes.quick_codes_handler import quick_codes_handler
 from utils.quick_codes.sync_members import sync_members_func
 from utils.sticky_msg.clan_break import clan_break_sticky_msg
+from utils.listener_func.spooky_hour_listener import handle_spooky_hour_hw_embed
 
 dot_role_id = 1375712535512354898
 
@@ -50,7 +51,9 @@ TRIGGERS = {
     "weekly_stats_checker": "**Clan Weekly Stats — VN Allstar**",
     "clan_stats": "Welcome to **VN Allstar**!",
     "clan_member": "Clan Member Information - VN Allstar",
-    "drop_role_autoping": "a drop has been initiated by"
+    "drop_role_autoping": "a drop has been initiated by",
+    "hw_embed": "happy halloween pokemeow! participate in activities for rewards!",
+
 }
 
 
@@ -281,7 +284,26 @@ class MessageCreateListener(commands.Cog):
                         self.bot,
                         message,
                     )
+                    
+                # 🌊────────────────────────────────────────────
+                #          Spooky Hour HW Embed Handler
+                # 🌊────────────────────────────────────────────
+                if TRIGGERS["hw_embed"].lower() in first_embed_author_text.lower():
+                    try:
+                        await handle_spooky_hour_hw_embed(bot=self.bot, message=message)
+                        pretty_log(
+                            "ready",
+                            f"Processed Spooky Hour HW embed from message ID {message.id}",
 
+                            label="Spooky Hour HW",
+                        )
+                    except Exception as e:
+                        pretty_log(
+                            "❌ ERROR",
+                            f"Failed processing Spooky Hour HW embed from message ID {message.id}: {e}",
+
+                            label="Spooky Hour HW",
+                        )
                 """# ————————————————————————————————
                 # 📖 Monika Library AR Handler
                 # ————————————————————————————————

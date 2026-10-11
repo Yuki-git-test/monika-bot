@@ -8,6 +8,7 @@ from constants.vn_allstars_constants import (
     VNA_SERVER_ID
 )
 from utils.background_loop.clan_break_checker import clan_break_checker
+from utils.background_loop.spooky_hour_checker import check_and_handle_spooky_hour_expiry
 
 # 🍭──────────────────────────────
 #  🎀 Central Loop
@@ -42,6 +43,9 @@ class CentralLoop(commands.Cog):
                 )"""
                 # Check for due clan break members
                 await clan_break_checker(self.bot)
+
+                # Check if Spooky Hour has ended and handle it accordingly
+                await check_and_handle_spooky_hour_expiry(self.bot)
 
             except Exception as e:
                 pretty_log(

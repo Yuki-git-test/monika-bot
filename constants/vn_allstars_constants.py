@@ -447,6 +447,7 @@ class VN_ALLSTARS_TEXT_CHANNELS:
     # 🌊💙🤍───────────── Uncategorized ─────────────💙🤍🌊
 
     testing = 1203720125031653416
+    bumps_channel = 1456083845815205898
 
 
 # 💦☁────────────────────────────────────────────💦☁
@@ -504,6 +505,7 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
+    spooky_hour = 1558635183354159184
     hunt = 1557072198362079232
     world_government = 1490491680309121134
     heavenly_demon_sect = 1490491754066215063

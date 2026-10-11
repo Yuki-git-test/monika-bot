@@ -165,6 +165,7 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
 
         as_spawn_ping = guild.get_role(VN_ALLSTARS_ROLES.as_spawn_ping)
         as_rare_spawn_ping = guild.get_role(VN_ALLSTARS_ROLES.as_rare_spawn_hunter)
+        spooky_hour_role = guild.get_role(VN_ALLSTARS_ROLES.spooky_hour)
 
         roles = []
         # Server Roles
@@ -306,6 +307,17 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
                 )
             )
             roles.append((emoji, ee_spawn_ping))
+        if spooky_hour_role:
+            emoji = "🎃"
+            view.add_item(
+                ToggleRoleButton(
+                    role=spooky_hour_role,
+                    label="Spooky Hour",
+                    emoji=emoji,
+                )
+            )
+            roles.append((emoji, spooky_hour_role))
+
 
         if as_spawn_ping:
             emoji = VN_ALLSTARS_EMOJIS.vna_pokeball
