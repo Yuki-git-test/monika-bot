@@ -4,10 +4,14 @@ import discord
 from discord.ext import commands
 
 from constants.settings import POKEMEOW_APPLICATION_ID
-from constants.vn_allstars_constants import (VN_ALLSTARS_ROLES,
+from constants.vn_allstars_constants import (CC_GUILD_ID,
+                                             CC_SPOOKY_HOUR_CHANNEL_ID,
+                                             VN_ALLSTARS_ROLES,
                                              VN_ALLSTARS_TEXT_CHANNELS,
                                              VNA_SERVER_ID)
 from utils.AR.house_join import join_house
+from utils.listener_func.cc_spooky_hour_listener import \
+    handle_cc_spooky_hour_message
 from utils.listener_func.clan_command_listener import clan_command_listener
 from utils.listener_func.clan_invite import auto_clan_invite
 from utils.listener_func.clan_members_listener import \
@@ -24,6 +28,8 @@ from utils.listener_func.perks_listener import (
     update_perks_via_perks_purchase)
 from utils.listener_func.pokemeow_username_listener import \
     update_pokemeow_username_by_command
+from utils.listener_func.spooky_hour_listener import \
+    handle_spooky_hour_hw_embed
 from utils.listener_func.stats_listener import stats_command_handler
 from utils.listener_func.top_grinder_listener import \
     assign_top_grinder_roles_listener
@@ -34,7 +40,6 @@ from utils.quick_codes.cleanup import clean_graveyard_channels_func
 from utils.quick_codes.quick_codes_handler import quick_codes_handler
 from utils.quick_codes.sync_members import sync_members_func
 from utils.sticky_msg.clan_break import clan_break_sticky_msg
-from utils.listener_func.spooky_hour_listener import handle_spooky_hour_hw_embed
 
 dot_role_id = 1375712535512354898
 
@@ -70,13 +75,6 @@ class MessageCreateListener(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         try:
-            # 🚫 Ignore all bots except PokéMeow to prevent loops
-            if (
-                message.author.bot
-                and message.author.id != POKEMEOW_APPLICATION_ID
-                and not message.webhook_id
-            ):
-                return
 
             # ————————————————————————————————
             # 🏰 Guild Check — Route by server
@@ -84,6 +82,24 @@ class MessageCreateListener(commands.Cog):
             guild = message.guild
             if not guild:
                 return  # Skip DMs
+
+            # ————————————————————————————————
+            # 🩵 CC Guild message logic
+            # ————————————————————————————————
+            if (
+                guild.id == CC_GUILD_ID
+                and message.channel.id == CC_SPOOKY_HOUR_CHANNEL_ID
+            ):
+                await handle_cc_spooky_hour_message(self.bot, message)
+                return
+
+            # 🚫 Ignore all bots except PokéMeow to prevent loops
+            if (
+                message.author.bot
+                and message.author.id != POKEMEOW_APPLICATION_ID
+                and not message.webhook_id
+            ):
+                return
 
             # ————————————————————————————————
             # 🩵 VNA message logic
@@ -284,7 +300,7 @@ class MessageCreateListener(commands.Cog):
                         self.bot,
                         message,
                     )
-                    
+
                 # 🌊────────────────────────────────────────────
                 #          Spooky Hour HW Embed Handler
                 # 🌊────────────────────────────────────────────
