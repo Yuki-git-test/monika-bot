@@ -50,7 +50,7 @@ def build_spooky_hour_embed(
         code_status = f"> - **All codes have been claimed!**"
     desc = f"""## Spooky Hour is active!
 💝 Bonuses active:
-- {VN_ALLSTARS_EMOJIS.vna_golden} Promo item __GOLDEN DERPY CHARM__ is unlocked (team still required)
+- {VN_ALLSTARS_EMOJIS.vna_golden} Promo item __GOLDEN DREEPY CHARM__ is unlocked (team still required)
 > - Check `!promo`!
 - 🏆 Halloween Catch Contest is now enabled `;hween contest`
 - ⚔️ Lusamine challenge is now enabled `;b npc 963`
