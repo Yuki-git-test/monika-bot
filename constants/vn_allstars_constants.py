@@ -508,6 +508,7 @@ class VN_ALLSTARS_CATEGORIES:
 #       VN_ALLSTARS_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class VN_ALLSTARS_ROLES:
+    world_boss_spawn = 1571010699172511945
     spooky_hour = 1558635183354159184
     hunt = 1557072198362079232
     world_government = 1490491680309121134

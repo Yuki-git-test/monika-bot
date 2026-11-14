@@ -154,6 +154,7 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
         drops_role = guild.get_role(VN_ALLSTARS_ROLES.drops)
         incense_role = guild.get_role(VN_ALLSTARS_ROLES.incense_ping)
         meow_promo_team = guild.get_role(VN_ALLSTARS_ROLES.meow_promo)
+        world_boss_spawn = guild.get_role(VN_ALLSTARS_ROLES.world_boss_spawn)
         ee_spawn_ping = guild.get_role(VN_ALLSTARS_ROLES.ee_spawn_ping)
         daily_ping = guild.get_role(VN_ALLSTARS_ROLES.daily_ping)
         calm_waters = guild.get_role(VN_ALLSTARS_ROLES.calm_waters)
@@ -297,8 +298,19 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
                 )
             )
             roles.append((emoji, games))
+        if world_boss_spawn:
+            emoji = "<:gigantamax:1300780191710314496>"
+            view.add_item(
+                ToggleRoleButton(
+                    role=world_boss_spawn,
+                    label="World Boss Spawn",
+                    emoji=emoji,
+                )
+            )
+            roles.append((emoji, world_boss_spawn))
+
         if ee_spawn_ping:
-            emoji = VN_ALLSTARS_EMOJIS.vna_gmax
+            emoji = "<:eet:1570724060428767232>"
             view.add_item(
                 ToggleRoleButton(
                     role=ee_spawn_ping,
@@ -317,7 +329,6 @@ def build_general_roles_embed(guild: discord.Guild, user: discord.Member):
                 )
             )
             roles.append((emoji, spooky_hour_role))
-
 
         if as_spawn_ping:
             emoji = VN_ALLSTARS_EMOJIS.vna_pokeball
